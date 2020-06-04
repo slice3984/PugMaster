@@ -7,7 +7,7 @@
     "build:www": "cross-env NODE_ENV=production webpack --config webpack.www.config.js --mode=production",
     "dev:www": "cross-env NODE_ENV=development webpack --config webpack.www.config.js --watch",
     "build:bot": "cross-env NODE_ENV=production webpack --config webpack.bot.config.js --mode=production",
-    "debug:bot": "cross-env TS_NODE_PROJECT=tsconfig.bot.json DEBUG=true node --inspect=5858 -r ts-node/register ./app.ts",
+    "debug:bot": "cross-env TS_NODE_PROJECT=tsconfig.bot.json DEV=true node --inspect=5858 -r ts-node/register ./app.ts",
     "dev:bot": "nodemon"
   },
   "nodemonConfig": {

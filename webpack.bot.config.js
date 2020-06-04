@@ -36,9 +36,11 @@ module.exports = {
         ]
     },
     plugins: [
-        new CopyWebpackPlugin([
-            { from: 'views', to: 'views' }
-        ])
+        new CopyWebpackPlugin({
+            patterns: [
+                { from: 'views', to: 'views' }
+            ]
+        })
     ],
     optimization: {
         minimize: true,
