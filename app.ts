@@ -1,4 +1,5 @@
 import ConfigTool from './core/configTool';
+import { checkDb, createTables } from './core/dbInit';
 
 (async () => {
     // Config check
@@ -10,4 +11,12 @@ import ConfigTool from './core/configTool';
         process.exit(0);
     }
 
+    // Db check
+    if (await checkDb()) {
+        console.log(`Found tables in database ${ConfigTool.getConfig().db.db}`);
+    } else {
+        console.log(`Empty database, creating tables`);
+        await createTables();
+        console.log('Tables successfully created');
+    }
 })();

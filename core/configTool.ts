@@ -6,14 +6,11 @@ export default class ConfigTool {
     static config: Config;
 
     static doesConfigExist(): Promise<Boolean> {
-        console.log(this.configPath);
         return new Promise((res, _rej) => {
             fs.access(ConfigTool.configPath, fs.constants.F_OK, (err) => {
                 if (err) {
                     res(false);
                 } else {
-                    const data = fs.readFileSync(ConfigTool.configPath).toString();
-                    ConfigTool.config = JSON.parse(data);
                     res(true);
                 }
             });
@@ -33,5 +30,13 @@ export default class ConfigTool {
         "db": ""
     }
 }`, 'utf8');
+    }
+
+    static getConfig(): Config {
+        if (!ConfigTool.config) {
+            const data = fs.readFileSync(ConfigTool.configPath).toString();
+            ConfigTool.config = JSON.parse(data);
+        }
+        return ConfigTool.config;
     }
 }
