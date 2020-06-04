@@ -227,26 +227,14 @@ export const createTables = () => new Promise(async (res, _req) => {
             blacklist_role BIGINT(20) NULL,
             promotion_role BIGINT(20) NULL,
             captain_role BIGINT(20) NULL,
-            server_id INT NOT NULL,
+            server_id INT NULL,
             INDEX guild_id_idx (guild_id ASC) VISIBLE,
             PRIMARY KEY (id),
-            INDEX mappool_id_idx (mappool_id ASC) VISIBLE,
-            INDEX server_id_idx (server_id ASC) VISIBLE,
             CONSTRAINT fk_pickup_configs
               FOREIGN KEY (guild_id)
               REFERENCES guilds (guild_id)
               ON DELETE CASCADE
-              ON UPDATE CASCADE,
-            CONSTRAINT mappool_id
-              FOREIGN KEY (mappool_id)
-              REFERENCES map_pool_names (id)
-              ON DELETE CASCADE
-              ON UPDATE CASCADE,
-            CONSTRAINT server_id
-              FOREIGN KEY (server_id)
-              REFERENCES pickup_servers (id)
-              ON DELETE CASCADE
-              ON UPDATE CASCADE)        
+              ON UPDATE CASCADE)
         `,
         `
         CREATE TABLE IF NOT EXISTS maps (
