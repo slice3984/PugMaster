@@ -1,3 +1,4 @@
+import Bot from './core/bot';
 import ConfigTool from './core/configTool';
 import { checkDb, createTables } from './core/dbInit';
 
@@ -19,4 +20,7 @@ import { checkDb, createTables } from './core/dbInit';
         await createTables();
         console.log('Tables successfully created');
     }
+
+    // Starting discord bot
+    Bot.getInstance();
 })();
