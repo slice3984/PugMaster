@@ -2,7 +2,7 @@ import db from './db';
 import ConfigTool from './configTool';
 
 export const checkDb = () => new Promise(async (res, _rej) => {
-    const result = await db.query(`
+  const result = await db.query(`
     SELECT COUNT(*) as tb
     FROM
         information_schema.tables
@@ -13,16 +13,16 @@ export const checkDb = () => new Promise(async (res, _rej) => {
     LIMIT 1;
     `)
 
-    if (result[0][0].tb) {
-        res(true);
-    } else {
-        res(false);
-    }
+  if (result[0][0].tb) {
+    res(true);
+  } else {
+    res(false);
+  }
 });
 
 export const createTables = () => new Promise(async (res, _req) => {
-    const dbQueries = [
-        `
+  const dbQueries = [
+    `
         CREATE TABLE IF NOT EXISTS guilds (
             guild_id BIGINT(20) NOT NULL,
             name VARCHAR(100) NOT NULL,
@@ -41,7 +41,7 @@ export const createTables = () => new Promise(async (res, _req) => {
             last_check DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (guild_id))       
         `,
-        `
+    `
         CREATE TABLE IF NOT EXISTS guild_channels (
             guild_id BIGINT(20) NOT NULL,
             channel_id BIGINT(20) NOT NULL,
@@ -53,13 +53,13 @@ export const createTables = () => new Promise(async (res, _req) => {
               ON DELETE CASCADE
               ON UPDATE CASCADE)       
         `,
-        `
+    `
         CREATE TABLE IF NOT EXISTS commands (
             name VARCHAR(20) NOT NULL,
             disabled TINYINT NOT NULL DEFAULT 0,
             PRIMARY KEY (name))        
         `,
-        `
+    `
         CREATE TABLE IF NOT EXISTS guild_disabled_commands (
             guild_id BIGINT(20) NOT NULL,
             command_name VARCHAR(20) NOT NULL,
@@ -76,7 +76,7 @@ export const createTables = () => new Promise(async (res, _req) => {
               ON DELETE CASCADE
               ON UPDATE CASCADE)        
         `,
-        `
+    `
         CREATE TABLE IF NOT EXISTS guild_command_settings (
             guild_id BIGINT(20) NOT NULL,
             command_name VARCHAR(20) NOT NULL,
@@ -93,7 +93,7 @@ export const createTables = () => new Promise(async (res, _req) => {
               ON DELETE CASCADE
               ON UPDATE CASCADE)        
         `,
-        `
+    `
         CREATE TABLE IF NOT EXISTS guild_roles (
             guild_id BIGINT(20) NOT NULL,
             role_id BIGINT(20) NOT NULL,
@@ -105,7 +105,7 @@ export const createTables = () => new Promise(async (res, _req) => {
               ON DELETE CASCADE
               ON UPDATE CASCADE)        
         `,
-        `
+    `
         CREATE TABLE IF NOT EXISTS guild_role_command_permissions (
             guild_role_id BIGINT(20) NOT NULL,
             command_name VARCHAR(20) NOT NULL,
@@ -122,12 +122,12 @@ export const createTables = () => new Promise(async (res, _req) => {
               ON DELETE CASCADE
               ON UPDATE CASCADE)        
         `,
-        `
+    `
         CREATE TABLE IF NOT EXISTS bot_permissions (
             permission_name VARCHAR(45) NOT NULL,
             PRIMARY KEY (permission_name))        
         `,
-        `
+    `
         CREATE TABLE IF NOT EXISTS guild_role_bot_permissions (
             guild_role_id BIGINT(20) NOT NULL,
             bot_permission_name VARCHAR(45) NOT NULL,
@@ -144,7 +144,7 @@ export const createTables = () => new Promise(async (res, _req) => {
               ON DELETE CASCADE
               ON UPDATE CASCADE)        
         `,
-        `
+    `
         CREATE TABLE IF NOT EXISTS players (
             id INT NOT NULL AUTO_INCREMENT,
             guild_id BIGINT(20) NOT NULL,
@@ -160,7 +160,7 @@ export const createTables = () => new Promise(async (res, _req) => {
               ON DELETE CASCADE
               ON UPDATE CASCADE)        
         `,
-        `
+    `
         CREATE TABLE IF NOT EXISTS player_settings (
             player_id INT NOT NULL,
             type VARCHAR(45) NOT NULL,
@@ -172,7 +172,7 @@ export const createTables = () => new Promise(async (res, _req) => {
               ON DELETE CASCADE
               ON UPDATE CASCADE)        
         `,
-        `
+    `
         CREATE TABLE IF NOT EXISTS player_nicks (
             player_id INT NULL,
             nick VARCHAR(32) NOT NULL,
@@ -184,7 +184,7 @@ export const createTables = () => new Promise(async (res, _req) => {
               ON DELETE CASCADE
               ON UPDATE CASCADE)        
         `,
-        `
+    `
         CREATE TABLE IF NOT EXISTS map_pool_names (
             id INT NOT NULL AUTO_INCREMENT,
             guild_id BIGINT(20) NOT NULL,
@@ -198,7 +198,7 @@ export const createTables = () => new Promise(async (res, _req) => {
               ON DELETE CASCADE
               ON UPDATE CASCADE)        
         `,
-        `
+    `
         CREATE TABLE IF NOT EXISTS pickup_servers (
             id INT NOT NULL AUTO_INCREMENT,
             guild_id BIGINT(20) NOT NULL,
@@ -212,7 +212,7 @@ export const createTables = () => new Promise(async (res, _req) => {
               ON DELETE CASCADE
               ON UPDATE CASCADE)        
         `,
-        `
+    `
         CREATE TABLE IF NOT EXISTS pickup_configs (
             id INT NOT NULL AUTO_INCREMENT,
             guild_id BIGINT(20) NOT NULL,
@@ -236,7 +236,7 @@ export const createTables = () => new Promise(async (res, _req) => {
               ON DELETE CASCADE
               ON UPDATE CASCADE)
         `,
-        `
+    `
         CREATE TABLE IF NOT EXISTS maps (
             id INT NOT NULL AUTO_INCREMENT,
             guild_id BIGINT(20) NOT NULL,
@@ -249,7 +249,7 @@ export const createTables = () => new Promise(async (res, _req) => {
               ON DELETE CASCADE
               ON UPDATE CASCADE)        
         `,
-        `
+    `
         CREATE TABLE IF NOT EXISTS map_pool_maps (
             pool_id INT NOT NULL,
             map_id INT NOT NULL,
@@ -266,7 +266,7 @@ export const createTables = () => new Promise(async (res, _req) => {
               ON DELETE CASCADE
               ON UPDATE CASCADE)        
         `,
-        `
+    `
         CREATE TABLE IF NOT EXISTS pickups (
             id INT NOT NULL AUTO_INCREMENT,
             guild_id BIGINT(20) NOT NULL,
@@ -287,7 +287,7 @@ export const createTables = () => new Promise(async (res, _req) => {
               ON DELETE CASCADE
               ON UPDATE CASCADE)        
         `,
-        `
+    `
         CREATE TABLE IF NOT EXISTS pickup_players (
             pickup_id INT NOT NULL,
             player_id INT NOT NULL,
@@ -304,7 +304,7 @@ export const createTables = () => new Promise(async (res, _req) => {
               ON DELETE CASCADE
               ON UPDATE CASCADE)        
         `,
-        `
+    `
         CREATE TABLE IF NOT EXISTS rated_results (
             player_id INT NOT NULL,
             pickup_id INT NOT NULL,
@@ -322,7 +322,7 @@ export const createTables = () => new Promise(async (res, _req) => {
               ON DELETE CASCADE
               ON UPDATE CASCADE)        
         `,
-        `
+    `
         CREATE TABLE IF NOT EXISTS guild_settings (
             guild_id BIGINT(20) NOT NULL,
             type VARCHAR(45) NOT NULL,
@@ -334,12 +334,12 @@ export const createTables = () => new Promise(async (res, _req) => {
               ON DELETE CASCADE
               ON UPDATE CASCADE)        
         `,
-        `
+    `
         CREATE TABLE IF NOT EXISTS banned_guilds (
             guild_id BIGINT(20) NOT NULL,
             PRIMARY KEY (guild_id))        
         `,
-        `
+    `
         CREATE TABLE IF NOT EXISTS bans (
             id INT NOT NULL AUTO_INCREMENT,
             guild_id BIGINT(20) NOT NULL,
@@ -368,7 +368,7 @@ export const createTables = () => new Promise(async (res, _req) => {
               ON DELETE CASCADE
               ON UPDATE CASCADE)        
         `,
-        `
+    `
         CREATE TABLE IF NOT EXISTS warns (
             id INT NOT NULL AUTO_INCREMENT,
             guild_id BIGINT(20) NOT NULL,
@@ -397,7 +397,7 @@ export const createTables = () => new Promise(async (res, _req) => {
               ON DELETE CASCADE
               ON UPDATE CASCADE)        
         `,
-        `
+    `
         CREATE TABLE IF NOT EXISTS state_active_pickups (
             guild_id BIGINT(20) NOT NULL,
             player_id INT NOT NULL,
@@ -421,7 +421,7 @@ export const createTables = () => new Promise(async (res, _req) => {
               ON DELETE CASCADE
               ON UPDATE CASCADE)        
         `,
-        `
+    `
         CREATE TABLE IF NOT EXISTS state_active_expires (
             guild_id BIGINT(20) NOT NULL,
             player_id INT NOT NULL,
@@ -439,7 +439,7 @@ export const createTables = () => new Promise(async (res, _req) => {
               ON DELETE CASCADE
               ON UPDATE CASCADE)       
         `,
-        `
+    `
         CREATE TABLE IF NOT EXISTS state_active_aos (
             guild_id BIGINT(20) NOT NULL,
             player_id INT NOT NULL,
@@ -457,19 +457,19 @@ export const createTables = () => new Promise(async (res, _req) => {
               ON DELETE CASCADE
               ON UPDATE CASCADE)       
         `,
-    ];
+  ];
 
-    const conn = await db.getConnection();
-    try {
-        await conn.query('START TRANSACTION');
-        dbQueries.forEach(async (query) => {
-            await conn.query(query);
-        });
-        await conn.commit();
-        await conn.release();
-        res();
-    } catch (err) {
-        await conn.query('ROLLBACK');
-        await conn.release();
-    }
+  const conn = await db.getConnection();
+  try {
+    await conn.query('START TRANSACTION');
+    dbQueries.forEach(async (query) => {
+      await conn.query(query);
+    });
+    await conn.commit();
+    await conn.release();
+    res();
+  } catch (err) {
+    await conn.query('ROLLBACK');
+    await conn.release();
+  }
 });
