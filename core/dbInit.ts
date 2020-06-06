@@ -33,6 +33,7 @@ export const createTables = () => new Promise(async (res, _req) => {
             global_expire INT NULL DEFAULT 21600000,
             default_server_ip VARCHAR(45) NULL DEFAULT 'Change me',
             default_server_password VARCHAR(45) NULL DEFAULT 'password',
+            last_promote DATETIME NULL,
             warn_streaks TINYINT NOT NULL DEFAULT 3,
             warn_streak_expiration INT NOT NULL DEFAULT 604800000,
             warn_expiration_time INT NOT NULL DEFAULT 172800000,
@@ -457,6 +458,24 @@ export const createTables = () => new Promise(async (res, _req) => {
               ON DELETE CASCADE
               ON UPDATE CASCADE)       
         `,
+    `
+      CREATE TABLE IF NOT EXISTS state_add_times (
+        guild_id BIGINT(20) NOT NULL,
+        player_id INT NOT NULL,
+        added_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        INDEX fk_state_add_times_idx (guild_id ASC) VISIBLE,
+        INDEX fk_state_add_times_player_idx (player_id ASC) VISIBLE,
+        CONSTRAINT fk_state_add_times
+          FOREIGN KEY (guild_id)
+          REFERENCES guilds (guild_id)
+          ON DELETE CASCADE
+          ON UPDATE CASCADE,
+        CONSTRAINT fk_state_add_times_player
+          FOREIGN KEY (player_id)
+          REFERENCES players (id)
+          ON DELETE CASCADE
+          ON UPDATE CASCADE)    
+      `
   ];
 
   const conn = await db.getConnection();
