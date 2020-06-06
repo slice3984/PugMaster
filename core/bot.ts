@@ -2,11 +2,13 @@ import fs from 'fs';
 import path from 'path';
 import Discord from 'discord.js';
 import ConfigTool from './configTool';
-import { Command } from './types';
+import { Command, GuildSettings } from './types';
+import Guild from '../models/guild';
 
 export default class Bot {
     private static instance: Bot;
     private commands: Map<string, Command> = new Map();
+    private guilds: Map<bigint, GuildSettings> = new Map();
     private client: Discord.Client;
 
     private constructor() {
@@ -66,6 +68,13 @@ export default class Bot {
         register();
     }
 
+    loadConnectedGuildsSettings() {
+        this.client.guilds.cache.forEach(async guild => {
+            const data = await Guild.getGuildSettings(BigInt(guild.id));
+            this.guilds.set(BigInt(guild.id), data);
+        });
+    }
+
     getClient(): Discord.Client {
         return this.client;
     }
@@ -75,5 +84,22 @@ export default class Bot {
             Bot.instance = new Bot();
         }
         return this.instance;
+    }
+
+    addGuild(guild: GuildSettings) {
+        if (this.guilds.has(guild.id)) {
+            return;
+        }
+        this.guilds.set(guild.id, guild);
+    }
+
+    removeGuild(guildId: string | bigint) {
+        const id = (typeof guildId === 'string') ? BigInt(guildId) : guildId;
+        this.guilds.delete(id);
+    }
+
+    getGuild(guildId: string | bigint) {
+        const id = (typeof guildId === 'string') ? BigInt(guildId) : guildId;
+        return this.guilds.get(id);
     }
 }

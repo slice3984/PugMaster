@@ -22,3 +22,16 @@ export interface Command {
     defaultDescs?: string[];
     exec: (params: any[], defaults?: any[]) => any;
 }
+
+// Only storing frequently accessed data
+export interface GuildSettings {
+    id: bigint;
+    prefix: string;
+    promotionRole: bigint;
+    blacklistRole: bigint;
+    whitelistRole: bigint;
+    lastPromote: Date | null;
+    globalExpireTime: number;
+    disabledCommands?: string[];
+    commandSettings?: Map<string, any[]>;
+}
