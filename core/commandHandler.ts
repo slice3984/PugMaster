@@ -35,14 +35,13 @@ export default class CommandHandler {
 
         if (isValid) {
             // Make sure its the correct channel, only allow setup commands everywhere
-            if (cmd === 'pickup' || cmd === 'pickup_reactions' || cmd === 'listen') {
+            if (cmd === 'pickup') {
                 return true;
             }
-
             if (guild.channels.has(BigInt(message.channel.id))) {
                 if (this.bot.getCommand(cmd).global) {
                     return true;
-                } else if (guild.channels.get(BigInt(message.channel.id)) !== ChannelType.Listen) {
+                } else if (guild.channels.get(BigInt(message.channel.id)) !== 'listen') {
                     return true;
                 } else {
                     return false;

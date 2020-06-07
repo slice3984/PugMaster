@@ -10,5 +10,7 @@ export default mysql2.createPool({
     database: config.db.db,
     waitForConnections: true,
     connectionLimit: 10,
-    queueLimit: 0
+    queueLimit: 0,
+    supportBigNumbers: true,
+    bigNumberStrings: false
 }).promise();

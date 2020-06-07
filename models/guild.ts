@@ -1,5 +1,6 @@
 import Discord from 'discord.js';
 import { GuildSettings, ChannelType } from '../core/types';
+import Bot from '../core/bot';
 import db from '../core/db';
 
 export default class Guild {
@@ -32,6 +33,17 @@ export default class Guild {
         `);
         data = data[0][0];
 
+        let guildChannels = await db.query(`
+        SELECT * FROM guild_channels
+        WHERE guild_id = ${guildId}
+        `);
+
+        const channels = new Map();
+
+        guildChannels[0].forEach(channel => {
+            channels.set(BigInt(channel.channel_id), channel.channel_type);
+        })
+
         return {
             id: guildId,
             prefix: data.prefix,
@@ -42,8 +54,71 @@ export default class Guild {
             globalExpireTime: data.global_expire,
             disabledCommands: [],
             commandSettings: new Map(),
-            channels: new Map()
+            channels
             // TODO: Load disabled commands & command settings
         }
+    }
+
+    static async getChannelType(guildId: bigint, channelId: bigint) {
+        let type = await db.query(`
+        SELECT channel_type
+        FROM guild_channels
+        WHERE guild_id = ${guildId} AND channel_id = ${channelId};
+        `);
+
+        if (type[0][0]) {
+            return type[0][0].channel_type;
+        }
+
+        return;
+    }
+
+    static async createChannel(guildId: bigint, channelId: bigint, type: ChannelType) {
+        const guildChannels = Bot.getInstance().getGuild(guildId).channels;
+        for (const [channelId, channelType] of guildChannels) {
+            if (channelType === type) {
+                guildChannels.delete(channelId);
+                break;
+            }
+        }
+
+        await db.query(`
+        DELETE FROM guild_channels
+        WHERE guild_id = ${guildId} AND channel_type = '${type}'
+        `);
+
+        await db.query(`
+        INSERT INTO guild_channels VALUES(${guildId}, ${channelId}, '${type}')
+        `);
+
+        guildChannels.set(channelId, type);
+    }
+
+    static async updateChannel(guildId: bigint, channelId: bigint, type: ChannelType) {
+        const guildChannels = Bot.getInstance().getGuild(guildId).channels;
+        for (const [channelId, channelType] of guildChannels) {
+            if (channelType === type) {
+                guildChannels.delete(channelId);
+            }
+            if (channelId === channelId) {
+                guildChannels.set(channelId, type);
+            }
+        }
+
+        await db.query(`
+        UPDATE guild_channels
+        SET channel_type = '${type}'
+        WHERE guild_id = ${guildId} AND channel_id = ${channelId}
+        `);
+    }
+
+    static async removeChannel(guildId: bigint, channelId: bigint) {
+        const guildChannels = Bot.getInstance().getGuild(guildId).channels;
+        guildChannels.delete(channelId);
+
+        await db.query(`
+        DELETE FROM guild_channels
+        WHERE guild_id = ${guildId} AND channel_id = ${channelId}
+        `);
     }
 }

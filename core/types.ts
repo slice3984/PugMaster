@@ -40,8 +40,4 @@ export interface GuildSettings {
     channels: Map<bigint, ChannelType>;
 }
 
-export enum ChannelType {
-    PickupText,
-    PickupStatic,
-    Listen
-}
+export type ChannelType = 'pickup' | 'pickup-reaction' | 'listen';
