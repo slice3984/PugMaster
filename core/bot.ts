@@ -102,4 +102,35 @@ export default class Bot {
         const id = (typeof guildId === 'string') ? BigInt(guildId) : guildId;
         return this.guilds.get(id);
     }
+
+    doesCommandExist(cmd: string) {
+        for (const [name, command] of this.commands.entries()) {
+            if (command.aliases) {
+                const names = [...command.aliases];
+                names.push(name);
+                if (names.includes(cmd)) {
+                    return true;
+                }
+            }
+            if (name === cmd) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    getCommand(cmd: string) {
+        for (const [name, command] of this.commands.entries()) {
+            if (command.aliases) {
+                const names = [...command.aliases];
+                names.push(name);
+                if (names.includes(cmd)) {
+                    return command;
+                }
+            }
+            if (name === cmd) {
+                return command;
+            }
+        }
+    }
 }

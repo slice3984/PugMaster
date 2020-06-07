@@ -1,3 +1,6 @@
+import Discord from 'discord.js';
+import Bot from './bot';
+
 export interface Config {
     bot: {
         token: string
@@ -20,7 +23,7 @@ export interface Command {
     global: boolean;
     defaults?: any[];
     defaultDescs?: string[];
-    exec: (params: any[], defaults?: any[]) => any;
+    exec: (bot: Bot, message: Discord.Message, params: any[], defaults?: any[]) => any;
 }
 
 // Only storing frequently accessed data
@@ -32,6 +35,13 @@ export interface GuildSettings {
     whitelistRole: bigint;
     lastPromote: Date | null;
     globalExpireTime: number;
-    disabledCommands?: string[];
-    commandSettings?: Map<string, any[]>;
+    disabledCommands: string[];
+    commandSettings: Map<string, any[]>;
+    channels: Map<bigint, ChannelType>;
+}
+
+export enum ChannelType {
+    PickupText,
+    PickupStatic,
+    Listen
 }

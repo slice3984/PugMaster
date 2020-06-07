@@ -5,8 +5,8 @@ const command: Command = {
     desc: 'Test command',
     global: true,
     perms: false,
-    exec: (params) => {
-        console.log(`Hi from test, params: ${params}`);
+    exec: (bot, message, params) => {
+        message.reply('test command executed');
     }
 }
 

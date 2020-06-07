@@ -1,5 +1,5 @@
 import Discord from 'discord.js';
-import { GuildSettings } from '../core/types';
+import { GuildSettings, ChannelType } from '../core/types';
 import db from '../core/db';
 
 export default class Guild {
@@ -40,6 +40,9 @@ export default class Guild {
             whitelistRole: data.global_whitelist_role,
             lastPromote: data.last_promote,
             globalExpireTime: data.global_expire,
+            disabledCommands: [],
+            commandSettings: new Map(),
+            channels: new Map()
             // TODO: Load disabled commands & command settings
         }
     }
