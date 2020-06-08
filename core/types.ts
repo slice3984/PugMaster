@@ -40,4 +40,4 @@ export interface GuildSettings {
     channels: Map<bigint, ChannelType>;
 }
 
-export type ChannelType = 'pickup' | 'pickup-reaction' | 'listen';
+export type ChannelType = 'pickup' | 'pickup-info' | 'listen';

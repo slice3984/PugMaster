@@ -6,12 +6,12 @@ const command: Command = {
     shortDesc: 'Setup channel for pickups',
     desc: 'Sets the channel to the type given as argument',
     args: [
-        ['<channelType>', 'Channel type, can be pickup, pickup-reaction or listen, none to disable']
+        ['<channelType>', 'Channel type, can be pickup, pickup-info or listen, none to disable']
     ],
     global: true,
     perms: true,
     exec: async (bot, message, params) => {
-        const types = ['pickup', 'pickup-reaction', 'listen', 'none'];
+        const types = ['pickup', 'pickup-info', 'listen', 'none'];
         const channelType = params[0].toLowerCase();
 
         if (!(types.includes(channelType))) {

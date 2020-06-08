@@ -41,7 +41,7 @@ export default class CommandHandler {
             if (guild.channels.has(BigInt(message.channel.id))) {
                 if (this.bot.getCommand(cmd).global) {
                     return true;
-                } else if (guild.channels.get(BigInt(message.channel.id)) !== 'listen') {
+                } else if (guild.channels.get(BigInt(message.channel.id)) === 'pickup') {
                     return true;
                 } else {
                     return false;
