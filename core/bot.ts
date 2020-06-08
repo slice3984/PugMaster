@@ -3,7 +3,8 @@ import path from 'path';
 import Discord from 'discord.js';
 import ConfigTool from './configTool';
 import { Command, GuildSettings } from './types';
-import Guild from '../models/guild';
+import GuildModel from '../models/guild';
+import BotModel from '../models/bot';
 
 export default class Bot {
     private static instance: Bot;
@@ -27,7 +28,7 @@ export default class Bot {
     }
 
     private async registerEventListeners() {
-        console.log('Registering events');
+        let events = 0;
 
         const register = async (dir = 'events') => {
             const files = await fs.promises.readdir(path.join(__dirname, dir));
@@ -39,17 +40,25 @@ export default class Bot {
                 } else {
                     let eventName = file.substring(0, file.length - 3);
                     const module: Function = require(path.join(__dirname, dir, file));
+                    events++;
                     // @ts-ignore - Required for dynamic event registration
                     this.client.on(eventName, module.bind(null, this));
                 }
             }
         };
 
-        register();
+        await register();
+        console.log(`Registered ${events} events`);
     }
 
     private async registerCommands() {
-        console.log('Registering commands');
+        let commands = 0;
+        const commandFiles = [];
+        const storedCommands = await BotModel.getStoredCommands();
+        const disabledCommands = storedCommands
+            .filter(command => command.disabled)
+            .map(command => command.name);
+
 
         const register = async (dir = 'commands') => {
             const files = await fs.promises.readdir(path.join(__dirname, '/../', dir));
@@ -60,17 +69,37 @@ export default class Bot {
                     register(path.join(dir, file));
                 } else {
                     const module: Command = require(path.join(__dirname, '/../', dir, file));
+                    commandFiles.push(module.cmd);
+
+                    if (disabledCommands.includes(module.cmd)) {
+                        continue;
+                    }
+
+                    // Command not in db, store it
+                    if (!storedCommands.some(command => command.name == module.cmd)) {
+                        BotModel.storeCommands(module.cmd);
+                    }
+
+                    commands++;
                     this.commands.set(module.cmd, module);
                 }
             }
         };
 
-        register();
+        await register();
+
+        // Remove not used commands
+        const toRemoveFromDb = storedCommands
+            .filter(command => !commandFiles.includes(command.name))
+            .map(command => command.name);
+        await BotModel.removeCommands(...toRemoveFromDb)
+
+        console.log(`Loaded ${commands} commands`)
     }
 
     loadConnectedGuildsSettings() {
         this.client.guilds.cache.forEach(async guild => {
-            const data = await Guild.getGuildSettings(BigInt(guild.id));
+            const data = await GuildModel.getGuildSettings(BigInt(guild.id));
             this.guilds.set(BigInt(guild.id), data);
         });
     }

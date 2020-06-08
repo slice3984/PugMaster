@@ -1,5 +1,5 @@
 import { Command, ChannelType } from '../core/types';
-import Guild from '../models/guild';
+import GuildModel from '../models/guild';
 
 const command: Command = {
     cmd: 'pickup',
@@ -20,21 +20,21 @@ const command: Command = {
 
         const guildId = BigInt(message.guild.id);
         const channelId = BigInt(message.channel.id);
-        const currChannelType = await Guild.getChannelType(guildId, channelId);
+        const currChannelType = await GuildModel.getChannelType(guildId, channelId);
         // No bot channel set for this guild channel
         if (!currChannelType) {
-            await Guild.createChannel(guildId, channelId, channelType);
+            await GuildModel.createChannel(guildId, channelId, channelType);
             message.reply(`Channel successfully configured as ${channelType} channel`);
         } else {
             if (channelType === 'none') {
-                await Guild.removeChannel(guildId, channelId);
+                await GuildModel.removeChannel(guildId, channelId);
                 return message.reply(`Deleted ${currChannelType} channel`);
             }
             if (currChannelType === channelType) {
                 return message.reply(`This channel is already a ${currChannelType} channel`);
             }
 
-            await Guild.updateChannel(guildId, channelId, channelType);
+            await GuildModel.updateChannel(guildId, channelId, channelType);
             return message.reply(`Channel successfully updated, channel type is ${channelType} instead of ${currChannelType} now`);
         }
     }

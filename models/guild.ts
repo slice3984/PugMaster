@@ -3,7 +3,7 @@ import { GuildSettings, ChannelType } from '../core/types';
 import Bot from '../core/bot';
 import db from '../core/db';
 
-export default class Guild {
+export default class GuildModel {
     private constructor() { }
 
     static async isGuildStored(guildId: bigint): Promise<boolean> {
