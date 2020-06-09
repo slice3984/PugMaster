@@ -1,6 +1,6 @@
 import Discord from 'discord.js';
-import { ChannelType } from './types';
 import Bot from './bot';
+import PermissionModel from '../models/permission';
 
 export default class CommandHandler {
     private bot: Bot;
@@ -9,13 +9,18 @@ export default class CommandHandler {
         this.bot = bot;
     }
 
-    private gotPermission(member: Discord.GuildMember, cmd): boolean {
+    private async gotPermission(member: Discord.GuildMember, cmd) {
         // Admin
         if (member.hasPermission(Discord.Permissions.FLAGS.ADMINISTRATOR)) {
             return true;
         }
 
-        // TODO: Role permissions
+        const userRoleIds = member.roles.cache.keyArray().map(strId => BigInt(strId));
+
+        if (userRoleIds.length > 0) {
+            // Check if one of the user roles got the required permission
+            return await PermissionModel.guildRolesGotCommandPermission(BigInt(member.guild.id), cmd, ...userRoleIds);
+        }
 
         return false;
     }
@@ -52,7 +57,7 @@ export default class CommandHandler {
         return false;
     }
 
-    execute(message: Discord.Message, cmd: string, args: any[] = []) {
+    async execute(message: Discord.Message, cmd: string, args: any[] = []) {
         if (!this.isCommandAvailable(message, cmd)) {
             return;
         }
@@ -60,7 +65,7 @@ export default class CommandHandler {
         const guild = this.bot.getGuild(message.guild.id);
         const command = this.bot.getCommand(cmd)
 
-        if (command.perms && !this.gotPermission(message.member, cmd)) {
+        if (command.perms && !(await this.gotPermission(message.member, this.bot.getCommand(cmd).cmd))) {
             return message.reply('insufficient permissions to execute this command')
         }
 

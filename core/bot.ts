@@ -162,4 +162,8 @@ export default class Bot {
             }
         }
     }
+
+    getCommandNames() {
+        return [...this.commands.keys()];
+    }
 }
