@@ -8,9 +8,9 @@ const command: Command = {
     shortDesc: 'Sets or shows permissions for a given role',
     desc: 'Shows command permissions or sets/revokes them for a given role',
     args: [
-        ['<role>', 'Role given as mention, id or name'],
-        ['<add/remove/show>', 'Specify if the given permissions are added or removed or just displayed'],
-        ['[command]...', 'Command names']
+        { name: '<role>', desc: 'Role given as mention, id or name', required: true },
+        { name: '<add/remove/show>', desc: 'Specify if the given permissions are added or removed or just displayed', required: true },
+        { name: '[command]...', desc: 'Command names', required: true }
     ],
     global: true,
     perms: true,

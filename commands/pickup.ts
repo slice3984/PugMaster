@@ -6,7 +6,7 @@ const command: Command = {
     shortDesc: 'Setup channel for pickups',
     desc: 'Sets the channel to the type given as argument',
     args: [
-        ['<channelType>', 'Channel type, can be pickup, pickup-info or listen, none to disable']
+        { name: '<channelType>', desc: 'Channel type, can be pickup, pickup-info or listen, none to disable', required: true }
     ],
     global: true,
     perms: true,

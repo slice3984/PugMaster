@@ -1,6 +1,7 @@
 import Discord from 'discord.js';
 import Bot from '../bot';
 import CommandHandler from '../commandHandler';
+import PickupModel from '../../models/pickup';
 
 const commandHandler = new CommandHandler(Bot.getInstance());
 

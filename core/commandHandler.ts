@@ -72,9 +72,10 @@ export default class CommandHandler {
         // TODO: Flood protection
         ;
         // Test if required args are given
-        if (command.args && args.length == 0) {
+        const requiredArgs = command.args ? command.args.filter(arg => arg.required).length : 0;
+        if (requiredArgs > args.length) {
             let reply = `arguments are missing, usage: ${guild.prefix}${command.cmd} `;
-            command.args.forEach(arg => reply += `${arg[0]} `);
+            command.args.forEach(arg => reply += `${arg.name} `);
             return message.reply(reply);
         }
 

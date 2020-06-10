@@ -18,12 +18,18 @@ export interface Command {
     aliases?: string[];
     shortDesc: string;
     desc: string;
-    args?: string[][];
+    args?: CommandArgument[];
     perms: boolean;
     global: boolean;
     defaults?: any[];
     defaultDescs?: string[];
     exec: (bot: Bot, message: Discord.Message, params: any[], defaults?: any[]) => any;
+}
+
+export interface CommandArgument {
+    name: string;
+    desc: string;
+    required: boolean;
 }
 
 // Only storing frequently accessed data

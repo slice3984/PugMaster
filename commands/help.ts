@@ -6,7 +6,7 @@ const command: Command = {
     shortDesc: 'Shows how to use a given command',
     desc: 'Shows usage, aliases and explains how to use a command',
     args: [
-        ['<cmd>', 'Command name']
+        { name: '<cmd>', desc: 'Command name', required: true }
     ],
     global: true,
     perms: false,
@@ -28,13 +28,13 @@ const command: Command = {
         helpReply += `Usage: ${prefix}${cmd.cmd} `;
 
         if (cmd.args) {
-            cmd.args.forEach(arr => helpReply += `${arr[0]} `);
+            cmd.args.forEach(arg => helpReply += `${arg.name} `);
             helpReply += `\n`;
 
-            cmd.args.forEach(arr => {
-                helpReply += `${arr[0]} - `;
+            cmd.args.forEach(arg => {
+                helpReply += `${arg.name} - `;
 
-                switch (arr[1]) {
+                switch (arg.desc) {
                     case 'ping':
                         helpReply += 'User supplied as ping or user id';
                         break;
@@ -42,7 +42,7 @@ const command: Command = {
                         helpReply += 'Time given as 1m 2h 3d 4w - minutes, hours, days, weeks';
                         break;
                     default:
-                        helpReply += arr[1];
+                        helpReply += arg.desc;
                 }
                 helpReply += '\n';
             });
