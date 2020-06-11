@@ -43,10 +43,12 @@ const command: Command = {
             return message.reply('Invalid syntax, no pickups created');
         }
 
-        const alreadyStored = await PickupModel.areValidPickups(BigInt(message.guild.id), ...validPickups
+        let alreadyStored = await PickupModel.areValidPickups(BigInt(message.guild.id), ...validPickups
             .map(pickup => pickup.name));
 
-        validPickups = validPickups.filter(pickup => !alreadyStored.includes(pickup.name));
+        const alreadyStoredNames = alreadyStored.map(pickup => pickup.name);
+
+        validPickups = validPickups.filter(pickup => !alreadyStoredNames.includes(pickup.name));
 
         if (validPickups.length === 0) {
             return message.reply('Valid given pickups are already stored');
