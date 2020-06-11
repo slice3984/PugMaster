@@ -13,6 +13,12 @@ export interface Config {
     }
 };
 
+interface DefaultValue {
+    type: 'string' | 'number';
+    desc: string, value: string | number;
+    possibleValues: number[] | string[] | { from: number; to: number }
+}
+
 export interface Command {
     cmd: string;
     aliases?: string[];
@@ -21,8 +27,7 @@ export interface Command {
     args?: CommandArgument[];
     perms: boolean;
     global: boolean;
-    defaults?: any[];
-    defaultDescs?: string[];
+    defaults?: DefaultValue[];
     exec: (bot: Bot, message: Discord.Message, params: any[], defaults?: any[]) => any;
 }
 

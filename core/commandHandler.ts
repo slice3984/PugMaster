@@ -82,7 +82,7 @@ export default class CommandHandler {
         if (guild.commandSettings.has(cmd)) {
             command.exec(this.bot, message, args, guild.commandSettings.get(cmd));
         } else {
-            const defaults = command.defaults;
+            const defaults = command.defaults ? command.defaults.map(def => def.value) : null;
 
             if (defaults) {
                 command.exec(this.bot, message, args, defaults);

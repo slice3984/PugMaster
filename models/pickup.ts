@@ -25,23 +25,43 @@ export default class PickupModel {
     }
 
     static async getActivePickups(guildId: bigint): Promise<Map<string,
-        { players: bigint[]; maxPlayers: number; configId: number }>> {
+        { name: string, players: { id: bigint, nick: string }[]; maxPlayers: number; configId: number }>> {
         const result = await db.query(`
-        SELECT id, c.name, player_id, c.player_count FROM state_active_pickups
-        JOIN pickup_configs c ON pickup_config_id = id WHERE c.guild_id = ${guildId}
+        SELECT c.id, c.name, player_id, c.player_count, p.current_nick FROM state_active_pickups
+        JOIN pickup_configs c ON pickup_config_id = id 
+        JOIN players p ON user_id = player_id
+        WHERE c.guild_id = ${guildId}
         `);
 
         const pickups = new Map();
 
         for (const row of result[0]) {
             if (!pickups.has(row.name)) {
-                pickups.set(row.name, { players: [BigInt(row.player_id)], maxPlayers: row.player_count, configId: row.id });
+                pickups.set(row.name, { name: row.name, players: [{ id: BigInt(row.player_id), nick: row.current_nick }], maxPlayers: row.player_count, configId: row.id });
                 continue;
             }
-            pickups.get(row.name).players.push(BigInt(row.player_id));
+            pickups.get(row.name).players.push({ id: BigInt(row.player_id), nick: row.current_nick });
         }
 
         return pickups;
+    }
+
+    static async isPlayerAdded(guildId: bigint, playerId: bigint, ...pickupConfigIds): Promise<number[]> {
+        if (pickupConfigIds.length === 0) {
+            const result = await db.query(`
+            SELECT pickup_config_id FROM state_active_pickups
+            WHERE guild_id = ${guildId} AND player_id = ${playerId}
+            `);
+            return result[0].map(row => row.pickup_config_id);
+        }
+
+        const result = await db.query(`
+        SELECT pickup_config_id FROM state_active_pickups
+        WHERE guild_id = ${guildId} AND player_id = ${playerId}
+        AND pickup_config_id IN (${pickupConfigIds.join(', ')})
+        `);
+
+        return result[0].map(row => row.pickup_config_id);
     }
 
     static async addPlayer(guildId: bigint, playerId: bigint, ...pickupConfigIds) {
@@ -58,6 +78,23 @@ export default class PickupModel {
         return;
     }
 
+    static async removePlayer(guildId: bigint, playerId: bigint, ...pickupConfigIds) {
+        if (pickupConfigIds.length === 0) {
+            await db.query(`
+            DELETE FROM state_active_pickups
+            WHERE guild_id = ${guildId} AND player_id = ${playerId}
+            `);
+            return;
+        }
+
+        await db.query(`
+        DELETE FROM state_active_pickups
+        WHERE guild_id = ${guildId} AND player_id = ${playerId}
+        AND pickup_config_id IN (${pickupConfigIds.join(', ')})
+        `);
+        return;
+    }
+
     static async updatePlayerAddTime(guildId: bigint, playerId: bigint) {
         await db.execute(`
             INSERT INTO state_add_times VALUES (${guildId}, ${playerId}, CURRENT_TIMESTAMP)
@@ -65,5 +102,4 @@ export default class PickupModel {
         `);
         return;
     }
-
 }

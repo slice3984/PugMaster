@@ -121,4 +121,13 @@ export default class GuildModel {
         WHERE guild_id = ${guildId} AND channel_id = ${channelId}
         `);
     }
+
+    static async getPickupChannel(guildId: bigint) {
+        const channel = await db.query(`
+        SELECT channel_id FROM guild_channels
+        WHERE guild_id = ${guildId} AND channel_type = 'pickup'
+        `);
+
+        return channel[0][0].channel_id;
+    }
 }

@@ -14,9 +14,7 @@ const command: Command = {
     global: false,
     perms: false,
     exec: async (bot, message, params) => {
-        // TODO: Ban check / Trust check
-        await PlayerModel.storeOrUpdatePlayer(BigInt(message.guild.id), BigInt(message.member.id), message.member.displayName);
-
+        // TODO: Ban check / Trust check;
         if (params.length === 0) {
             // TODO: Auto add
         } else {
@@ -25,7 +23,15 @@ const command: Command = {
             if (existingPickups.length === 0) {
                 return message.reply(`Pickup${params.length > 1 ? 's' : ''} not found`);
             }
-            PickupState.addPlayer(message.member, ...existingPickups.map(pickup => pickup.id))
+
+            const playerAddedTo = await PickupModel.isPlayerAdded(BigInt(message.guild.id), BigInt(message.member.id), existingPickups.map(pickup => pickup.id));
+            const validPickups = existingPickups.filter(pickup => !playerAddedTo.includes(pickup.id));
+
+            if (validPickups.length === 0) {
+                return;
+            }
+            await PlayerModel.storeOrUpdatePlayer(BigInt(message.guild.id), BigInt(message.member.id), message.member.displayName);
+            await PickupState.addPlayer(message.member, ...validPickups.map(pickup => pickup.id))
         }
     }
 };
