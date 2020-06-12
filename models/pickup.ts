@@ -24,26 +24,45 @@ export default class PickupModel {
         return;
     }
 
-    static async getActivePickups(guildId: bigint): Promise<Map<string,
-        { name: string, players: { id: bigint, nick: string }[]; maxPlayers: number; configId: number }>> {
-        const result = await db.query(`
-        SELECT c.id, c.name, player_id, c.player_count, p.current_nick FROM state_active_pickups
-        JOIN pickup_configs c ON pickup_config_id = id 
-        JOIN players p ON user_id = player_id
-        WHERE c.guild_id = ${guildId}
-        `);
+    static async getActivePickups(guildId: bigint, includingDefaults = false): Promise<Map<string,
+        { name: string, players: { id: bigint | null, nick: string | null }[]; maxPlayers: number; configId: number }>> {
+        let result;
 
+        if (!includingDefaults) {
+            result = await db.query(`
+            SELECT c.id, c.name, player_id, c.player_count, p.current_nick FROM state_active_pickups
+            JOIN pickup_configs c ON pickup_config_id = id 
+            JOIN players p ON user_id = player_id
+            WHERE c.guild_id = ${guildId}
+            `);
+        } else {
+            result = await db.query(`
+            SELECT c.id, c.name, s.player_id, c.player_count, p.current_nick FROM pickup_configs c
+            LEFT JOIN state_active_pickups s ON s.pickup_config_id = c.id
+            LEFT JOIN players p on p.user_id = s.player_id
+            WHERE c.guild_id = ${guildId} AND (s.player_id IS NOT NULL OR c.is_default_pickup = true)
+            `);
+        }
         const pickups = new Map();
 
         for (const row of result[0]) {
             if (!pickups.has(row.name)) {
-                pickups.set(row.name, { name: row.name, players: [{ id: BigInt(row.player_id), nick: row.current_nick }], maxPlayers: row.player_count, configId: row.id });
+                pickups.set(row.name, { name: row.name, players: [{ id: row.player_id ? BigInt(row.player_id) : null, nick: row.current_nick }], maxPlayers: row.player_count, configId: row.id });
                 continue;
             }
-            pickups.get(row.name).players.push({ id: BigInt(row.player_id), nick: row.current_nick });
+            pickups.get(row.name).players.push({ id: row.player_id ? BigInt(row.player_id) : null, nick: row.current_nick });
         }
 
         return pickups;
+    }
+
+    static async getStoredPickupCount(guildId: bigint) {
+        const count = await db.query(`
+        SELECT COUNT(*) AS cnt FROM pickup_configs
+        WHERE guild_id = ${guildId}
+        `);
+
+        return count[0][0].cnt;
     }
 
     static async isPlayerAdded(guildId: bigint, playerId: bigint, ...pickupConfigIds): Promise<number[]> {
