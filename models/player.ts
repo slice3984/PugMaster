@@ -58,4 +58,21 @@ export default class PlayerModel {
             }
         }
     }
+
+    static async arePlayersTrusted(guildId: bigint, ...playersIds): Promise<number[]> {
+        const trustedPlayers = await db.query(`
+        SELECT user_id FROM players
+        WHERE guild_id = ${guildId} AND trusted = 1 AND user_id IN (${playersIds.join(', ')})
+        `);
+
+        return trustedPlayers[0].map(row => row.user_id);
+    }
+
+    static async trustPlayers(guildId: bigint, ...playersIds) {
+        await db.query(`
+        UPDATE players SET trusted = 1
+        WHERE guild_id = ${guildId} AND user_id IN (${playersIds.join(', ')})
+        `);
+        return;
+    }
 }

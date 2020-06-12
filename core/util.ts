@@ -61,4 +61,33 @@ export default class Util {
             return guild.channels.cache.get(id[1]);
         }
     }
+
+    static formatTime(ms: number) {
+        const mins = Math.floor((ms / 60000) % 60);
+        const hours = Math.floor((ms / 60000) / 60);
+
+        if (hours < 1) {
+            if (mins == 1) {
+                return mins + " minute";
+            } else {
+                return mins + " minutes";
+            }
+        } else if (hours == 1) {
+            if (mins < 1) {
+                return hours + " hour";
+            } else if (mins == 1) {
+                return hours + " hour and " + mins + " minute";
+            } else {
+                return hours + " hour and " + mins + " minutes";
+            }
+        } else {
+            if (mins < 1) {
+                return hours + " hours";
+            } else if (mins == 1) {
+                return hours + " hours and " + mins + " minute";
+            } else {
+                return hours + " hours and " + mins + " minutes";
+            }
+        }
+    }
 }

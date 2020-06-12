@@ -1,4 +1,5 @@
 import { Command } from '../core/types';
+import Util from '../core/util';
 import PickupModel from '../models/pickup';
 import PlayerModel from '../models/player';
 import PickupState from '../core/pickupState';
@@ -14,7 +15,24 @@ const command: Command = {
     global: false,
     perms: false,
     exec: async (bot, message, params) => {
-        // TODO: Ban check / Trust check;
+        // Trust check
+        const guildSettings = bot.getGuild(message.guild.id);
+        if (guildSettings.trustTime) {
+            const trustTime = guildSettings.trustTime;
+            const joinDate = message.member.joinedAt;
+            const timeLeft = (joinDate.getTime() + trustTime) - new Date().getTime();
+            if (timeLeft > 0) {
+                // Check if already trusted
+                const alreadyTrusted = await PlayerModel.arePlayersTrusted(BigInt(message.guild.id), message.member.id);
+
+                if (alreadyTrusted.length === 0) {
+                    return message.reply(`you joined this server recently, please wait ${Util.formatTime(Math.abs(timeLeft))}`);
+                }
+            }
+        }
+
+        // TODO: Ban check
+
         if (params.length === 0) {
             if (!await PickupModel.getStoredPickupCount(BigInt(message.guild.id))) {
                 return;

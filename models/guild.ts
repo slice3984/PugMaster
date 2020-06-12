@@ -52,6 +52,7 @@ export default class GuildModel {
             whitelistRole: data.global_whitelist_role,
             lastPromote: data.last_promote,
             globalExpireTime: data.global_expire,
+            trustTime: data.trust_check ? data.trust_time : null,
             disabledCommands: [],
             commandSettings: new Map(),
             channels

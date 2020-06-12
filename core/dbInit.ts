@@ -37,6 +37,8 @@ export const createTables = () => new Promise(async (res, _req) => {
       sub_message VARCHAR(150) NULL,
       notify_message VARCHAR(150) NULL,
       last_promote DATETIME NULL,
+      trust_check TINYINT NOT NULL DEFAULT 0,
+      trust_time INT NOT NULL DEFAULT 86400000,
       warn_streaks TINYINT NOT NULL DEFAULT 3,
       warn_streak_expiration INT NOT NULL DEFAULT 604800000,
       warn_expiration_time INT NOT NULL DEFAULT 172800000,

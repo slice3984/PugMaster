@@ -46,6 +46,7 @@ export interface GuildSettings {
     whitelistRole: bigint;
     lastPromote: Date | null;
     globalExpireTime: number;
+    trustTime: number;
     disabledCommands: string[];
     commandSettings: Map<string, any[]>;
     channels: Map<bigint, ChannelType>;
