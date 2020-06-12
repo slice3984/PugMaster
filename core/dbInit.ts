@@ -357,8 +357,9 @@ export const createTables = () => new Promise(async (res, _req) => {
       player_id INT NOT NULL,
       issuer_player_id INT NOT NULL,
       reason VARCHAR(128) NULL,
+      ends_at DATETIME NULL,
+      is_active TINYINT NULL DEFAULT 1,
       permanent TINYINT NOT NULL DEFAULT 0,
-      time DATETIME NOT NULL,
       PRIMARY KEY (id),
       INDEX guild_id_idx (guild_id ASC) VISIBLE,
       INDEX player_id_idx (player_id ASC) VISIBLE,
@@ -377,7 +378,7 @@ export const createTables = () => new Promise(async (res, _req) => {
         FOREIGN KEY (issuer_player_id)
         REFERENCES players (id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE)       
+        ON UPDATE CASCADE)    
         `,
     `
     CREATE TABLE IF NOT EXISTS warns (

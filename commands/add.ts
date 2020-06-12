@@ -30,9 +30,8 @@ const command: Command = {
             if (validPickups.length === 0) {
                 return;
             }
-
+            await PlayerModel.storeOrUpdatePlayer(BigInt(message.guild.id), BigInt(message.member.id), message.member.displayName);
             await PickupState.addPlayer(message.member, ...validPickups);
-
         } else {
             const existingPickups = await PickupModel.areValidPickups(BigInt(message.guild.id), ...params);
 
