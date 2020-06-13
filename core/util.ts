@@ -90,4 +90,34 @@ export default class Util {
             }
         }
     }
+
+    static timeStringToTime(timeString: string) {
+        const regex = /(\d+)[mhdw]/g;
+        const matches = timeString.match(regex);
+        let sum = 0;
+
+        if (!matches) {
+            return null;
+        }
+
+        matches.forEach(match => {
+            const amount = match.charAt(match.length - 1);
+            const time = match.substr(0, match.length - 1);
+
+            switch (amount) {
+                case 'm':
+                    sum += +time;
+                    break;
+                case 'h':
+                    sum += +time * 60;
+                    break;
+                case 'd':
+                    sum += +time * 60 * 24;
+                    break;
+                case 'w':
+                    sum += +time * 60 * 24 * 7;
+            }
+        });
+        return sum;
+    }
 }

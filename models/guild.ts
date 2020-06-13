@@ -131,4 +131,12 @@ export default class GuildModel {
 
         return channel[0][0].channel_id;
     }
+
+    static async getAllExpires() {
+        const expires = await db.query(`
+        SELECT guild_id, player_id, expiration_date FROM state_active_expires
+        `);
+
+        return expires[0];
+    }
 }

@@ -41,6 +41,9 @@ const command: Command = {
                     case 'time':
                         helpReply += 'Time given as 1m 2h 3d 4w - minutes, hours, days, weeks';
                         break;
+                    case 'time-short':
+                        helpReply += 'Time given as 1m 2h 3d - minutes, hours, days';
+                        break;
                     default:
                         helpReply += arg.desc;
                 }

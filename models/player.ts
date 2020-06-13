@@ -75,4 +75,33 @@ export default class PlayerModel {
         `);
         return;
     }
+
+    static async setExpire(guildId: bigint, playerId: bigint, timeInMinutes: number) {
+        const expireDate = new Date(new Date().getTime() + timeInMinutes * 60000);
+
+        await db.execute(`
+        INSERT INTO state_active_expires VALUES (?, ?, ?)
+        ON DUPLICATE KEY UPDATE expiration_date = ?
+        `, [guildId, playerId, expireDate, expireDate]);
+        return;
+    }
+
+    static async removeExpires(guildId: bigint, ...playerIds) {
+        await db.query(`
+        DELETE FROM state_active_expires
+        WHERE guild_id = ${guildId} AND player_id IN (${playerIds.join(', ')})
+        `)
+    }
+
+    static async getExpires(guildId: bigint, ...playerIds): Promise<Date> {
+        const expiresIn = await db.query(`
+        SELECT expiration_date FROM state_active_expires
+        WHERE guild_id = ${guildId} AND player_id IN (${playerIds.join(', ')})
+        `);
+
+        if (!expiresIn[0][0]) {
+            return null;
+        }
+        return expiresIn[0].map(row => row.expiration_date);
+    }
 }

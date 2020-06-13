@@ -5,6 +5,10 @@ import ConfigTool from './configTool';
 import { Command, GuildSettings } from './types';
 import GuildModel from '../models/guild';
 import BotModel from '../models/bot';
+import PickupModel from '../models/pickup';
+import PickupState from './pickupState';
+import PlayerModel from '../models/player';
+import { time } from 'console';
 
 export default class Bot {
     private static instance: Bot;
@@ -22,9 +26,54 @@ export default class Bot {
         this.client.login(ConfigTool.getConfig().bot.token);
         console.log('Bot successfully logged in');
 
-        // Loading Events & Commands
-        await this.registerEventListeners();
-        await this.registerCommands();
+        this.client.on('ready', async () => {
+            await this.loadConnectedGuildsSettings();
+            // TODO: Refresh state
+            await this.registerCommands();
+            await this.registerEventListeners();
+            this.mainLoop();
+        });
+    }
+
+    private mainLoop() {
+        setInterval(async () => {
+            // Expire check
+            const dateInMs = new Date().getTime();
+            const expires = await GuildModel.getAllExpires();
+            const playersToRemove = new Map();
+
+            expires.forEach(expire => {
+                const timeLeft = expire.expiration_date.getTime() - dateInMs;
+                if (timeLeft <= 0) {
+                    if (playersToRemove.has(expire.guild_id)) {
+                        playersToRemove.get(expire.guild_id).push(expire.player_id);
+                    } else {
+                        playersToRemove.set(expire.guild_id, [expire.player_id]);
+                    }
+                }
+            });
+
+            const genPickupInfo = pickup => `**${pickup.name}** [ **${pickup.players.length}** / **${pickup.maxPlayers}** ]`;
+
+            for (const [guild, players] of playersToRemove.entries()) {
+                await PickupModel.removePlayers(BigInt(guild), ...players);
+                await PlayerModel.removeExpires(BigInt(guild), ...players);
+
+                const guildObj = this.client.guilds.cache.get(guild);
+                const pickupChannel = guildObj.channels.cache.get(await GuildModel.getPickupChannel(BigInt(guild))) as Discord.TextChannel;
+                const playerObjs = players.map(player => guildObj.members.cache.get(player));
+
+                pickupChannel.send(`${playerObjs.join(', ')} you got removed from all pickups, expire ran out`);
+
+                const pickups = Array.from((await PickupModel.getActivePickups(BigInt(guild))).values())
+                    .sort((a, b) => b.players.length - a.players.length);
+
+                let msg = '';
+                pickups.forEach(pickup => msg += `${genPickupInfo(pickup)} `);
+
+                pickupChannel.send(msg || 'No active pickups');
+            }
+        }, 10 * 1000);
     }
 
     private async registerEventListeners() {
@@ -97,11 +146,16 @@ export default class Bot {
         console.log(`Loaded ${commands} commands`)
     }
 
-    loadConnectedGuildsSettings() {
-        this.client.guilds.cache.forEach(async guild => {
+    async loadConnectedGuildsSettings() {
+        let guildCounter = 0;
+        const guilds = this.client.guilds.cache.values();
+        for (const guild of guilds) {
             const data = await GuildModel.getGuildSettings(BigInt(guild.id));
             this.guilds.set(BigInt(guild.id), data);
-        });
+            guildCounter++;
+        }
+        console.log(`Connected to ${guildCounter} guild${guildCounter > 1 ? 's' : ''}`);
+        return;
     }
 
     getClient(): Discord.Client {

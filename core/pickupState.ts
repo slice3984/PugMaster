@@ -2,6 +2,7 @@ import Discord from 'discord.js';
 import Bot from './bot';
 import PickupModel from '../models/pickup';
 import GuildModel from '../models/guild';
+import PlayerModel from '../models/player';
 import Util from '../core/util';
 
 const bot = Bot.getInstance();
@@ -47,6 +48,12 @@ export default class PickupState {
             await PickupModel.removePlayer(BigInt(member.guild.id), BigInt(member.id));
         } else {
             await PickupModel.removePlayer(BigInt(member.guild.id), BigInt(member.id), ...pickupIds);
+        }
+
+        const playerAddedTo = await PickupModel.isPlayerAdded(BigInt(member.guild.id), BigInt(member.id));
+
+        if (!playerAddedTo.length) {
+            PlayerModel.removeExpires(BigInt(member.guild.id), member.id);
         }
 
         const pickupChannel = Util.getChannel(member.guild, await GuildModel.getPickupChannel(BigInt(member.guild.id))) as Discord.TextChannel;

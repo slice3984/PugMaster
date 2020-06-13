@@ -56,6 +56,14 @@ export default class PickupModel {
         return pickups;
     }
 
+    static async getAddedPlayers() {
+        const players = await db.query(`
+        SELECT player_id, guild_id FROM state_active_pickups
+        `);
+
+        return players[0];
+    }
+
     static async getStoredPickupCount(guildId: bigint) {
         const count = await db.query(`
         SELECT COUNT(*) AS cnt FROM pickup_configs
@@ -93,6 +101,14 @@ export default class PickupModel {
         await db.query(`
         INSERT INTO state_active_pickups
         VALUES ${valueStrings.join(', ')}
+        `);
+        return;
+    }
+
+    static async removePlayers(guildId: bigint, ...playerIds) {
+        await db.query(`
+        DELETE FROM state_active_pickups
+        WHERE guild_id = ${guildId} AND player_id IN (${playerIds.join(', ')})
         `);
         return;
     }
