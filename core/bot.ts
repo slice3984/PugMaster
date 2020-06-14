@@ -6,9 +6,8 @@ import { Command, GuildSettings } from './types';
 import GuildModel from '../models/guild';
 import BotModel from '../models/bot';
 import PickupModel from '../models/pickup';
-import PickupState from './pickupState';
 import PlayerModel from '../models/player';
-import { time } from 'console';
+import Util from './util';
 
 export default class Bot {
     private static instance: Bot;
@@ -38,6 +37,8 @@ export default class Bot {
     private mainLoop() {
         // TODO: Add checks to make sure nothing fails on member/guild unavailability
         setInterval(async () => {
+            // Can't use the util getPickupChannel method here
+            const getPickupChannel = async guild => guild.channels.cache.get(await GuildModel.getPickupChannel(BigInt(guild.id))) as Discord.TextChannel;
             const dateInMs = new Date().getTime();
             const leftExpires = new Map();
             const guildsToShowStatus = new Set();
@@ -70,7 +71,7 @@ export default class Bot {
                 await PlayerModel.removeExpires(BigInt(guild), ...players);
 
                 const guildObj = this.client.guilds.cache.get(guild);
-                const pickupChannel = guildObj.channels.cache.get(await GuildModel.getPickupChannel(BigInt(guild))) as Discord.TextChannel;
+                const pickupChannel = await getPickupChannel(guildObj);
                 const playerObjs = players.map(player => guildObj.members.cache.get(player));
 
                 pickupChannel.send(`${playerObjs.join(', ')} you got removed from all pickups, expire ran out`);
@@ -102,7 +103,7 @@ export default class Bot {
                 await GuildModel.removeAddTimes(BigInt(guild), ...players);
 
                 const guildObj = this.client.guilds.cache.get(guild);
-                const pickupChannel = guildObj.channels.cache.get(await GuildModel.getPickupChannel(BigInt(guild))) as Discord.TextChannel;
+                const pickupChannel = await getPickupChannel(guildObj);
                 const playerObjs = players.map(player => guildObj.members.cache.get(player));
 
                 pickupChannel.send(`${playerObjs.join(', ')} you got removed from all pickups, global expire ran out`);
@@ -134,7 +135,7 @@ export default class Bot {
                 const validPlayers = players.filter(player => addedPlayers.includes(player));
 
                 const guildObj = this.client.guilds.cache.get(guild);
-                const pickupChannel = guildObj.channels.cache.get(await GuildModel.getPickupChannel(BigInt(guild))) as Discord.TextChannel;
+                const pickupChannel = await getPickupChannel(guildObj);
 
                 const toPing = [];
                 const toNick = [];
@@ -185,7 +186,7 @@ export default class Bot {
                         .sort((a, b) => b.players.length - a.players.length);
 
                     const guildObj = this.client.guilds.cache.get(guild as string);
-                    const pickupChannel = guildObj.channels.cache.get(await GuildModel.getPickupChannel(BigInt(guild))) as Discord.TextChannel;
+                    const pickupChannel = await getPickupChannel(guildObj);
 
                     let msg = '';
                     pickups.forEach(pickup => msg += `${genPickupInfo(pickup)} `);

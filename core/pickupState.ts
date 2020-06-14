@@ -12,7 +12,7 @@ export default class PickupState {
 
     static async addPlayer(member: Discord.GuildMember, ...pickupIds: number[]) {
         const activePickups = await PickupModel.getActivePickups(BigInt(member.guild.id));
-        const pickupChannel = Util.getChannel(member.guild, await GuildModel.getPickupChannel(BigInt(member.guild.id))) as Discord.TextChannel;
+        const pickupChannel = await Util.getPickupChannel(member.guild);
 
         // No active pickups
         if (!activePickups.size) {
@@ -56,7 +56,7 @@ export default class PickupState {
             PlayerModel.removeExpires(BigInt(member.guild.id), member.id);
         }
 
-        const pickupChannel = Util.getChannel(member.guild, await GuildModel.getPickupChannel(BigInt(member.guild.id))) as Discord.TextChannel;
+        const pickupChannel = await Util.getPickupChannel(member.guild);
 
         const genPickupInfo = pickup => `**${pickup.name}** [ **${pickup.players.length}** / **${pickup.maxPlayers}** ]`;
 

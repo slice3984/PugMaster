@@ -1,4 +1,5 @@
 import Discord from 'discord.js';
+import GuildModel from '../models/guild';
 import Bot from './bot';
 
 const bot = Bot.getInstance();
@@ -60,6 +61,10 @@ export default class Util {
         } else {
             return guild.channels.cache.get(id[1]);
         }
+    }
+
+    static async getPickupChannel(guild: Discord.Guild) {
+        return Util.getChannel(guild, await GuildModel.getPickupChannel(BigInt(guild.id))) as Discord.TextChannel;
     }
 
     static formatTime(ms: number) {
