@@ -36,26 +36,36 @@ export default class Bot {
     }
 
     private mainLoop() {
+        // TODO: Add checks to make sure nothing fails on member/guild unavailability
         setInterval(async () => {
-            // Expire check
             const dateInMs = new Date().getTime();
+            const leftExpires = new Map();
+            const guildsToShowStatus = new Set();
+
+            /************************ Player expires ************************/
             const expires = await GuildModel.getAllExpires();
-            const playersToRemove = new Map();
+            const playersToRemoveExpire = new Map();
 
             expires.forEach(expire => {
                 const timeLeft = expire.expiration_date.getTime() - dateInMs;
                 if (timeLeft <= 0) {
-                    if (playersToRemove.has(expire.guild_id)) {
-                        playersToRemove.get(expire.guild_id).push(expire.player_id);
+                    if (playersToRemoveExpire.has(expire.guild_id)) {
+                        playersToRemoveExpire.get(expire.guild_id).push(expire.player_id);
                     } else {
-                        playersToRemove.set(expire.guild_id, [expire.player_id]);
+                        playersToRemoveExpire.set(expire.guild_id, [expire.player_id]);
+                    }
+                } else {
+                    if (leftExpires.has(expire.guild_id)) {
+                        leftExpires.get(expire.guild_id).push(expire.player_id);
+                    } else {
+                        leftExpires.set(expire.guild_id, [expire.player_id]);
                     }
                 }
             });
 
             const genPickupInfo = pickup => `**${pickup.name}** [ **${pickup.players.length}** / **${pickup.maxPlayers}** ]`;
 
-            for (const [guild, players] of playersToRemove.entries()) {
+            for (const [guild, players] of playersToRemoveExpire.entries()) {
                 await PickupModel.removePlayers(BigInt(guild), ...players);
                 await PlayerModel.removeExpires(BigInt(guild), ...players);
 
@@ -64,14 +74,124 @@ export default class Bot {
                 const playerObjs = players.map(player => guildObj.members.cache.get(player));
 
                 pickupChannel.send(`${playerObjs.join(', ')} you got removed from all pickups, expire ran out`);
+                guildsToShowStatus.add(guild);
+            }
+            /************************ Global expires ************************/
+            const globalExpires = await GuildModel.getAllAddTimes();
+            const playersToRemoveGlobalExpire = new Map();
 
-                const pickups = Array.from((await PickupModel.getActivePickups(BigInt(guild))).values())
-                    .sort((a, b) => b.players.length - a.players.length);
+            globalExpires.forEach(expire => {
+                const timeLeft = (expire.added_at.getTime() + this.getGuild(expire.guild_id).globalExpireTime) - dateInMs;
 
-                let msg = '';
-                pickups.forEach(pickup => msg += `${genPickupInfo(pickup)} `);
+                // Ignore players with active expire
+                if (timeLeft <= 0) {
+                    if (leftExpires.has(expire.guild_id) && leftExpires.get(expire.guild_id).includes(expire.player_id)) {
+                        return;
+                    }
 
-                pickupChannel.send(msg || 'No active pickups');
+                    if (playersToRemoveGlobalExpire.has(expire.guild_id)) {
+                        playersToRemoveGlobalExpire.get(expire.guild_id).push(expire.player_id);
+                    } else {
+                        playersToRemoveGlobalExpire.set(expire.guild_id, [expire.player_id]);
+                    }
+                }
+            });
+
+            for (const [guild, players] of playersToRemoveGlobalExpire.entries()) {
+                await PickupModel.removePlayers(BigInt(guild), ...players);
+                await GuildModel.removeAddTimes(BigInt(guild), ...players);
+
+                const guildObj = this.client.guilds.cache.get(guild);
+                const pickupChannel = guildObj.channels.cache.get(await GuildModel.getPickupChannel(BigInt(guild))) as Discord.TextChannel;
+                const playerObjs = players.map(player => guildObj.members.cache.get(player));
+
+                pickupChannel.send(`${playerObjs.join(', ')} you got removed from all pickups, global expire ran out`);
+                guildsToShowStatus.add(guild);
+            }
+            /************************ AOs ************************/
+            const playerAos = await GuildModel.getAllAos();
+            const playersToRemoveAos = new Map();
+
+            playerAos.forEach(ao => {
+                const timeLeft = ao.expiration_date.getTime() - dateInMs;
+                if (timeLeft <= 0) {
+                    if (timeLeft <= 0) {
+                        if (playersToRemoveAos.has(ao.guild_id)) {
+                            playersToRemoveAos.get(ao.guild_id).push(ao.player_id);
+                        } else {
+                            playersToRemoveAos.set(ao.guild_id, [ao.player_id]);
+                        }
+                    }
+                }
+            });
+
+
+            for (const [guild, players] of playersToRemoveAos.entries()) {
+                await PlayerModel.removeAos(BigInt(guild), ...players);
+
+                // Filter out players who are not added to any pickup
+                const addedPlayers = await GuildModel.getAllAddedPlayers(BigInt(guild));
+                const validPlayers = players.filter(player => addedPlayers.includes(player));
+
+                const guildObj = this.client.guilds.cache.get(guild);
+                const pickupChannel = guildObj.channels.cache.get(await GuildModel.getPickupChannel(BigInt(guild))) as Discord.TextChannel;
+
+                const toPing = [];
+                const toNick = [];
+
+                const toRemoveNick = [];
+
+                for (const player of players.filter(player => !validPlayers.includes(player))) {
+                    const playerObj = guildObj.members.cache.get(player);
+                    if (playerObj.presence.status === 'offline') {
+                        toNick.push(playerObj);
+                    } else {
+                        toPing.push(playerObj);
+                    }
+                }
+
+                const toRemoveObjs = [];
+
+                for (const player of validPlayers) {
+                    const playerObj = guildObj.members.cache.get(player);
+                    // Only remove on offline status
+                    if (playerObj.presence.status === 'offline') {
+                        toRemoveNick.push(playerObj);
+                        toNick.push(playerObj);
+                        toRemoveObjs.push(playerObj);
+                        guildsToShowStatus.add(guild);
+                    } else {
+                        toPing.push(playerObj);
+                    }
+                }
+
+                const toRemoveIds = toRemoveObjs.map(player => player.id);
+
+                if (toRemoveIds.length) {
+                    await PickupModel.removePlayers(BigInt(guild), ...toRemoveIds);
+                    await GuildModel.removeAddTimes(BigInt(guild), ...toRemoveIds);
+                }
+
+                pickupChannel.send(`${toPing.join(', ')} ${toNick.map(player => player.displayName).join(', ')} your allow offline ran out`);
+
+                if (toRemoveIds.length > 0) {
+                    pickupChannel.send(`${toRemoveObjs.map(player => player.displayName).join(', ')} you got removed from all active pickups as you are offline`);
+                }
+            }
+
+            if (guildsToShowStatus.size > 0) {
+                for (const guild of guildsToShowStatus) {
+                    const pickups = Array.from((await PickupModel.getActivePickups(BigInt(guild))).values())
+                        .sort((a, b) => b.players.length - a.players.length);
+
+                    const guildObj = this.client.guilds.cache.get(guild as string);
+                    const pickupChannel = guildObj.channels.cache.get(await GuildModel.getPickupChannel(BigInt(guild))) as Discord.TextChannel;
+
+                    let msg = '';
+                    pickups.forEach(pickup => msg += `${genPickupInfo(pickup)} `);
+
+                    pickupChannel.send(msg || 'No active pickups');
+                }
             }
         }, 10 * 1000);
     }

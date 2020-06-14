@@ -20,6 +20,11 @@ const command: Command = {
         }
 
         const existingPickups = await PickupModel.areValidPickups(BigInt(message.guild.id), ...params);
+
+        if (!existingPickups.length) {
+            return;
+        }
+
         const playerAddedTo = await PickupModel.isPlayerAdded(BigInt(message.guild.id), BigInt(message.member.id), existingPickups.map(pickup => pickup.id));
         const validPickups = existingPickups.filter(pickup => playerAddedTo.includes(pickup.id));
 

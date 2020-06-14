@@ -139,4 +139,45 @@ export default class GuildModel {
 
         return expires[0];
     }
+
+    static async getAllAddTimes() {
+        const addTimes = await db.query(`
+        SELECT * FROM state_add_times
+        `);
+
+        return addTimes[0];
+    }
+
+    static async removeAddTimes(guildId: bigint, ...playerIds) {
+        await db.query(`
+        DELETE FROM state_add_times
+        WHERE guild_id = ${guildId} AND player_id IN (${playerIds.join(', ')})
+        `);
+        return;
+    }
+
+    static async getAllAos() {
+        const aos = await db.query(`
+        SELECT * FROM state_active_aos;
+        `);
+
+        return aos[0];
+    }
+
+    static async getAllAddedPlayers(guildId?: BigInt) {
+        if (!guildId) {
+            const players = await db.query(`
+            SELECT guild_id, player_id FROM state_active_pickups
+            `);
+
+            return players[0];
+        } else {
+            const players = await db.query(`
+            SELECT player_id FROM state_active_pickups
+            WHERE guild_id = ${guildId}
+            `);
+
+            return players[0].map(row => row.player_id);
+        }
+    }
 }

@@ -104,4 +104,36 @@ export default class PlayerModel {
         }
         return expiresIn[0].map(row => row.expiration_date);
     }
+
+    static async getAos(guildId: bigint, ...playerIds) {
+        const aos = await db.query(`
+        SELECT expiration_date, player_id FROM state_active_aos
+        WHERE guild_id = ${guildId} AND player_id IN (${playerIds.join(', ')})
+        `);
+
+        if (!aos[0][0]) {
+            return null;
+        }
+
+        return aos[0];
+    }
+
+    static async setAo(guildId: bigint, playerId: bigint, timeInMs: number) {
+        const expireDate = new Date(new Date().getTime() + timeInMs);
+
+        await db.execute(`
+        INSERT INTO state_active_aos VALUES (?, ?, ?)
+        ON DUPLICATE KEY UPDATE expiration_date = ?
+        `, [guildId, playerId, expireDate, expireDate]);
+
+        return;
+    }
+
+    static async removeAos(guildId: bigint, ...playerIds) {
+        await db.query(`
+        DELETE FROM state_active_aos WHERE
+        guild_id = ${guildId} AND player_id IN (${playerIds.join(', ')})
+        `);
+        return;
+    }
 }
