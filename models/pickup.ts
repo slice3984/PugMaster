@@ -29,19 +29,19 @@ export default class PickupModel {
         let result;
 
         if (!includingDefaults) {
-            result = await db.query(`
+            result = await db.execute(`
             SELECT c.id, c.name, player_id, c.player_count, p.current_nick FROM state_active_pickups
             JOIN pickup_configs c ON pickup_config_id = id 
             JOIN players p ON user_id = player_id
-            WHERE c.guild_id = ${guildId}
-            `);
+            WHERE c.guild_id = ?
+            `, [guildId]);
         } else {
-            result = await db.query(`
+            result = await db.execute(`
             SELECT c.id, c.name, s.player_id, c.player_count, p.current_nick FROM pickup_configs c
             LEFT JOIN state_active_pickups s ON s.pickup_config_id = c.id
             LEFT JOIN players p on p.user_id = s.player_id
-            WHERE c.guild_id = ${guildId} AND (s.player_id IS NOT NULL OR c.is_default_pickup = true)
-            `);
+            WHERE c.guild_id = ? AND (s.player_id IS NOT NULL OR c.is_default_pickup = true)
+            `, [guildId]);
         }
         const pickups = new Map();
 
@@ -65,28 +65,28 @@ export default class PickupModel {
     }
 
     static async getStoredPickupCount(guildId: bigint) {
-        const count = await db.query(`
+        const count = await db.execute(`
         SELECT COUNT(*) AS cnt FROM pickup_configs
-        WHERE guild_id = ${guildId}
-        `);
+        WHERE guild_id = ?
+        `, [guildId]);
 
         return count[0][0].cnt;
     }
 
     static async isPlayerAdded(guildId: bigint, playerId: bigint, ...pickupConfigIds): Promise<number[]> {
         if (pickupConfigIds.length === 0) {
-            const result = await db.query(`
+            const result = await db.execute(`
             SELECT pickup_config_id FROM state_active_pickups
-            WHERE guild_id = ${guildId} AND player_id = ${playerId}
-            `);
+            WHERE guild_id = ? AND player_id = ?
+            `, [guildId, playerId]);
             return result[0].map(row => row.pickup_config_id);
         }
 
-        const result = await db.query(`
+        const result = await db.execute(`
         SELECT pickup_config_id FROM state_active_pickups
-        WHERE guild_id = ${guildId} AND player_id = ${playerId}
-        AND pickup_config_id IN (${pickupConfigIds.join(', ')})
-        `);
+        WHERE guild_id = ? AND player_id = ?
+        AND pickup_config_id IN (${Array(pickupConfigIds.length).fill('?').join(',')})
+        `, [guildId, playerId, ...pickupConfigIds]);
 
         return result[0].map(row => row.pickup_config_id);
     }
@@ -101,40 +101,41 @@ export default class PickupModel {
         await db.query(`
         INSERT INTO state_active_pickups
         VALUES ${valueStrings.join(', ')}
-        `);
+        `, []);
         return;
     }
 
     static async removePlayers(guildId: bigint, ...playerIds) {
-        await db.query(`
+        await db.execute(`
         DELETE FROM state_active_pickups
-        WHERE guild_id = ${guildId} AND player_id IN (${playerIds.join(', ')})
-        `);
+        WHERE guild_id = ?
+        AND player_id IN (${Array(playerIds.length).fill('?').join(',')})
+        `, [guildId, ...playerIds]);
         return;
     }
 
     static async removePlayer(guildId: bigint, playerId: bigint, ...pickupConfigIds) {
         if (pickupConfigIds.length === 0) {
-            await db.query(`
+            await db.execute(`
             DELETE FROM state_active_pickups
-            WHERE guild_id = ${guildId} AND player_id = ${playerId}
-            `);
+            WHERE guild_id = ? AND player_id = ?
+            `, [guildId, playerId]);
             return;
         }
 
-        await db.query(`
+        await db.execute(`
         DELETE FROM state_active_pickups
-        WHERE guild_id = ${guildId} AND player_id = ${playerId}
-        AND pickup_config_id IN (${pickupConfigIds.join(', ')})
-        `);
+        WHERE guild_id = ? AND player_id = ?
+        AND pickup_config_id IN (${Array(pickupConfigIds.length).fill('?').join(',')})
+        `, [guildId, playerId, ...pickupConfigIds]);
         return;
     }
 
     static async updatePlayerAddTime(guildId: bigint, playerId: bigint) {
         await db.execute(`
-            INSERT INTO state_add_times VALUES (${guildId}, ${playerId}, CURRENT_TIMESTAMP)
+            INSERT INTO state_add_times VALUES (?, ?, CURRENT_TIMESTAMP)
             ON DUPLICATE KEY UPDATE added_at = CURRENT_TIMESTAMP
-        `);
+        `, [guildId, playerId]);
         return;
     }
 }

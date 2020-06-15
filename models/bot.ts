@@ -13,18 +13,18 @@ export default class BotModel {
 
     static async storeCommands(...names) {
         for (const name of names) {
-            await db.query(`
-            INSERT INTO commands VALUES('${name}', 0)
-            `);
+            await db.execute(`
+            INSERT INTO commands VALUES(?, 0)
+            `, [name]);
         }
         return;
     }
 
     static async removeCommands(...names) {
         for (const name of names) {
-            await db.query(`
-            DELETE FROM commands WHERE name = '${name}'
-            `);
+            await db.execute(`
+            DELETE FROM commands WHERE name = ?
+            `, [name]);
         }
         return;
     }

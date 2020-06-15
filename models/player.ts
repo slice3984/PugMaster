@@ -4,19 +4,19 @@ export default class PlayerModel {
     private constructor() { }
 
     static async isPlayerStored(guildId: bigint, playerId: bigint) {
-        const result = await db.query(`
+        const result = await db.execute(`
         SELECT COUNT(*) as cnt FROM players
-        wHERE guild_id = ${guildId} AND user_id = ${playerId}
-        `);
+        wHERE guild_id = ? AND user_id = ?
+        `, [guildId, playerId]);
 
         return result[0][0].cnt;
     }
 
     static async storeOrUpdatePlayer(guildId: bigint, playerId: bigint, nick: string) {
         // Get the current nick, no results => create user
-        const nickAndId = await db.query(`
-        SELECT current_nick, id FROM players WHERE user_id = ${playerId}
-        `);
+        const nickAndId = await db.execute(`
+        SELECT current_nick, id FROM players WHERE user_id = ?
+        `, [playerId]);
 
         // Player not stored
         if (nickAndId[0].length === 0) {
@@ -38,41 +38,43 @@ export default class PlayerModel {
                 `, [nickAndId[0][0].id, nickAndId[0][0].current_nick]);
 
                 // Get the amount of already stored old nicks
-                const amountStored = await db.query(`
+                const amountStored = await db.execute(`
                 SELECT COUNT(*) as cnt FROM player_nicks
-                WHERE player_id = ${nickAndId[0][0].id}
-                `);
+                WHERE player_id = ?
+                `, [nickAndId[0][0].id]);
 
                 if (amountStored[0][0].cnt > 2) {
                     // Delete the oldest nick
-                    const oldestNickId = await db.query(`
+                    const oldestNickId = await db.execute(`
                     SELECT id FROM player_nicks 
-                    WHERE player_id = ${nickAndId[0][0].id}
+                    WHERE player_id = ?
                     ORDER BY updated_at LIMIT 1
-                    `);
+                    `, [nickAndId[0][0].id]);
 
-                    await db.query(`
-                    DELETE FROM player_nicks WHERE id = ${oldestNickId[0][0].id}
-                    `);
+                    await db.execute(`
+                    DELETE FROM player_nicks WHERE id = ?
+                    `, [oldestNickId[0][0].id]);
                 }
             }
         }
     }
 
     static async arePlayersTrusted(guildId: bigint, ...playersIds): Promise<number[]> {
-        const trustedPlayers = await db.query(`
+        const trustedPlayers = await db.execute(`
         SELECT user_id FROM players
-        WHERE guild_id = ${guildId} AND trusted = 1 AND user_id IN (${playersIds.join(', ')})
-        `);
+        WHERE guild_id = ? AND trusted = 1 
+        AND user_id IN (${Array(playersIds.length).fill('?').join(',')})
+        `, [guildId, ...playersIds]);
 
         return trustedPlayers[0].map(row => row.user_id);
     }
 
     static async trustPlayers(guildId: bigint, ...playersIds) {
-        await db.query(`
+        await db.execute(`
         UPDATE players SET trusted = 1
-        WHERE guild_id = ${guildId} AND user_id IN (${playersIds.join(', ')})
-        `);
+        WHERE guild_id = ?
+        AND user_id IN (${Array(playersIds.length).fill('?').join(',')})
+        `, [guildId, ...playersIds]);
         return;
     }
 
@@ -87,17 +89,18 @@ export default class PlayerModel {
     }
 
     static async removeExpires(guildId: bigint, ...playerIds) {
-        await db.query(`
+        await db.execute(`
         DELETE FROM state_active_expires
-        WHERE guild_id = ${guildId} AND player_id IN (${playerIds.join(', ')})
-        `)
+        WHERE guild_id = ? AND player_id IN (${Array(playerIds.length).fill('?').join(',')})
+        `, [guildId, ...playerIds])
     }
 
     static async getExpires(guildId: bigint, ...playerIds): Promise<Date> {
-        const expiresIn = await db.query(`
+        const expiresIn = await db.execute(`
         SELECT expiration_date FROM state_active_expires
-        WHERE guild_id = ${guildId} AND player_id IN (${playerIds.join(', ')})
-        `);
+        WHERE guild_id = ?
+        AND player_id IN (${Array(playerIds.length).fill('?').join(',')})
+        `, [guildId, ...playerIds]);
 
         if (!expiresIn[0][0]) {
             return null;
@@ -106,10 +109,11 @@ export default class PlayerModel {
     }
 
     static async getAos(guildId: bigint, ...playerIds) {
-        const aos = await db.query(`
+        const aos = await db.execute(`
         SELECT expiration_date, player_id FROM state_active_aos
-        WHERE guild_id = ${guildId} AND player_id IN (${playerIds.join(', ')})
-        `);
+        WHERE guild_id = ?
+        AND player_id IN (${Array(playerIds.length).fill('?').join(',')})
+        `, [guildId, ...playerIds]);
 
         if (!aos[0][0]) {
             return null;
@@ -130,10 +134,10 @@ export default class PlayerModel {
     }
 
     static async removeAos(guildId: bigint, ...playerIds) {
-        await db.query(`
+        await db.execute(`
         DELETE FROM state_active_aos WHERE
-        guild_id = ${guildId} AND player_id IN (${playerIds.join(', ')})
-        `);
+        guild_id = ? AND player_id IN (${Array(playerIds.length).fill('?').join(',')})
+        `, [guildId, ...playerIds]);
         return;
     }
 }

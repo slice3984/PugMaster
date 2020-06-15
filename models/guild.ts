@@ -7,7 +7,9 @@ export default class GuildModel {
     private constructor() { }
 
     static async isGuildStored(guildId: bigint): Promise<boolean> {
-        const stored = await db.query(`SELECT COUNT(*) AS cnt FROM guilds WHERE guild_id = ${guildId}`);
+        const stored = await db.execute(`
+        SELECT COUNT(*) AS cnt FROM guilds WHERE guild_id = ?
+        `, [guildId]);
         return stored[0][0].cnt;
     }
 
@@ -23,20 +25,22 @@ export default class GuildModel {
     }
 
     static async isGuildBanned(guildId: bigint): Promise<boolean> {
-        const isBanned = await db.query(`SELECT COUNT(*) AS banned FROM banned_guilds WHERE guild_id = ${guildId}`);
+        const isBanned = await db.execute(`
+        SELECT COUNT(*) AS banned FROM banned_guilds WHERE guild_id = ?
+        `, [guildId]);
         return isBanned[0][0].banned;
     }
 
     static async getGuildSettings(guildId: bigint): Promise<GuildSettings> {
-        let data = await db.query(`
-        SELECT * FROM guilds WHERE guild_id = ${guildId}
-        `);
+        let data = await db.execute(`
+        SELECT * FROM guilds WHERE guild_id = ?
+        `, [guildId]);
         data = data[0][0];
 
-        let guildChannels = await db.query(`
+        let guildChannels = await db.execute(`
         SELECT * FROM guild_channels
-        WHERE guild_id = ${guildId}
-        `);
+        WHERE guild_id = ?
+        `, [guildId]);
 
         const channels = new Map();
 
@@ -61,11 +65,11 @@ export default class GuildModel {
     }
 
     static async getChannelType(guildId: bigint, channelId: bigint) {
-        let type = await db.query(`
+        let type = await db.execute(`
         SELECT channel_type
         FROM guild_channels
-        WHERE guild_id = ${guildId} AND channel_id = ${channelId};
-        `);
+        WHERE guild_id = ? AND channel_id = ?
+        `, [guildId, channelId]);
 
         if (type[0][0]) {
             return type[0][0].channel_type;
@@ -83,14 +87,14 @@ export default class GuildModel {
             }
         }
 
-        await db.query(`
+        await db.execute(`
         DELETE FROM guild_channels
-        WHERE guild_id = ${guildId} AND channel_type = '${type}'
-        `);
+        WHERE guild_id = ? AND channel_type = ?
+        `, [guildId, type]);
 
-        await db.query(`
-        INSERT INTO guild_channels VALUES(${guildId}, ${channelId}, '${type}')
-        `);
+        await db.execute(`
+        INSERT INTO guild_channels VALUES(?, ?, ?)
+        `, [guildId, channelId, type]);
 
         guildChannels.set(channelId, type);
     }
@@ -106,28 +110,28 @@ export default class GuildModel {
             }
         }
 
-        await db.query(`
+        await db.execute(`
         UPDATE guild_channels
-        SET channel_type = '${type}'
-        WHERE guild_id = ${guildId} AND channel_id = ${channelId}
-        `);
+        SET channel_type = ?
+        WHERE guild_id = ? AND channel_id = ?
+        `, [type, guildId, channelId]);
     }
 
     static async removeChannel(guildId: bigint, channelId: bigint) {
         const guildChannels = Bot.getInstance().getGuild(guildId).channels;
         guildChannels.delete(channelId);
 
-        await db.query(`
+        await db.execute(`
         DELETE FROM guild_channels
-        WHERE guild_id = ${guildId} AND channel_id = ${channelId}
-        `);
+        WHERE guild_id = ? AND channel_id = ?
+        `, [guildId, channelId]);
     }
 
     static async getPickupChannel(guildId: bigint) {
-        const channel = await db.query(`
+        const channel = await db.execute(`
         SELECT channel_id FROM guild_channels
-        WHERE guild_id = ${guildId} AND channel_type = 'pickup'
-        `);
+        WHERE guild_id = ? AND channel_type = 'pickup'
+        `, [guildId]);
 
         return channel[0][0].channel_id;
     }
@@ -149,10 +153,11 @@ export default class GuildModel {
     }
 
     static async removeAddTimes(guildId: bigint, ...playerIds) {
-        await db.query(`
+        await db.execute(`
         DELETE FROM state_add_times
-        WHERE guild_id = ${guildId} AND player_id IN (${playerIds.join(', ')})
-        `);
+        WHERE guild_id = ?
+        AND player_id IN (${Array(playerIds.length).fill('?').join(',')})
+        `, [guildId, ...playerIds]);
         return;
     }
 
@@ -172,10 +177,10 @@ export default class GuildModel {
 
             return players[0];
         } else {
-            const players = await db.query(`
+            const players = await db.execute(`
             SELECT player_id FROM state_active_pickups
-            WHERE guild_id = ${guildId}
-            `);
+            WHERE guild_id = ?
+            `, [guildId]);
 
             return players[0].map(row => row.player_id);
         }
