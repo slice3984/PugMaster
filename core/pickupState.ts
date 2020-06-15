@@ -56,11 +56,14 @@ export default class PickupState {
             PlayerModel.removeExpires(BigInt(member.guild.id), member.id);
         }
 
-        const pickupChannel = await Util.getPickupChannel(member.guild);
+        await PickupState.showPickupStatus(member.guild);
+    }
 
+    static async showPickupStatus(guild: Discord.Guild) {
+        const pickupChannel = await Util.getPickupChannel(guild);
         const genPickupInfo = pickup => `**${pickup.name}** [ **${pickup.players.length}** / **${pickup.maxPlayers}** ]`;
 
-        const pickups = Array.from((await PickupModel.getActivePickups(BigInt(member.guild.id))).values())
+        const pickups = Array.from((await PickupModel.getActivePickups(BigInt(guild.id))).values())
             .sort((a, b) => b.players.length - a.players.length);
 
         let msg = '';
