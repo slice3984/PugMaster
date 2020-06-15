@@ -136,18 +136,35 @@ export default class GuildModel {
         return channel[0][0].channel_id;
     }
 
-    static async getAllExpires() {
-        const expires = await db.query(`
-        SELECT guild_id, player_id, expiration_date FROM state_active_expires
-        `);
+    static async getAllExpires(...guildIds) {
+        let expires;
 
+        if (guildIds.length === 0) {
+            expires = await db.query(`
+            SELECT guild_id, player_id, expiration_date FROM state_active_expires
+            `);
+        } else {
+            expires = await db.execute(`
+            SELECT guild_id, player_id, expiration_date FROM state_active_expires
+            WHERE guild_id IN (${Array(guildIds.length).fill('?').join(',')})
+            `, [...guildIds])
+        }
         return expires[0];
     }
 
-    static async getAllAddTimes() {
-        const addTimes = await db.query(`
-        SELECT * FROM state_add_times
-        `);
+    static async getAllAddTimes(...guildIds) {
+        let addTimes;
+
+        if (guildIds.length === 0) {
+            addTimes = await db.query(`
+            SELECT * FROM state_add_times
+            `);
+        } else {
+            addTimes = await db.execute(`
+            SELECT * FROM state_add_times
+            WHERE guild_id IN (${Array(guildIds.length).fill('?').join(',')})
+            `, [...guildIds])
+        }
 
         return addTimes[0];
     }
@@ -161,10 +178,19 @@ export default class GuildModel {
         return;
     }
 
-    static async getAllAos() {
-        const aos = await db.query(`
-        SELECT * FROM state_active_aos;
-        `);
+    static async getAllAos(...guildIds) {
+        let aos;
+
+        if (guildIds.length === 0) {
+            aos = await db.query(`
+            SELECT * FROM state_active_aos
+            `);
+        } else {
+            aos = await db.execute(`
+            SELECT * FROM state_active_aos
+            WHERE guild_id IN (${Array(guildIds.length).fill('?').join(',')})
+            `, [...guildIds]);
+        }
 
         return aos[0];
     }

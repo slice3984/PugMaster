@@ -57,7 +57,7 @@ const command: Command = {
                 return message.reply(`Pickup${params.length > 1 ? 's' : ''} not found`);
             }
 
-            const playerAddedTo = await PickupModel.isPlayerAdded(BigInt(message.guild.id), BigInt(message.member.id), existingPickups.map(pickup => pickup.id));
+            const playerAddedTo = await PickupModel.isPlayerAdded(BigInt(message.guild.id), BigInt(message.member.id), ...existingPickups.map(pickup => pickup.id));
             const validPickups = existingPickups.filter(pickup => !playerAddedTo.includes(pickup.id));
 
             if (validPickups.length === 0) {
