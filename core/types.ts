@@ -53,3 +53,8 @@ export interface GuildSettings {
 }
 
 export type ChannelType = 'pickup' | 'pickup-info' | 'listen';
+
+export interface ValidationError {
+    type: string;
+    errorMessage: string;
+};

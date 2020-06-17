@@ -138,4 +138,44 @@ export default class PickupModel {
         `, [guildId, playerId]);
         return;
     }
+
+    static async getPickupSettings(guildId: BigInt, pickup: number | string) {
+        let settings;
+
+        if (typeof pickup === 'number') {
+            settings = await db.execute(`
+            SELECT * FROM pickup_configs
+            WHERE guild_id = ? AND id  = ?
+            `, [guildId, pickup]);
+        } else {
+            settings = await db.execute(`
+            SELECT * FROM pickup_configs
+            WHERE guild_id = ? AND name = ?
+            `, [guildId, pickup]);
+        }
+
+        return settings[0][0];
+    }
+
+    static async modifyPickup(guildId: bigint, pickup: number | string, key: string, value: string) {
+        let newValue: string | number = value;
+
+        if (value === 'true') {
+            newValue = 1;
+        } else if (value === 'false') {
+            newValue = 0;
+        }
+
+        if (typeof pickup === 'number') {
+            await db.execute(`
+            UPDATE pickup_configs SET ${key} = ?
+            WHERE guild_id = ? AND id = ?
+            `, [newValue, guildId, pickup]);
+        } else {
+            await db.execute(`
+            UPDATE pickup_configs SET ${key} = ?
+            WHERE guild_id = ? AND name = ?
+            `, [newValue, guildId, pickup]);
+        }
+    }
 }
