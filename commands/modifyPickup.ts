@@ -2,6 +2,7 @@ import { Command } from '../core/types';
 import { Validator } from '../core/validator';
 import PickupModel from '../models/pickup';
 import Util from '../core/util';
+import MappoolModel from '../models/mappool';
 
 
 const command: Command = {
@@ -22,8 +23,8 @@ const command: Command = {
         const value = params[2];
 
         const dbColumnNames = ['player_count', 'team_count', 'is_default_pickup', 'afk_check', 'pick_mode', 'whitelist_role',
-            'blacklist_role', 'promotion_role', 'captain_role', 'server_id'];
-        const keyNames = ['players', 'teams', 'default', 'afkcheck', 'pickmode', 'whitelist', 'blacklist', 'promotion', 'captain', 'server'];
+            'blacklist_role', 'promotion_role', 'captain_role', 'server_id', 'mappool_id'];
+        const keyNames = ['players', 'teams', 'default', 'afkcheck', 'pickmode', 'whitelist', 'blacklist', 'promotion', 'captain', 'server', 'mappool'];
         let dbColumn = keyNames.includes(key) ? dbColumnNames[keyNames.indexOf(key)] : key;
 
         const isValidPickup = await Validator.Pickup.isValidPickup(BigInt(message.guild.id), pickup);
@@ -68,6 +69,15 @@ const command: Command = {
 
             await PickupModel.modifyPickup(BigInt(message.guild.id), pickup, dbColumn, newRole.id);
             message.reply(`successfully updated pickup ${pickup}, set ${key} to ${newRole.name}`);
+        } else if (key === 'mappool') {
+            const poolId = await (await MappoolModel.getPools(BigInt(message.guild.id), value))[0].id;
+
+            if (currentValue && currentValue === poolId) {
+                return message.reply(`${key} is already set to ${value} for pickup ${pickup}`);
+            }
+
+            await PickupModel.modifyPickup(BigInt(message.guild.id), pickup, dbColumn, poolId);
+            message.reply(`successfully updated pickup ${pickup}, set map pool to ${value}`);
         } else {
             if (currentValue && currentValue.toString() === value) {
                 return message.reply(`${key} is already set to ${value} for pickup ${pickup}`);

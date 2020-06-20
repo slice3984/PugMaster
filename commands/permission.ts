@@ -10,7 +10,7 @@ const command: Command = {
     args: [
         { name: '<role>', desc: 'Role given as mention, id or name', required: true },
         { name: '<add/remove/show>', desc: 'Specify if the given permissions are added or removed or just displayed', required: true },
-        { name: '[command]...', desc: 'Command names', required: true }
+        { name: '[command]...', desc: 'Command names', required: false }
     ],
     global: true,
     perms: true,

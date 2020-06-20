@@ -3,6 +3,7 @@ import PickupModel from "../models/pickup";
 import Util from "./util";
 import Bot from "./bot";
 import { ValidationError } from './types';
+import MappoolModel from '../models/mappool';
 
 const bot = Bot.getInstance();
 
@@ -116,7 +117,12 @@ export namespace Validator {
                         }
                         break;
                     case 'mappool':
-                        // TODO  
+                        const validPool = await MappoolModel.isMappoolStored(BigInt(guild.id), value);
+
+                        if (!validPool) {
+                            errors.push({ type: 'mappool', errorMessage: 'given map pool not found' });
+                            break;
+                        }
                         break;
                     case 'afkcheck':
                         if (!['true', 'false'].includes(value)) {
@@ -205,6 +211,41 @@ export namespace Validator {
             }
 
             return errors;
+        }
+    }
+
+    export namespace Mappool {
+        export async function isValidPool(guildId: bigint, name: string, isDuplicate = true): Promise<ValidationError | true> {
+            const doesExist = await MappoolModel.isMappoolStored(guildId, name);
+
+            if (isDuplicate && !doesExist) {
+                return { type: 'exists', errorMessage: 'pool not found' };
+            }
+
+            if (!isDuplicate && doesExist) {
+                return { type: 'exists', errorMessage: 'pool already stored' };
+            }
+
+            if (!/^[a-zA-Z0-9]+$/.test(name)) {
+                return { type: 'name', errorMessage: 'invalid pool name, has to be alphanumeric only' };
+            }
+
+            if (name.length > 20 || name.length === 0) {
+                return { type: 'name', errorMessage: 'pool name must be between 1-20 chars long' };
+
+            }
+
+            return true;
+        }
+
+        export function areValidMapNames(...maps): string[] {
+            return maps.filter(map => !(map.length < 1 || map.length > 45));
+        }
+
+        export async function validate(guild: Discord.Guild, ...toValidate) {
+            for (const obj of toValidate) {
+
+            }
         }
     }
 }

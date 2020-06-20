@@ -57,13 +57,11 @@ export default class PermissionModel {
     }
 
     static async guildRolesGotCommandPermission(guildId: bigint, command: string, ...roleIds: bigint[]) {
-        const roleList = roleIds.map(roleId => `'${roleId}'`);
-
         const gotPermission = await db.execute(`
         SELECT COUNT(*) as cnt FROM guild_roles
         JOIN guild_role_command_permissions ON role_id = guild_role_id
-        WHERE guild_id = ? AND role_id IN (${Array(roleList.length).fill('?').join(',')}) AND command_name = ?
-        `, [guildId, ...roleList, command]);
+        WHERE guild_id = ? AND role_id IN (${Array(roleIds.length).fill('?').join(',')}) AND command_name = ?
+        `, [guildId, ...roleIds, command]);
 
         return gotPermission[0][0].cnt;
     }
