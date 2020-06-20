@@ -4,6 +4,7 @@ import Util from "./util";
 import Bot from "./bot";
 import { ValidationError } from './types';
 import MappoolModel from '../models/mappool';
+import ServerModel from '../models/server';
 
 const bot = Bot.getInstance();
 
@@ -205,7 +206,12 @@ export namespace Validator {
                         }
                         break;
                     case 'server':
-                        // TODO
+                        const validServer = await ServerModel.isServerStored(BigInt(guild.id), value);
+
+                        if (!validServer) {
+                            errors.push({ type: 'server', errorMessage: 'can\'t find the given server' });
+                            break;
+                        }
                         break;
                 }
             }
@@ -246,6 +252,44 @@ export namespace Validator {
             for (const obj of toValidate) {
 
             }
+        }
+    }
+
+    export namespace Server {
+        export async function isValidServer(guildId: bigint, name: string, isDuplicate = true): Promise<ValidationError | true> {
+            const doesExist = await ServerModel.isServerStored(guildId, name);
+
+            if (isDuplicate && !doesExist) {
+                return { type: 'exists', errorMessage: 'server not found' };
+            }
+
+            if (!isDuplicate && doesExist) {
+                return { type: 'exists', errorMessage: 'server already stored' };
+            }
+
+            if (!/^[a-zA-Z0-9]+$/.test(name)) {
+                return { type: 'name', errorMessage: 'invalid server name, has to be alphanumeric only' };
+            }
+
+            if (name.length > 45 || name.length === 0) {
+                return { type: 'name', errorMessage: 'server name must be between 1-45 chars long' };
+            }
+
+            return true;
+        }
+
+        export function isValidIp(ip) {
+            if (ip.length > 45 || ip.length === 0) {
+                return { type: 'ip', errorMessage: 'ip must be between 1-45 chars long' };
+            }
+            return true;
+        }
+
+        export function isValidPassword(ip) {
+            if (ip.length > 45 || ip.length === 0) {
+                return { type: 'password', errorMessage: 'password must be between 1-45 chars long' };
+            }
+            return true;
         }
     }
 }

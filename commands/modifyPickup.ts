@@ -3,6 +3,7 @@ import { Validator } from '../core/validator';
 import PickupModel from '../models/pickup';
 import Util from '../core/util';
 import MappoolModel from '../models/mappool';
+import ServerModel from '../models/server';
 
 
 const command: Command = {
@@ -23,8 +24,8 @@ const command: Command = {
         const value = params[2];
 
         const dbColumnNames = ['player_count', 'team_count', 'is_default_pickup', 'afk_check', 'pick_mode', 'whitelist_role',
-            'blacklist_role', 'promotion_role', 'captain_role', 'server_id', 'mappool_id'];
-        const keyNames = ['players', 'teams', 'default', 'afkcheck', 'pickmode', 'whitelist', 'blacklist', 'promotion', 'captain', 'server', 'mappool'];
+            'blacklist_role', 'promotion_role', 'captain_role', 'server_id', 'mappool_id', 'server_id'];
+        const keyNames = ['players', 'teams', 'default', 'afkcheck', 'pickmode', 'whitelist', 'blacklist', 'promotion', 'captain', 'server', 'mappool', 'server'];
         let dbColumn = keyNames.includes(key) ? dbColumnNames[keyNames.indexOf(key)] : key;
 
         const isValidPickup = await Validator.Pickup.isValidPickup(BigInt(message.guild.id), pickup);
@@ -78,6 +79,15 @@ const command: Command = {
 
             await PickupModel.modifyPickup(BigInt(message.guild.id), pickup, dbColumn, poolId);
             message.reply(`successfully updated pickup ${pickup}, set map pool to ${value}`);
+        } else if (key === 'server') {
+            const serverId = await ServerModel.getServerIds(BigInt(message.guild.id), value);
+
+            if (currentValue && currentValue === serverId[0]) {
+                return message.reply(`${key} is already set to ${value} for pickup ${pickup}`);
+            }
+
+            await PickupModel.modifyPickup(BigInt(message.guild.id), pickup, dbColumn, serverId[0]);
+            message.reply(`successfully updated pickup ${pickup}, set server to ${value}`);
         } else {
             if (currentValue && currentValue.toString() === value) {
                 return message.reply(`${key} is already set to ${value} for pickup ${pickup}`);
