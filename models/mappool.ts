@@ -91,6 +91,15 @@ export default class MappoolModel {
         return pools[0];
     }
 
+    static async getPoolName(guildId: bigint, poolId) {
+        const name = await db.execute(`
+        SELECT name FROM map_pool_names
+        WHERE guild_id = ? AND id = ?
+        `, [guildId, poolId]);
+
+        return name[0][0].name;
+    }
+
     static async addMapsToPool(guildId: bigint, poolName: string, ...maps) {
         await MappoolModel.addMapsToGlobalPool(guildId, ...maps);
         const mapIds = await MappoolModel.getMapIds(guildId, ...maps);
