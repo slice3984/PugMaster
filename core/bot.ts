@@ -2,7 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import Discord from 'discord.js';
 import ConfigTool from './configTool';
-import { Command, GuildSettings } from './types';
+import { Command } from './types';
+import GuildSettings from './guildSettings';
 import GuildModel from '../models/guild';
 import BotModel from '../models/bot';
 import PickupModel from '../models/pickup';
@@ -292,7 +293,7 @@ export default class Bot {
         let guildCounter = 0;
         const guilds = this.client.guilds.cache.values();
         for (const guild of guilds) {
-            const data = await GuildModel.getGuildSettings(BigInt(guild.id));
+            const data = await GuildModel.getGuildSettings(guild);
             this.guilds.set(BigInt(guild.id), data);
             guildCounter++;
         }

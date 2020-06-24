@@ -35,11 +35,20 @@ export default class ServerModel {
         return servers[0];
     }
 
-    static async getServer(guildId: bigint, name) {
-        const server = await db.execute(`
-        SELECT name, ip, password FROM pickup_servers
-        WHERE guild_id = ? AND name = ?
-        `, [guildId, name]);
+    static async getServer(guildId: bigint, identifier: string | number) {
+        let server;
+
+        if (typeof identifier === 'string') {
+            server = await db.execute(`
+            SELECT name, ip, password FROM pickup_servers
+            WHERE guild_id = ? AND name = ?
+            `, [guildId, identifier]);
+        } else {
+            server = await db.execute(`
+            SELECT name, ip, password FROM pickup_servers
+            WHERE guild_id = ? AND id = ?
+            `, [guildId, identifier]);
+        }
 
         return server[0][0];
     }

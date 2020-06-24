@@ -78,8 +78,8 @@ export default class PlayerModel {
         return;
     }
 
-    static async setExpire(guildId: bigint, playerId: bigint, timeInMinutes: number) {
-        const expireDate = new Date(new Date().getTime() + timeInMinutes * 60000);
+    static async setExpire(guildId: bigint, playerId: bigint, timeInMs: number) {
+        const expireDate = new Date(new Date().getTime() + timeInMs);
 
         await db.execute(`
         INSERT INTO state_active_expires VALUES (?, ?, ?)

@@ -143,7 +143,6 @@ export default class MappoolModel {
     static async addMapsToGlobalPool(guildId: bigint, ...maps) {
         const duplicates = await MappoolModel.getDuplicates(guildId, ...maps);
         const mapsToInsert = [...new Set(maps.filter(map => !duplicates.includes(map)))];
-        console.log(mapsToInsert);
 
         if (mapsToInsert.length === 0) {
             return mapsToInsert;

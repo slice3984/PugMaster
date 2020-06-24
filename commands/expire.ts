@@ -46,25 +46,18 @@ const command: Command = {
             return message.reply('you are not added to any pickup');
         }
 
-        if (!/^(\d+[mhd]\s*)+$/m.test(params.join(' '))) {
+        const validTime = Util.validateTimeString(params.join(' '), (defaults[0] * 60 * 1000), (60 * 1000));
+
+        if (validTime === 'exceeded') {
+            return message.reply(`max expire time is ${Util.formatTime(defaults[0] * 60000)}`);
+        } else if (validTime === 'subceeded') {
+            return message.reply(`min expire time is 1 minute`);
+        } else if (validTime === 'invalid') {
             return message.reply('invalid time amounts given');
         }
 
-        // Fast check to see if the entered number is too high
-        for (const param of params) {
-            if ((param.length - 1) > defaults[0].toString().length) {
-                return message.reply(`max expire time is ${Util.formatTime(defaults[0] * 60000)}`);
-            }
-        }
-
-        const time = Util.timeStringToTime(params.join(' '));
-
-        if (time > defaults[0]) {
-            return message.reply(`max expire time is ${Util.formatTime(defaults[0] * 60000)}`);
-        }
-
-        await PlayerModel.setExpire(BigInt(message.guild.id), BigInt(message.member.id), time);
-        message.reply(`you will be removed from all pickups in ${Util.formatTime(time * 60000)}`);
+        await PlayerModel.setExpire(BigInt(message.guild.id), BigInt(message.member.id), validTime);
+        message.reply(`you will be removed from all pickups in ${Util.formatTime(validTime)}`);
     }
 }
 

@@ -5,8 +5,10 @@ import Bot from "./bot";
 import { ValidationError } from './types';
 import MappoolModel from '../models/mappool';
 import ServerModel from '../models/server';
+import GuildSettings from './guildSettings';
+import ConfigTool from './configTool';
 
-const bot = Bot.getInstance();
+const config = ConfigTool.getConfig();
 
 export namespace Validator {
     export namespace Pickup {
@@ -290,6 +292,196 @@ export namespace Validator {
                 return { type: 'password', errorMessage: 'password must be between 1-45 chars long' };
             }
             return true;
+        }
+    }
+
+    export namespace Guild {
+        export function areValidKeys(...keys) {
+            const validKeys = ['prefix', 'global_expire', 'promotion', 'whitelist', 'blacklist', 'server',
+                'start_message', 'sub_message', 'notify_message', 'warn_streaks', 'warn_streak_expiration',
+                'warn_expiration', 'warn_bantime', 'warn_bantime_multiplier'];
+
+            const invalidKeys = keys.filter(key => !validKeys.includes(key));
+
+            return invalidKeys;
+        }
+
+        export async function validate(guild: Discord.Guild, guildSettings: GuildSettings, ...toValidate: { key: string, value: string }[]) {
+            let errors: ValidationError[] = [];
+
+            for (const obj of toValidate) {
+                let key = obj.key;
+                let value = obj.value;
+
+                switch (key) {
+                    case 'prefix':
+                        if (value.length > 3) {
+                            errors.push({ type: key, errorMessage: 'prefix must be between 1-3 chars long' });
+                            break;
+                        }
+
+                        const currentPrefix = guildSettings.prefix;
+
+                        if (currentPrefix === value) {
+                            errors.push({ type: key, errorMessage: `prefix is already set to ${value}` });
+                            break;
+                        }
+                        break;
+                    case 'global_expire':
+                        const validTime = Util.validateTimeString(value, +config.settings.MAX_GLOBAL_EXPIRE, 10800000);
+
+                        if (validTime === 'exceeded') {
+                            errors.push({ type: key, errorMessage: `max global expire time is ${Util.formatTime(+config.settings.MAX_GLOBAL_EXPIRE)}` });
+                            break;
+                        } else if (validTime === 'subceeded') {
+                            errors.push({ type: key, errorMessage: `min global expire time is ${Util.formatTime(10800000)}` });
+                            break;
+                        } else if (validTime === 'invalid') {
+                            errors.push({ type: key, errorMessage: 'invalid time amounts given' });
+                            break;
+                        }
+
+                        if (guildSettings.globalExpireTime === validTime) {
+                            errors.push({ type: key, errorMessage: `global expire is already set to ${Util.formatTime(validTime)}` });
+                        }
+                    case 'promotion':
+                        const promotionRole = Util.getRole(guild, value);
+
+                        if (!promotionRole) {
+                            errors.push({ type: key, errorMessage: 'can\'t find the given role' });
+                            break;
+                        }
+
+                        if (BigInt(promotionRole.id) === guildSettings.promotionRole) {
+                            errors.push({ type: key, errorMessage: 'the given role is already set as promotion role' });
+                        }
+
+                        if ([guildSettings.promotionRole, guildSettings.whitelistRole, guildSettings.blacklistRole].includes(BigInt(promotionRole.id))) {
+                            errors.push({ type: key, errorMessage: 'can\'t use the same role twice in server settings' });
+                            break;
+                        }
+                        break;
+                    case 'whitelist':
+                        const whitelistRole = Util.getRole(guild, value);
+
+                        if (!whitelistRole) {
+                            errors.push({ type: key, errorMessage: 'can\'t find the given role' });
+                            break;
+                        }
+
+                        if (BigInt(whitelistRole.id) === guildSettings.whitelistRole) {
+                            errors.push({ type: key, errorMessage: 'the given role is already set as whitelist role' });
+                        }
+
+                        if ([guildSettings.promotionRole, guildSettings.whitelistRole, guildSettings.blacklistRole].includes(BigInt(whitelistRole.id))) {
+                            errors.push({ type: key, errorMessage: 'can\'t use the same role twice in server settings' });
+                            break;
+                        }
+                        break;
+                    case 'blacklist':
+                        const blacklistRole = Util.getRole(guild, value);
+
+                        if (!blacklistRole) {
+                            errors.push({ type: key, errorMessage: 'can\'t find the given role' });
+                            break;
+                        }
+
+                        if (BigInt(blacklistRole.id) === guildSettings.blacklistRole) {
+                            errors.push({ type: key, errorMessage: 'the given role is already set as blacklist role' });
+                        }
+
+                        if ([guildSettings.promotionRole, guildSettings.whitelistRole, guildSettings.blacklistRole].includes(BigInt(blacklistRole.id))) {
+                            errors.push({ type: key, errorMessage: 'can\'t use the same role twice in server settings' });
+                            break;
+                        }
+                        break;
+                    case 'server':
+                        const validServer = await ServerModel.isServerStored(BigInt(guild.id), value);
+
+                        if (!validServer) {
+                            errors.push({ type: key, errorMessage: 'can\'t find the given server' });
+                            break;
+                        }
+
+                        const serverId = await ServerModel.getServerIds(BigInt(guild.id), value);
+
+                        if (serverId[0] === +guildSettings.defaultServer) {
+                            errors.push({ type: key, errorMessage: `${value} is already set as default server` });
+                            break;
+                        }
+                        break;
+                    case 'start_message':
+                    case 'sub_message':
+                    case 'notify_message':
+                        const toRespond = key.replace('_', ' ');
+
+                        if (value.length > 150) {
+                            errors.push({ type: key, errorMessage: `${toRespond} has to be shorter than 150 chars` });
+                            break;
+                        }
+
+                        const propertyNames = {
+                            start_message: 'startMessage',
+                            sub_message: 'subMessage',
+                            notify_message: 'notifyMessage'
+                        }
+
+                        if (guildSettings[propertyNames[key]] === value) {
+                            errors.push({ type: key, errorMessage: `${toRespond} is already set to this value` });
+                            break;
+                        }
+                        break;
+                    case 'warn_streaks':
+                        if (!/^\d+$/.test(value)) {
+                            errors.push({ type: key, errorMessage: 'amount has to be a number' });
+                            break;
+                        }
+
+                        if (+value < 1 || +value > +config.settings.MAX_WARN_STREAKS) {
+                            errors.push({ type: key, errorMessage: `warn streaks has to be a number between 1-${config.settings.MAX_WARN_STREAKS}` });
+                            break;
+                        }
+                        break;
+                    case 'warn_streak_expiration':
+                    case 'warn_expiration':
+                    case 'warn_bantime':
+                        const values = {
+                            warn_streak_expiration: [+config.settings.MAX_WARN_STREAK_EXPIRATION_TIME, 86400000, 'warnStreakExpiration'],
+                            warn_expiration: [+config.settings.MAX_WARN_EXPIRATION_TIME, 7200000, 'warnExpiration'],
+                            warn_bantime: [+config.settings.MAX_WARN_BANTIME, 3600000, 'warnBanTime']
+                        }
+
+                        const validTimeWarns = Util.validateTimeString(value, +values[key][0], +values[key][1]);
+
+                        if (validTimeWarns === 'exceeded') {
+                            errors.push({ type: key, errorMessage: `max ${key.replace('_', ' ')} time is ${Util.formatTime(+values[key][0])}` });
+                            break;
+                        } else if (validTimeWarns === 'subceeded') {
+                            errors.push({ type: key, errorMessage: `min ${key.replace('_', ' ')} time is ${Util.formatTime(+values[key][1])}` });
+                            break;
+                        } else if (validTimeWarns === 'invalid') {
+                            errors.push({ type: key, errorMessage: 'invalid time amounts given' });
+                            break;
+                        }
+
+                        if (guildSettings[values[key][2]] === validTimeWarns) {
+                            errors.push({ type: key, errorMessage: `warn ${key.replace('_', ' ')} time is already set to ${Util.formatTime(validTimeWarns)}` });
+                            break;
+                        }
+                        break;
+                    case 'warn_bantime_multiplier':
+                        if (!/^\d+$/.test(value)) {
+                            errors.push({ type: key, errorMessage: 'amount has to be a number' });
+                            break;
+                        }
+
+                        if (+value < 1 || +value > +config.settings.MAX_WARN_BANTIME_MULTIPLIER) {
+                            errors.push({ type: key, errorMessage: `warn streak bantime multiplier has to be a number between 1-${config.settings.MAX_WARN_BANTIME_MULTIPLIER}` });
+                            break;
+                        }
+                }
+            }
+            return errors;
         }
     }
 }

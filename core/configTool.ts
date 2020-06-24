@@ -28,6 +28,14 @@ export default class ConfigTool {
         "user": "",
         "password": "",
         "db": ""
+    },
+    "settings": {
+        "MAX_GLOBAL_EXPIRE": "86400000",
+        "MAX_WARN_STREAKS": "10",
+        "MAX_WARN_STREAK_EXPIRATION_TIME": "2592000000",
+        "MAX_WARN_EXPIRATION_TIME": "1209600000",
+        "MAX_WARN_BANTIME": "604800000",
+        "MAX_WARN_BANTIME_MULTIPLIER": "5" 
     }
 }`, 'utf8');
     }

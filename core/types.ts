@@ -10,6 +10,14 @@ export interface Config {
         user: string;
         password: string;
         db: string;
+    };
+    settings: {
+        MAX_GLOBAL_EXPIRE: string;
+        MAX_WARN_STREAKS: string;
+        MAX_WARN_STREAK_EXPIRATION_TIME: string;
+        MAX_WARN_EXPIRATION_TIME: string;
+        MAX_WARN_BANTIME: string;
+        MAX_WARN_BANTIME_MULTIPLIER: string;
     }
 };
 
@@ -37,24 +45,11 @@ export interface CommandArgument {
     required: boolean;
 }
 
-// Only storing frequently accessed data
-export interface GuildSettings {
-    id: bigint;
-    prefix: string;
-    promotionRole: bigint;
-    blacklistRole: bigint;
-    whitelistRole: bigint;
-    lastPromote: Date | null;
-    globalExpireTime: number;
-    trustTime: number;
-    disabledCommands: string[];
-    commandSettings: Map<string, any[]>;
-    channels: Map<bigint, ChannelType>;
-}
-
 export type ChannelType = 'pickup' | 'pickup-info' | 'listen';
 
 export interface ValidationError {
     type: string;
     errorMessage: string;
-};
+}
+
+export type TimeError = 'exceeded' | 'subceeded' | 'invalid';

@@ -1,8 +1,7 @@
 import Discord from 'discord.js';
 import GuildModel from '../models/guild';
 import Bot from './bot';
-
-const bot = Bot.getInstance();
+import { ValidationError, TimeError } from './types';
 
 export default class Util {
     private constructor() { }
@@ -21,6 +20,8 @@ export default class Util {
         }
 
         if (global) {
+            const bot = Bot.getInstance();
+
             try {
                 const user = await bot.getClient().users.fetch(id);
                 return user;
@@ -68,32 +69,66 @@ export default class Util {
     }
 
     static formatTime(ms: number) {
-        const mins = Math.floor((ms / 60000) % 60);
-        const hours = Math.floor((ms / 60000) / 60);
+        const stringParts = [];
 
-        if (hours < 1) {
-            if (mins == 1) {
-                return mins + " minute";
-            } else {
-                return mins + " minutes";
-            }
-        } else if (hours == 1) {
-            if (mins < 1) {
-                return hours + " hour";
-            } else if (mins == 1) {
-                return hours + " hour and " + mins + " minute";
-            } else {
-                return hours + " hour and " + mins + " minutes";
-            }
-        } else {
-            if (mins < 1) {
-                return hours + " hours";
-            } else if (mins == 1) {
-                return hours + " hours and " + mins + " minute";
-            } else {
-                return hours + " hours and " + mins + " minutes";
+        let seconds = (ms / 1000) | 0;
+        ms -= seconds * 1000;
+
+        let minutes = (seconds / 60) | 0;
+        seconds -= minutes * 60;
+
+        let hours = (minutes / 60) | 0;
+        minutes -= hours * 60;
+
+        let days = (hours / 24) | 0;
+        hours -= days * 24;
+
+        let weeks = (days / 7) | 0;
+        days -= weeks * 7;
+
+        if (weeks > 0) {
+            stringParts.push(`${weeks} week${weeks > 1 ? 's' : ''}`);
+        }
+
+        if (days > 0) {
+            stringParts.push(`${days} day${days > 1 ? 's' : ''}`);
+        }
+
+        if (hours > 0) {
+            stringParts.push(`${hours} hour${hours > 1 ? 's' : ''}`);
+        }
+
+        if (minutes > 0) {
+            stringParts.push(`${minutes} minute${minutes > 1 ? 's' : ''}`);
+        }
+
+        return stringParts.join(' and ');
+    }
+
+    static validateTimeString(timeString: string, maxInMs: number, minInMs: number): TimeError | number {
+        if (!/^(\d+[mhdw]\s*)+$/m.test(timeString)) {
+            return 'invalid';
+        }
+
+        const timeParts = timeString.split(' ');
+
+        for (const part of timeParts) {
+            if ((part.length - 1) > maxInMs.toString().length) {
+                return 'exceeded';
             }
         }
+
+        const time = Util.timeStringToTime(timeString) * 60 * 1000;
+
+        if (time > maxInMs) {
+            return 'exceeded';
+        }
+
+        if (time < minInMs) {
+            return 'subceeded';
+        }
+
+        return time;
     }
 
     static timeStringToTime(timeString: string) {

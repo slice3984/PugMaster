@@ -1,5 +1,6 @@
 import Discord from 'discord.js';
-import { GuildSettings, ChannelType } from '../core/types';
+import { ChannelType } from '../core/types';
+import GuildSettings from '../core/guildSettings';
 import Bot from '../core/bot';
 import db from '../core/db';
 
@@ -31,37 +32,48 @@ export default class GuildModel {
         return isBanned[0][0].banned;
     }
 
-    static async getGuildSettings(guildId: bigint): Promise<GuildSettings> {
+    static async getGuildSettings(guild: Discord.Guild): Promise<GuildSettings> {
         let data = await db.execute(`
         SELECT * FROM guilds WHERE guild_id = ?
-        `, [guildId]);
+        `, [guild.id]);
         data = data[0][0];
 
         let guildChannels = await db.execute(`
         SELECT * FROM guild_channels
         WHERE guild_id = ?
-        `, [guildId]);
+        `, [guild.id]);
 
         const channels = new Map();
 
         guildChannels[0].forEach(channel => {
             channels.set(BigInt(channel.channel_id), channel.channel_type);
-        })
+        });
 
-        return {
-            id: guildId,
-            prefix: data.prefix,
-            promotionRole: data.global_promotion_role,
-            blacklistRole: data.global_blacklist_role,
-            whitelistRole: data.global_whitelist_role,
-            lastPromote: data.last_promote,
-            globalExpireTime: data.global_expire,
-            trustTime: data.trust_check ? data.trust_time : null,
-            disabledCommands: [],
-            commandSettings: new Map(),
-            channels
-            // TODO: Load disabled commands & command settings
-        }
+        const settings = new GuildSettings(
+            guild,
+            BigInt(guild.id),
+            data.prefix,
+            data.global_promotion_role,
+            data.global_blacklist_role,
+            data.global_whitelist_role,
+            data.last_promote,
+            data.global_expire,
+            data.trust_check ? data.trust_time : null,
+            [],
+            new Map(),
+            channels,
+            data.server_id,
+            data.start_message,
+            data.sub_message,
+            data.notify_message,
+            data.warn_streaks,
+            data.warn_streak_expiration,
+            data.warn_expiration_time,
+            data.warn_ban_time,
+            data.warn_ban_time_multiplier
+        )
+
+        return settings;
     }
 
     static async getChannelType(guildId: bigint, channelId: bigint) {
@@ -210,5 +222,14 @@ export default class GuildModel {
 
             return players[0].map(row => row.player_id);
         }
+    }
+
+    static async modifyGuild(guildId: bigint, key: string, value: string) {
+        let newValue: string | number = value;
+
+        await db.execute(`
+        UPDATE guilds SET ${key} = ?
+        WHERE guild_id = ?
+        `, [newValue, guildId]);
     }
 }

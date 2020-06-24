@@ -17,6 +17,6 @@ module.exports = async (bot: Bot, guild: Discord.Guild) => {
         console.log(`Successfully stored new guild '${newGuild}'`);
     }
 
-    const settings = await GuildModel.getGuildSettings(BigInt(guild.id));
+    const settings = await GuildModel.getGuildSettings(guild);
     bot.addGuild(settings);
 }
