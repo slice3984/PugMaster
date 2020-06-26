@@ -12,7 +12,7 @@ const command: Command = {
     ],
     defaults: [
         {
-            type: 'string', desc: 'How to display the active pickups, per line, compact or dynamic based on amount',
+            type: 'string', name: 'display', desc: 'How to display the active pickups, per line, compact or dynamic based on amount',
             value: 'dynamic', possibleValues: ['dynamic', 'long', 'compact']
         }
     ],

@@ -23,8 +23,10 @@ export interface Config {
 
 interface DefaultValue {
     type: 'string' | 'number';
-    desc: string, value: string | number;
-    possibleValues: number[] | string[] | { from: number; to: number }
+    name: string;
+    desc: string;
+    value: string | number;
+    possibleValues: number[] | string[] | { from: number; to: number };
 }
 
 export interface Command {

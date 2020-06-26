@@ -2,11 +2,12 @@ import Discord from 'discord.js';
 import PickupModel from "../models/pickup";
 import Util from "./util";
 import Bot from "./bot";
-import { ValidationError } from './types';
+import { ValidationError, Command } from './types';
 import MappoolModel from '../models/mappool';
 import ServerModel from '../models/server';
 import GuildSettings from './guildSettings';
 import ConfigTool from './configTool';
+import { isArray } from 'util';
 
 const config = ConfigTool.getConfig();
 
@@ -480,6 +481,55 @@ export namespace Validator {
                             break;
                         }
                 }
+            }
+            return errors;
+        }
+    }
+
+    export namespace CommandOption {
+        export function areValidOptions(command: Command, ...options) {
+            return options.filter(option => !command.defaults.includes(option));
+        }
+
+        export function validate(guildSettings: GuildSettings, ...toValidate: { command: Command, key: string, value: string }[]) {
+            let errors: ValidationError[] = [];
+
+            for (const obj of toValidate) {
+                let command = obj.command;
+                let key = obj.key;
+                let value = obj.value;
+
+                if (!command.defaults.map(def => def.name).includes(key)) {
+                    errors.push({ type: key, errorMessage: `unknown setting ${key}` });
+                }
+
+                command.defaults.forEach(def => {
+                    switch (def.type) {
+                        case 'string':
+                            // @ts-ignore
+                            if (!def.possibleValues.includes(value)) {
+                                // @ts-ignore
+                                errors.push({ type: key, errorMessage: `${value} is not a valid value for ${key}, values: ${def.possibleValues.join(', ')}` })
+                                break;
+                            }
+                            break;
+                        case 'number':
+                            if (!/^\d+$/.test(value)) {
+                                errors.push({ type: key, errorMessage: 'amount has to be a number' });
+                                break;
+                            }
+
+                            if (isArray(def.possibleValues)) {
+                                if (!(def.possibleValues as number[]).includes(+value)) {
+                                    errors.push({ type: key, errorMessage: `${value} is not a valid value for ${key}, value has to be ${def.possibleValues.join(', ')}` });
+                                }
+                            } else {
+                                if (def.possibleValues.from > +value || def.possibleValues.to < +value) {
+                                    errors.push({ type: key, errorMessage: `${key} has to be in the range of ${def.possibleValues.from}-${def.possibleValues.to}` });
+                                }
+                            }
+                    }
+                });
             }
             return errors;
         }

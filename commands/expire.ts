@@ -12,7 +12,7 @@ const command: Command = {
     ],
     defaults: [
         {
-            type: 'number', desc: 'Max expiration time',
+            type: 'number', name: 'max_expire', desc: 'Max expiration time in minutes',
             value: 1440, possibleValues: { from: 5, to: 2880 }
         }
     ],

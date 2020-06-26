@@ -1,5 +1,5 @@
 import Discord from 'discord.js';
-import { ChannelType, ValidationError } from "./types";
+import { ChannelType, ValidationError, Command } from "./types";
 import { Validator } from "./validator";
 import GuildModel from '../models/guild';
 import Util from './util';
@@ -18,7 +18,7 @@ export default class GuildSettings {
         private _globalExpireTime: number | null,
         private _trustTime: number,
         private _disabledCommands: string[],
-        private _commandSettings: Map<string, any>,
+        private _commandSettings: Map<string, any[]>,
         private _channels: Map<bigint, ChannelType>,
         private _defaultServer: number,
         private _startMessage: string,
@@ -110,6 +110,21 @@ export default class GuildSettings {
         }
 
         return errors;
+    }
+
+    public async modifyCommand(command: Command, valueArr) {
+        await GuildModel.modifyCommand(this.id, [{ command: command.cmd, values: valueArr }])
+        this._commandSettings.set(command.cmd, valueArr);
+    }
+
+    public async disableCommand(...commands) {
+        await GuildModel.disableCommand(this.id, ...commands);
+        this._disabledCommands.push(...commands);
+    }
+
+    public async enableCommand(...commands) {
+        await GuildModel.enableCommand(this.id, ...commands);
+        this._disabledCommands = this._disabledCommands.filter(cmd => !commands.includes(cmd));
     }
 
     public get channels(): Map<bigint, ChannelType> {

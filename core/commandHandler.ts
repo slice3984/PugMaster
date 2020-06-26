@@ -31,6 +31,12 @@ export default class CommandHandler {
         // Check if its a valid command
         const isValid = this.bot.doesCommandExist(cmd);
 
+        if (!isValid) {
+            return false;
+        }
+
+        cmd = this.bot.getCommand(cmd).cmd;
+
         // Check if guild disabled
         const isDisabled = guild.disabledCommands.includes(cmd);
 
@@ -38,19 +44,17 @@ export default class CommandHandler {
             return false;
         }
 
-        if (isValid) {
-            // Make sure its the correct channel, only allow setup commands everywhere
-            if (cmd === 'pickup') {
+        // Make sure its the correct channel, only allow setup commands everywhere
+        if (cmd === 'pickup') {
+            return true;
+        }
+        if (guild.channels.has(BigInt(message.channel.id))) {
+            if (this.bot.getCommand(cmd).global) {
                 return true;
-            }
-            if (guild.channels.has(BigInt(message.channel.id))) {
-                if (this.bot.getCommand(cmd).global) {
-                    return true;
-                } else if (guild.channels.get(BigInt(message.channel.id)) === 'pickup') {
-                    return true;
-                } else {
-                    return false;
-                }
+            } else if (guild.channels.get(BigInt(message.channel.id)) === 'pickup') {
+                return true;
+            } else {
+                return false;
             }
         }
 

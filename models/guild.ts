@@ -43,11 +43,29 @@ export default class GuildModel {
         WHERE guild_id = ?
         `, [guild.id]);
 
+        let commandSettingsResults = await db.execute(`
+            SELECT command_name, value FROM guild_command_settings
+            WHERE guild_id = ?
+        `, [guild.id]);
+
+        const commandSettings = new Map();
+
+        for (const row of commandSettingsResults[0]) {
+            let value = Number.isInteger(+row.value) ? +row.value : row.value;
+            if (!commandSettings.has(row.command_name)) {
+                commandSettings.set(row.command_name, [value]);
+            } else {
+                commandSettings.get(row.command_name).push(value);
+            }
+        }
+
         const channels = new Map();
 
         guildChannels[0].forEach(channel => {
             channels.set(BigInt(channel.channel_id), channel.channel_type);
         });
+
+        let disabledCommands = await GuildModel.getDisabledCommands(BigInt(guild.id));
 
         const settings = new GuildSettings(
             guild,
@@ -59,8 +77,8 @@ export default class GuildModel {
             data.last_promote,
             data.global_expire,
             data.trust_check ? data.trust_time : null,
-            [],
-            new Map(),
+            disabledCommands,
+            commandSettings,
             channels,
             data.server_id,
             data.start_message,
@@ -231,5 +249,48 @@ export default class GuildModel {
         UPDATE guilds SET ${key} = ?
         WHERE guild_id = ?
         `, [newValue, guildId]);
+    }
+
+    static async modifyCommand(guildId: bigint, settings: { command: string, values: [] }[]) {
+        const commandNames = settings.map(obj => obj.command);
+        const toInsert = [];
+
+        settings.forEach(setting => {
+            setting.values.forEach(value => {
+                toInsert.push(guildId, setting.command, value);
+            });
+        });
+
+        // Delete possible already stored settings
+        await db.execute(`
+        DELETE FROM guild_command_settings WHERE guild_id = ?
+        AND command_name IN (${Array(commandNames.length).fill('?').join(',')}) 
+        `, [guildId, ...commandNames]);
+
+        // Insert new settings
+        await db.execute(`
+        INSERT INTO guild_command_settings VALUES ${Array(toInsert.length / 3).fill('(?, ?, ?)').join(',')}
+        `, [...toInsert]);
+    }
+
+    static async disableCommand(guildId: bigint, ...commands) {
+        await db.execute(`
+        INSERT INTO guild_disabled_commands VALUES ${Array(commands.length).fill('(?, ?)').join(',')}
+        `, [guildId, ...commands]);
+    }
+
+    static async getDisabledCommands(guildId: bigint) {
+        const disabled = await db.execute(`
+        SELECT command_name FROM guild_disabled_commands WHERE guild_id = ?
+        `, [guildId]);
+
+        return disabled[0].map(row => row.command_name);
+    }
+
+    static async enableCommand(guildId: bigint, ...commands) {
+        await db.execute(`
+        DELETE FROM guild_disabled_commands WHERE guild_id = ?
+        AND command_name IN (${Array(commands.length).fill('?').join(',')})
+        `, [guildId, ...commands]);
     }
 }
