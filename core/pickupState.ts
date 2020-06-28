@@ -61,6 +61,10 @@ export default class PickupState {
 
     static async showPickupStatus(guild: Discord.Guild) {
         const pickupChannel = await Util.getPickupChannel(guild);
+
+        if (!pickupChannel) {
+            return;
+        }
         const genPickupInfo = pickup => `**${pickup.name}** [ **${pickup.players.length}** / **${pickup.maxPlayers}** ]`;
 
         const pickups = Array.from((await PickupModel.getActivePickups(BigInt(guild.id))).values())

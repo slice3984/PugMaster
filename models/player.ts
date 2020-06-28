@@ -140,4 +140,89 @@ export default class PlayerModel {
         `, [guildId, ...playerIds]);
         return;
     }
+
+    static async unbanPlayer(guildId: bigint, playerId: bigint | number) {
+        if (typeof playerId === 'number') {
+            await db.execute(`
+            UPDATE bans SET is_active = false
+            WHERE guild_id = ? AND player_id = ?
+            `, [guildId, playerId]);
+        } else {
+            const id = await db.execute(`
+            SELECT id FROM players WHERE guild_id = ? AND user_id = ?
+            `, [guildId, playerId]);
+
+            await db.execute(`
+            UPDATE bans SET is_active = false
+            WHERE guild_id = ? AND player_id = ?
+            `, [guildId, id[0][0].id]);
+        }
+    }
+
+    // 0ms bantime => perm
+    static async banPlayer(guildId: bigint, issuerId: bigint, playerId: bigint, banTimeInMs: number, reason?: string) {
+        const endsAt = new Date(new Date().getTime() + banTimeInMs);
+
+        const bannedPlayerId = await db.execute(`
+        SELECT id FROM players WHERE guild_id = ? AND user_id = ?
+        `, [guildId, playerId]);
+
+        const issuerPlayerId = await db.execute(`
+        SELECT id FROM players WHERE guild_id = ? AND user_id = ?
+        `, [guildId, issuerId]);
+
+        if (!banTimeInMs) {
+            if (reason) {
+                await db.execute(`
+                INSERT INTO bans (guild_id, player_id, issuer_player_id, reason, permanent)
+                VALUES (?, ?, ?, ?, ?)
+                `, [guildId, bannedPlayerId[0][0].id, issuerPlayerId[0][0].id, reason, true]);
+            } else {
+                await db.execute(`
+                INSERT INTO bans (guild_id, player_id, issuer_player_id, permanent)
+                VALUES (?, ?, ?, ?)
+                `, [guildId, bannedPlayerId[0][0].id, issuerPlayerId[0][0].id, true]);
+            }
+
+        } else {
+            if (reason) {
+                await db.execute(`
+                INSERT INTO bans (guild_id, player_id, issuer_player_id, reason, ends_at)
+                VALUES (?, ?, ?, ?, ?)
+                `, [guildId, bannedPlayerId[0][0].id, issuerPlayerId[0][0].id, reason || '-', endsAt]);
+            } else {
+                await db.execute(`
+                INSERT INTO bans (guild_id, player_id, issuer_player_id, ends_at)
+                VALUES (?, ?, ?, ?)
+                `, [guildId, bannedPlayerId[0][0].id, issuerPlayerId[0][0].id, endsAt]);
+
+            }
+        }
+
+    }
+
+    static async isPlayerBanned(guildId: bigint, playerId: bigint | number): Promise<{ player: string; issuer: string; ends_at: Date, reason: string, id: string, banid: string } | null> {
+        let banInfo;
+
+        if (typeof playerId === 'bigint') {
+            banInfo = await db.execute(`
+            SELECT p.current_nick AS player, p2.current_nick AS issuer, b.ends_at, b.reason, p.id, b.id AS banid FROM bans b
+            JOIN players p ON b.player_id = p.id
+            JOIN players p2 ON b.issuer_player_id = p2.id
+            WHERE (b.ends_at > current_date() OR b.permanent = true) AND b.is_active = true 
+            AND p.user_id = ? AND b.guild_id = ? ORDER BY b.ends_at IS NULL DESC, b.ends_at DESC LIMIT 1
+            `, [playerId, guildId]);
+        } else {
+            banInfo = await db.execute(`
+            SELECT p.current_nick AS player, p2.current_nick AS issuer, b.ends_at, b.reason, p.id, b.id AS banid FROM bans b
+            JOIN players p ON b.player_id = p.id
+            JOIN players p2 ON b.issuer_player_id = p2.id
+            WHERE (b.ends_at > current_date() OR b.permanent = true) AND b.is_active = true 
+            AND b.id = ? AND b.guild_id = ? ORDER BY b.ends_at IS NULL DESC, b.ends_at DESC LIMIT 1
+            `, [playerId, guildId]);
+        }
+
+
+        return banInfo[0][0];
+    }
 }

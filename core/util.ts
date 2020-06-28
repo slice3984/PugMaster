@@ -21,13 +21,18 @@ export default class Util {
 
         if (global) {
             const bot = Bot.getInstance();
+            const user = guild.members.cache.get(id);
 
-            try {
-                const user = await bot.getClient().users.fetch(id);
-                return user;
-            } catch (_err) {
-                return null;
+            if (!user) {
+                try {
+                    const user = await bot.getClient().users.fetch(id);
+                    return user;
+                } catch (_err) {
+                    return null;
+                }
             }
+
+            return user;
         } else {
             const user = guild.members.cache.get(id);
             return user;
@@ -50,6 +55,10 @@ export default class Util {
     }
 
     static getChannel(guild: Discord.Guild, identifier: string) {
+        if (!identifier) {
+            return null;
+        }
+
         let id: string | RegExpMatchArray = identifier.match(/<#(\d+)>/);
 
         if (!id) {

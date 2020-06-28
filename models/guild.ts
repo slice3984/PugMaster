@@ -163,7 +163,11 @@ export default class GuildModel {
         WHERE guild_id = ? AND channel_type = 'pickup'
         `, [guildId]);
 
-        return channel[0][0].channel_id;
+        if (channel[0][0]) {
+            return channel[0][0].channel_id;
+        } else {
+            return null;
+        }
     }
 
     static async getAllExpires(...guildIds) {
@@ -292,5 +296,32 @@ export default class GuildModel {
         DELETE FROM guild_disabled_commands WHERE guild_id = ?
         AND command_name IN (${Array(commands.length).fill('?').join(',')})
         `, [guildId, ...commands]);
+    }
+
+    static async getBans(guildId: bigint, mode: 'perms_only' | 'all' | 'timed', limit: number = 10) {
+        let bans;
+
+        switch (mode) {
+            case 'perms_only':
+                bans = await db.execute(`
+                SELECT p.current_nick AS player, p2.current_nick AS issuer, b.ends_at, b.reason, p.id, b.id AS banid FROM bans b
+                JOIN players p ON b.player_id = p.id
+                JOIN players p2 ON b.issuer_player_id = p2.id
+                WHERE b.permanent = true AND b.is_active = true 
+                AND b.guild_id = ? ORDER BY b.id LIMIT ${limit}
+                `, [guildId]);
+                break;
+            case 'timed':
+                bans = await db.execute(`
+                SELECT p.current_nick AS player, p2.current_nick AS issuer, b.ends_at, b.reason, p.id, b.id AS banid FROM bans b
+                JOIN players p ON b.player_id = p.id
+                JOIN players p2 ON b.issuer_player_id = p2.id
+                WHERE b.ends_at > current_date() AND b.is_active = true 
+                AND b.guild_id = ? ORDER BY b.ends_at DESC LIMIT ${limit}
+                `, [guildId]);
+                break;
+        }
+
+        return bans[0];
     }
 }

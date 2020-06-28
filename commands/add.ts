@@ -31,7 +31,16 @@ const command: Command = {
             }
         }
 
-        // TODO: Ban check
+        // Ban check
+        const isBanned = await PlayerModel.isPlayerBanned(BigInt(message.guild.id), BigInt(message.member.id));
+        if (isBanned) {
+            if (isBanned.ends_at) {
+                const timeDif = isBanned.ends_at.getTime() - new Date().getTime();
+                return message.reply(`you are banned, time left: ${Util.formatTime(timeDif)} ${isBanned.reason ? 'reason: ' + isBanned.reason : ''}`);
+            } else {
+                return message.reply(`you are permbanned${isBanned.reason ? ', reason: ' + isBanned.reason : ''}`);
+            }
+        }
 
         if (params.length === 0) {
             if (!await PickupModel.getStoredPickupCount(BigInt(message.guild.id))) {
