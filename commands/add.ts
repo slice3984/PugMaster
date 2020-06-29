@@ -42,21 +42,73 @@ const command: Command = {
             }
         }
 
+        const roleCheck = async (...pickupIds) => {
+            const userRoles = message.member.roles.cache;
+            const invalidPickups = [];
+
+            for (const id of pickupIds) {
+                const pickupSettings = await PickupModel.getPickupSettings(BigInt(message.guild.id), id);
+                const guildSettings = bot.getGuild(message.guild.id);
+
+                // Pickup settings
+                if (pickupSettings.whitelist_role) {
+                    if (!userRoles.has(pickupSettings.whitelist_role)) {
+                        invalidPickups.push(id);
+                        continue;
+                    }
+                } else if (pickupSettings.blacklist_role) {
+                    if (userRoles.has(pickupSettings.blacklist_role)) {
+                        invalidPickups.push(id);
+                        continue;
+                    }
+                }
+
+                // Guild defaults
+                if (guildSettings.whitelistRole) {
+                    if (!userRoles.has(guildSettings.whitelistRole.toString())) {
+                        invalidPickups.push(id);
+                        continue;
+                    }
+                } else if (guildSettings.blacklistRole) {
+                    if (userRoles.has(guildSettings.blacklistRole.toString())) {
+                        invalidPickups.push(id);
+                    }
+                }
+            }
+
+            return invalidPickups;
+        }
+
         if (params.length === 0) {
             if (!await PickupModel.getStoredPickupCount(BigInt(message.guild.id))) {
                 return;
             }
 
             const playerAddedTo = await PickupModel.isPlayerAdded(BigInt(message.guild.id), BigInt(message.member.id));
-            const activeAndDefaultPickups = await (await PickupModel.getActivePickups(BigInt(message.guild.id), true)).values();
+            const activeAndDefaultPickups = Array.from(await (await PickupModel.getActivePickups(BigInt(message.guild.id), true)).values());
 
-            const validPickups = [...activeAndDefaultPickups]
+            let validPickups = activeAndDefaultPickups
                 .filter(pickup => !(playerAddedTo.includes(pickup.configId) || pickup.maxPlayers <= 2)) // Only autoadd on 2+ player pickups
                 .map(pickup => pickup.configId);
 
             if (validPickups.length === 0) {
                 return;
             }
+
+            const invalidPickups = await roleCheck(BigInt(...validPickups));
+            validPickups = validPickups.filter(id => !invalidPickups.includes(id));
+
+            if (invalidPickups.length) {
+                const invalidPickupNames = [...activeAndDefaultPickups].filter(pickup => invalidPickups.includes(pickup.configId))
+                    .map(pickup => pickup.name);
+
+                message.reply(`you are not allowed to add to ${invalidPickupNames.join(', ')} (Whitelist / Blacklist)`);
+            }
+
+            if (validPickups.length === 0) {
+                return;
+            }
+
             await PlayerModel.storeOrUpdatePlayer(BigInt(message.guild.id), BigInt(message.member.id), message.member.displayName);
             await PickupState.addPlayer(message.member, ...validPickups);
         } else {
@@ -67,11 +119,27 @@ const command: Command = {
             }
 
             const playerAddedTo = await PickupModel.isPlayerAdded(BigInt(message.guild.id), BigInt(message.member.id), ...existingPickups.map(pickup => pickup.id));
-            const validPickups = existingPickups.filter(pickup => !playerAddedTo.includes(pickup.id));
+            let validPickups = existingPickups.filter(pickup => !playerAddedTo.includes(pickup.id));
 
             if (validPickups.length === 0) {
                 return;
             }
+
+            const invalidPickups = await roleCheck(...validPickups.map(pickup => pickup.id));
+
+            if (invalidPickups.length) {
+                const invalidPickupNames = validPickups.filter(pickup => invalidPickups.includes(pickup.id))
+                    .map(pickup => pickup.name);
+
+                message.reply(`you are not allowed to add to ${invalidPickupNames.join(', ')} (Whitelist / Blacklist)`);
+            }
+
+            validPickups = validPickups.filter(pickup => !invalidPickups.includes(pickup.id));
+
+            if (validPickups.length === 0) {
+                return;
+            }
+
             await PlayerModel.storeOrUpdatePlayer(BigInt(message.guild.id), BigInt(message.member.id), message.member.displayName);
             await PickupState.addPlayer(message.member, ...validPickups.map(pickup => pickup.id))
         }
