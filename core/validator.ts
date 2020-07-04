@@ -299,7 +299,7 @@ export namespace Validator {
     export namespace Guild {
         export function areValidKeys(...keys) {
             const validKeys = ['prefix', 'global_expire', 'promotion', 'whitelist', 'blacklist', 'server',
-                'start_message', 'sub_message', 'notify_message', 'warn_streaks', 'warn_streak_expiration',
+                'start_message', 'sub_message', 'notify_message', 'warn_streaks', 'warns_until_ban', 'warn_streak_expiration',
                 'warn_expiration', 'warn_bantime', 'warn_bantime_multiplier'];
 
             const invalidKeys = keys.filter(key => !validKeys.includes(key));
@@ -479,6 +479,15 @@ export namespace Validator {
                         if (+value < 1 || +value > +config.settings.MAX_WARN_BANTIME_MULTIPLIER) {
                             errors.push({ type: key, errorMessage: `warn streak bantime multiplier has to be a number between 1-${config.settings.MAX_WARN_BANTIME_MULTIPLIER}` });
                             break;
+                        }
+                        break;
+                    case 'warns_until_ban':
+                        if (!/^\d+$/.test(value)) {
+                            errors.push({ type: key, errorMessage: 'amount has to be a number' });
+                            break;
+                        }
+                        if (+value < 2 || +value > 10) {
+                            errors.push({ type: key, errorMessage: `warns until ban has to be a number between 1-10` });
                         }
                 }
             }

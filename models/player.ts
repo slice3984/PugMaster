@@ -1,4 +1,5 @@
 import db from '../core/db';
+import Bot from '../core/bot';
 
 export default class PlayerModel {
     private constructor() { }
@@ -160,7 +161,7 @@ export default class PlayerModel {
     }
 
     // 0ms bantime => perm
-    static async banPlayer(guildId: bigint, issuerId: bigint, playerId: bigint, banTimeInMs: number, reason?: string) {
+    static async banPlayer(guildId: bigint, issuerId: bigint, playerId: bigint, banTimeInMs: number, isWarnBan: boolean, reason?: string) {
         const endsAt = new Date(new Date().getTime() + banTimeInMs);
 
         const bannedPlayerId = await db.execute(`
@@ -187,14 +188,14 @@ export default class PlayerModel {
         } else {
             if (reason) {
                 await db.execute(`
-                INSERT INTO bans (guild_id, player_id, issuer_player_id, reason, ends_at)
-                VALUES (?, ?, ?, ?, ?)
-                `, [guildId, bannedPlayerId[0][0].id, issuerPlayerId[0][0].id, reason || '-', endsAt]);
+                INSERT INTO bans (guild_id, player_id, issuer_player_id, reason, ends_at, is_warn_ban)
+                VALUES (?, ?, ?, ?, ?, ?)
+                `, [guildId, bannedPlayerId[0][0].id, issuerPlayerId[0][0].id, reason || '-', endsAt, isWarnBan]);
             } else {
                 await db.execute(`
-                INSERT INTO bans (guild_id, player_id, issuer_player_id, ends_at)
-                VALUES (?, ?, ?, ?)
-                `, [guildId, bannedPlayerId[0][0].id, issuerPlayerId[0][0].id, endsAt]);
+                INSERT INTO bans (guild_id, player_id, issuer_player_id, ends_at, is_warn_ban)
+                VALUES (?, ?, ?, ?, ?)
+                `, [guildId, bannedPlayerId[0][0].id, issuerPlayerId[0][0].id, endsAt, isWarnBan]);
 
             }
         }
@@ -224,5 +225,141 @@ export default class PlayerModel {
 
 
         return banInfo[0][0];
+    }
+
+    static async isPlayerWarned(guildId: bigint, playerId: bigint | number) {
+        const guildSettings = Bot.getInstance().getGuild(guildId);
+        let isWarned;
+
+        if (typeof playerId === 'bigint') {
+            isWarned = await db.execute(`
+            SELECT current_nick FROM warns w
+            JOIN players p ON p.id = w.player_id
+            WHERE p.user_id = ?
+            AND w.is_active = true
+            AND DATE_ADD(warned_at, INTERVAL (? / 1000) SECOND) > CURRENT_DATE()
+            AND w.guild_id = ?
+            LIMIT 1
+            `, [playerId, guildSettings.warnExpiration, guildId]);
+        } else {
+            isWarned = await db.execute(`
+            SELECT current_nick FROM warns w
+            JOIN players p ON p.id = w.player_id
+            WHERE w.id = ? AND w.guild_id = ? AND w.is_active = true
+            AND DATE_ADD(warned_at, INTERVAL (? / 1000) SECOND) > CURRENT_DATE()
+            LIMIT 1
+            `, [playerId, guildId, guildSettings.warnExpiration]);
+        }
+
+        if (isWarned[0][0]) {
+            return isWarned[0][0].current_nick;
+        }
+    }
+
+    static async getActiveWarns(guildId: bigint, playerId: bigint): Promise<{ current_nick: string, reason: string }[]> {
+        const guildSettings = Bot.getInstance().getGuild(guildId);
+
+        const activeWarns = await db.execute(`
+        SELECT p.current_nick, w.reason FROM warns w
+        JOIN players p ON w.player_id = p.id
+        WHERE w.guild_id = ? AND p.user_id = ?
+        AND DATE_ADD(w.warned_at, INTERVAL (? / 1000) SECOND) > CURRENT_DATE()
+        AND w.is_active = true
+        `, [guildId, playerId, guildSettings.warnExpiration]);
+
+        return activeWarns[0];
+    }
+
+    static async setActiveWarnsToFalse(guildId: bigint, playerId: bigint) {
+        const dbPlayerId = await db.execute(`
+        SELECT id FROM players WHERE guild_id = ? AND user_id = ?
+        `, [guildId, playerId]);
+
+        await db.execute(`
+        UPDATE warns SET is_active = false WHERE guild_id = ?
+        AND player_id = ?
+        `, [guildId, dbPlayerId[0][0].id]);
+    }
+
+    static async getWarnsInStreak(guildId: bigint, playerId: bigint) {
+        const guildSettings = Bot.getInstance().getGuild(guildId);
+
+        const warnsInStreak = await db.execute(`
+        SELECT COUNT(w.id) as warnCount FROM warns w
+        JOIN players p ON w.player_id = p.id
+        WHERE w.guild_id = ? AND p.user_id = ?
+        AND DATE_ADD(w.warned_at, INTERVAL (? / 1000) SECOND) > CURRENT_DATE()
+        `, [guildId, playerId, guildSettings.warnStreakExpiration]);
+
+        return warnsInStreak[0][0].warnCount;
+    }
+
+    static async warnPlayer(guildId: bigint, issuerId: bigint, playerId: bigint, reason?: string) {
+        const dbPlayerId = await db.execute(`
+        SELECT id FROM players WHERE guild_id = ? AND user_id = ?
+        `, [guildId, playerId]);
+
+        const dbIssuerPlayerId = await db.execute(`
+        SELECT id FROM players WHERE guild_id = ? AND user_id = ?
+        `, [guildId, issuerId]);
+
+        if (reason) {
+            await db.execute(`
+            INSERT INTO warns (guild_id, player_id, issuer_player_id, reason)
+            VALUES (?, ?, ?, ?)
+            `, [guildId, dbPlayerId[0][0].id, dbIssuerPlayerId[0][0].id, reason]);
+        } else {
+            await db.execute(`
+            INSERT INTO warns (guild_id, player_id, issuer_player_id)
+            VALUES (?, ?, ?)
+            `, [guildId, dbPlayerId[0][0].id, dbIssuerPlayerId[0][0].id]);
+        }
+    }
+
+    static async unwarnPlayer(guildId: bigint, playerId: bigint | number, all: boolean) {
+        const guildSettings = Bot.getInstance().getGuild(guildId);
+
+        if (all) {
+            if (typeof playerId === 'bigint') {
+                await db.execute(`
+                UPDATE warns SET is_active = false
+                WHERE player_id = (SELECT id FROM players WHERE user_id = ?)
+                AND DATE_ADD(warned_at, INTERVAL (? / 1000) SECOND) > CURRENT_DATE()
+                AND is_active = true
+                AND guild_id = ?
+                `, [playerId, guildSettings.warnExpiration, guildId]);
+            } else {
+                await db.execute(`
+				UPDATE warns SET is_active = false
+                WHERE player_id = (SELECT player_id FROM (SELECT * FROM warns) w WHERE w.id = ? AND w.guild_id = ?) 
+                AND guild_id = ?
+                AND is_active = true
+                AND DATE_ADD(warned_at, INTERVAL (? / 1000) SECOND) > CURRENT_DATE()
+                `, [playerId, guildId, guildId, guildSettings.warnExpiration]);
+            }
+        } else {
+            if (typeof playerId === 'bigint') {
+                await db.execute(`
+                UPDATE warns SET is_active = false
+                WHERE id = (
+                  SELECT id FROM (
+                    SELECT MAX(id) AS id FROM warns w
+                    WHERE player_id = (
+                      SELECT id FROM players WHERE user_id = ?
+                      AND guild_id = ?
+                    )
+                    AND is_active = true
+                    AND guild_id = ?
+                    AND DATE_ADD(warned_at, INTERVAL (? / 1000) SECOND) > CURRENT_DATE()
+                  ) AS id
+                )
+                `, [playerId, guildId, guildId, guildSettings.warnExpiration]);
+            } else {
+                await db.execute(`
+                UPDATE warns SET is_active = false
+                WHERE guild_id = ? AND id = ?
+                `, [guildId, playerId]);
+            }
+        }
     }
 }

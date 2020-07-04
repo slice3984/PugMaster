@@ -85,6 +85,7 @@ export default class GuildModel {
             data.sub_message,
             data.notify_message,
             data.warn_streaks,
+            data.warns_until_ban,
             data.warn_streak_expiration,
             data.warn_expiration_time,
             data.warn_ban_time,
@@ -304,7 +305,7 @@ export default class GuildModel {
         switch (mode) {
             case 'perms_only':
                 bans = await db.execute(`
-                SELECT p.current_nick AS player, p2.current_nick AS issuer, b.ends_at, b.reason, p.id, b.id AS banid FROM bans b
+                SELECT p.current_nick AS player, p2.current_nick AS issuer, b.ends_at, b.is_warn_ban, b.reason, p.id, b.id AS banid FROM bans b
                 JOIN players p ON b.player_id = p.id
                 JOIN players p2 ON b.issuer_player_id = p2.id
                 WHERE b.permanent = true AND b.is_active = true 
@@ -313,7 +314,7 @@ export default class GuildModel {
                 break;
             case 'timed':
                 bans = await db.execute(`
-                SELECT p.current_nick AS player, p2.current_nick AS issuer, b.ends_at, b.reason, p.id, b.id AS banid FROM bans b
+                SELECT p.current_nick AS player, p2.current_nick AS issuer, b.ends_at, b.is_warn_ban, b.reason, p.id, b.id AS banid FROM bans b
                 JOIN players p ON b.player_id = p.id
                 JOIN players p2 ON b.issuer_player_id = p2.id
                 WHERE b.ends_at > current_date() AND b.is_active = true 
@@ -323,5 +324,26 @@ export default class GuildModel {
         }
 
         return bans[0];
+    }
+
+    static async getWarns(guildId: bigint, limit: number)
+        : Promise<{ warns: number, player: string, issuer: string, warned_at: Date, reason: string, id: number, warnid: number }[]> {
+        const guildSettings = Bot.getInstance().getGuild(guildId);
+
+        // https://mariadb.com/kb/en/why-is-order-by-in-a-from-subquery-ignored/
+        const warns = await db.execute(`
+        SELECT COUNT(w_temp.id) AS warns, w_temp.* FROM (
+            SELECT p.current_nick AS player, p2.current_nick AS issuer, w.warned_at, w.reason, p.id, w.id AS warnid FROM warns w
+            JOIN players p ON w.player_id = p.id
+            JOIN players p2 ON w.issuer_player_id = p2.id
+            WHERE DATE_ADD(w.warned_at, INTERVAL (? / 1000) SECOND) > CURRENT_DATE()
+            AND w.guild_id = ? AND is_active = true
+            ORDER BY w.warned_at DESC
+            LIMIT 18446744073709551615) AS w_temp
+        GROUP BY w_temp.id
+        LIMIT ${limit}
+        `, [guildSettings.warnExpiration, guildId]);
+
+        return warns[0].reverse();
     }
 }

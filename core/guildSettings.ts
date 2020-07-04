@@ -25,6 +25,7 @@ export default class GuildSettings {
         private _subMessage: string,
         private _notifyMessage: string,
         private _warnStreaks: number,
+        private _warnsUntilBan: number,
         private _warnStreakExpiration: number,
         private _warnExpiration: number,
         private _warnBanTime: number,
@@ -38,7 +39,7 @@ export default class GuildSettings {
 
             if (prop.value === 'none') {
                 if (['prefix', 'warn_streaks', 'warn_streak_expiration', 'warn_expiration', 'warn_bantime',
-                    'warn_bantime_multiplier'].includes(prop.key)) {
+                    'warn_bantime_multiplier', 'warns_until_ban'].includes(prop.key)) {
                     errors.push({ type: 'none', errorMessage: `you can't disable property ${prop.key}` });
                 } else {
                     continue;
@@ -102,6 +103,7 @@ export default class GuildSettings {
                 case 'sub_message': this._subMessage = value; break;
                 case 'notify_message': this._notifyMessage = value; break;
                 case 'warn_streaks': this._warnStreaks = value ? +value : null; break;
+                case 'warns_until_ban': this._warnsUntilBan = value ? +value : null; break;
                 case 'warn_streak_expiration': this._warnStreakExpiration = +value; break;
                 case 'warn_expiration': this._warnExpiration = +value; break;
                 case 'warn_bantime': this._warnBanTime = +value; break;
@@ -173,6 +175,10 @@ export default class GuildSettings {
 
     public get warnBanTimeMultiplier(): number {
         return this._warnBanTimeMultiplier;
+    }
+
+    public get warnsUntilBan(): number {
+        return this._warnsUntilBan;
     }
 
     public get warnExpiration(): number {

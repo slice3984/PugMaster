@@ -37,7 +37,14 @@ const command: Command = {
                 }
                 const timeDif = ban.ends_at.getTime() - new Date().getTime();
                 const issuer = defaults[0] === 'true' ? ' Issuer: ' + ban.issuer : '';
-                formattedBans.push(`Banid: ${ban.banid} Player: ${ban.player}${issuer} Time left: ${Util.formatTime(timeDif)}${ban.reason ? ' Reason: ' + ban.reason : ''}`);
+
+                let reason = ban.reason;
+
+                if (reason && reason.length > 45) {
+                    reason = reason.substr(0, 45) + '...';
+                }
+
+                formattedBans.push(`Banid: ${ban.banid} Player: ${ban.player}${issuer} Time left: ${Util.formatTime(timeDif)}${reason ? ' Reason: ' + reason : ''}${ban.is_warn_ban ? ' (AUTOBAN - WARNS)' : ''}`);
             });
 
             message.channel.send(formattedBans.join('\n'));
@@ -62,8 +69,15 @@ const command: Command = {
                 if (index === 10) {
                     return;
                 }
+
+                let reason = ban.reason;
+
+                if (reason && reason.length > 45) {
+                    reason = reason.substr(0, 45) + '...';
+                }
+
                 const issuer = defaults[0] === 'true' ? ' Issuer: ' + ban.issuer : '';
-                formattedBans.push(`Banid: ${ban.banid} Player: ${ban.player}${issuer}${ban.reason ? ' Reason: ' + ban.reason : ''}`);
+                formattedBans.push(`Banid: ${ban.banid} Player: ${ban.player}${issuer}${reason ? ' Reason: ' + reason : ''}`);
             });
 
             message.channel.send(formattedBans.join('\n'));

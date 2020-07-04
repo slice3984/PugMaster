@@ -43,6 +43,13 @@ const command: Command = {
         if (['perm', 'permanent'].includes(time)) {
             const isBannedAlready = await PlayerModel.isPlayerBanned(BigInt(message.guild.id), BigInt(player.id));
             let msg = '';
+            const reason = params.slice(2).join(' ');
+
+            if (reason) {
+                if (reason.length > 128) {
+                    return message.reply('max reason length is 128 chars');
+                }
+            }
 
             if (isBannedAlready) {
                 // no date stored, perm ban
@@ -57,7 +64,7 @@ const command: Command = {
                 }
             }
 
-            await PlayerModel.banPlayer(BigInt(message.guild.id), BigInt(message.member.id), BigInt(player.id), 0, params.slice(2).join(' ') || null);
+            //await PlayerModel.banPlayer(BigInt(message.guild.id), BigInt(message.member.id), BigInt(player.id), 0, params.slice(2).join(' ') || null);
 
             if (player instanceof GuildMember) {
                 msg += `${player.displayName} got permanently banned ${params.slice(2).join(' ') ? 'Reason: ' + params.slice(2).join(' ') : ''}`;
@@ -113,10 +120,10 @@ const command: Command = {
             }
 
             if (player instanceof GuildMember) {
-                await PlayerModel.banPlayer(BigInt(message.guild.id), BigInt(message.member.id), BigInt(player.id), ms, reason || '');
+                await PlayerModel.banPlayer(BigInt(message.guild.id), BigInt(message.member.id), BigInt(player.id), ms, false, reason || '');
                 msg += `${player.displayName} got banned for ${Util.formatTime(ms)}${reason ? ' Reason: ' + reason : ''}`;
             } else {
-                await PlayerModel.banPlayer(BigInt(message.guild.id), BigInt(message.member.id), BigInt(player.id), ms, reason || '');
+                await PlayerModel.banPlayer(BigInt(message.guild.id), BigInt(message.member.id), BigInt(player.id), ms, false, reason || '');
                 msg += `${player.username} got banned for ${Util.formatTime(ms)}${reason ? ' Reason: ' + reason : ''}`;
             }
 

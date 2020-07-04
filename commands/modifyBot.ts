@@ -43,6 +43,7 @@ const command: Command = {
             const subMessage = settings.subMessage || '-';
             const notifyMessage = settings.notifyMessage || '-';
             const warnStreaks = settings.warnStreaks;
+            const warnsUntilBan = settings.warnsUntilBan;
             const warnStreakExpiration = Util.formatTime(settings.warnStreakExpiration);
             const warnExpirationTime = Util.formatTime(settings.warnExpiration);
             const warnBanTime = Util.formatTime(settings.warnBanTime);
@@ -61,6 +62,7 @@ const command: Command = {
                 `Sub message: **${subMessage}**\n` +
                 `Notify message: **${notifyMessage}**\n` +
                 `Max warn streaks: **${warnStreaks}**\n` +
+                `Warns until ban: **${warnsUntilBan}**\n` +
                 `Warn streak expiration: **${warnStreakExpiration}**\n` +
                 `Warn expiration time: **${warnExpirationTime}**\n` +
                 `Warn bantime: **${warnBanTime}**\n` +

@@ -95,7 +95,7 @@ const command: Command = {
                 return;
             }
 
-            const invalidPickups = await roleCheck(BigInt(...validPickups));
+            const invalidPickups = await roleCheck(...validPickups);
             validPickups = validPickups.filter(id => !invalidPickups.includes(id));
 
             if (invalidPickups.length) {
