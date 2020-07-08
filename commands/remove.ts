@@ -25,14 +25,14 @@ const command: Command = {
             return;
         }
 
-        const playerAddedTo = await PickupModel.isPlayerAdded(BigInt(message.guild.id), BigInt(message.member.id), existingPickups.map(pickup => pickup.id));
+        const playerAddedTo = await PickupModel.isPlayerAdded(BigInt(message.guild.id), BigInt(message.member.id), ...existingPickups.map(pickup => pickup.id));
         const validPickups = existingPickups.filter(pickup => playerAddedTo.includes(pickup.id));
 
         if (existingPickups.length === 0 || validPickups.length === 0) {
             return;
         }
 
-        await PickupState.removePlayer(message.member, ...validPickups.map(pickup => pickup.id));
+        await PickupState.removePlayer(message.member, true, ...validPickups.map(pickup => pickup.id));
     }
 }
 

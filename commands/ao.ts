@@ -34,7 +34,7 @@ const command: Command = {
                 return message.reply('you got no active ao');
             }
 
-            const timeLeft = ao[0].expiration_date.getTime() - new Date().getTime();
+            const timeLeft = ao[0].ao_expire.getTime() - new Date().getTime();
             message.reply(`your ao will expire in ${Util.formatTime(timeLeft)}`);
         }
     }

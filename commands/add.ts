@@ -51,13 +51,13 @@ const command: Command = {
                 const guildSettings = bot.getGuild(message.guild.id);
 
                 // Pickup settings
-                if (pickupSettings.whitelist_role) {
-                    if (!userRoles.has(pickupSettings.whitelist_role)) {
+                if (pickupSettings.whitelistRole) {
+                    if (!userRoles.has(pickupSettings.whitelistRole.toString())) {
                         invalidPickups.push(id);
                         continue;
                     }
-                } else if (pickupSettings.blacklist_role) {
-                    if (userRoles.has(pickupSettings.blacklist_role)) {
+                } else if (pickupSettings.blacklistRole) {
+                    if (userRoles.has(pickupSettings.blacklistRole.toString())) {
                         invalidPickups.push(id);
                         continue;
                     }

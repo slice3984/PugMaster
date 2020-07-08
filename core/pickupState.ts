@@ -4,6 +4,8 @@ import PickupModel from '../models/pickup';
 import GuildModel from '../models/guild';
 import PlayerModel from '../models/player';
 import Util from '../core/util';
+import { PickupSettings } from './types';
+import PickupStage from './PickupStage';
 
 const bot = Bot.getInstance();
 
@@ -20,8 +22,24 @@ export default class PickupState {
             await PickupModel.addPlayer(BigInt(member.guild.id), BigInt(member.id), ...pickupIds);
             await PickupModel.updatePlayerAddTime(BigInt(member.guild.id), BigInt(member.id));
         } else {
-            // Pickup start check
             await PickupModel.addPlayer(BigInt(member.guild.id), BigInt(member.id), ...pickupIds);
+
+            // Pickup start check
+            // First pickup about to start
+            // Loop in order of the given pickups
+            for (const id of pickupIds) {
+                let pickup = Array.from(activePickups.values()).find(pickup => pickup.configId === id);
+
+                if (!pickup) {
+                    continue;
+                }
+
+                // Pickup is about to start
+                if (pickup.maxPlayers === pickup.players.length + 1) {
+                    PickupStage.handle(member.guild, +pickup.configId);
+                    return;
+                }
+            }
         }
 
         const genPickupInfo = pickup => `**${pickup.name}** [ **${pickup.players.length}** / **${pickup.maxPlayers}** ]`;
@@ -37,7 +55,7 @@ export default class PickupState {
         return pickupChannel.send(msg);
     }
 
-    static async removePlayer(member: Discord.GuildMember, ...pickupIds: number[]) {
+    static async removePlayer(member: Discord.GuildMember, showStatus = true, ...pickupIds: number[]) {
         // TODO: Check if the pickup is pending and abort
         if (pickupIds.length === 0) {
             const isAddedToAnyPickup = await PickupModel.isPlayerAdded(BigInt(member.guild.id), BigInt(member.id));
@@ -56,7 +74,9 @@ export default class PickupState {
             PlayerModel.removeExpires(BigInt(member.guild.id), member.id);
         }
 
-        await PickupState.showPickupStatus(member.guild);
+        if (showStatus) {
+            await PickupState.showPickupStatus(member.guild);
+        }
     }
 
     static async showPickupStatus(guild: Discord.Guild) {
@@ -73,5 +93,9 @@ export default class PickupState {
         let msg = '';
         pickups.forEach(pickup => msg += `${genPickupInfo(pickup)} `);
         pickupChannel.send(msg || 'No active pickups');
+    }
+
+    static async showPickupStart(guild: Discord.Guild, settings: PickupSettings, players: BigInt[]) {
+        // %players, %server %
     }
 }

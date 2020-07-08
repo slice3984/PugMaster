@@ -2,7 +2,7 @@ import Discord from 'discord.js';
 import PickupModel from "../models/pickup";
 import Util from "./util";
 import Bot from "./bot";
-import { ValidationError, Command } from './types';
+import { ValidationError, Command, PickupSettings } from './types';
 import MappoolModel from '../models/mappool';
 import ServerModel from '../models/server';
 import GuildSettings from './guildSettings';
@@ -39,7 +39,7 @@ export namespace Validator {
             let errors: ValidationError[] = [];
             let teamCount;
             let playerCount;
-            let pickupSettings;
+            let pickupSettings: PickupSettings;
             let isPickupActive;
 
             for (const obj of toValidate) {
@@ -86,7 +86,7 @@ export namespace Validator {
                         }
 
                         if (!teamCount) {
-                            teamCount = await (await PickupModel.getPickupSettings(BigInt(guild.id), pickup)).team_count;
+                            teamCount = await (await PickupModel.getPickupSettings(BigInt(guild.id), pickup)).teamCount;
                         }
 
                         if (+value % teamCount !== 0) {
@@ -106,7 +106,7 @@ export namespace Validator {
                         }
 
                         if (!playerCount) {
-                            playerCount = await (await PickupModel.getPickupSettings(BigInt(guild.id), pickup)).player_count;
+                            playerCount = await (await PickupModel.getPickupSettings(BigInt(guild.id), pickup)).playerCount;
                         }
 
                         if (playerCount % +value !== 0) {
@@ -152,7 +152,7 @@ export namespace Validator {
                             pickupSettings = await PickupModel.getPickupSettings(BigInt(guild.id), pickup);
                         }
 
-                        if ([pickupSettings.blacklist_role, pickupSettings.promotion_role, pickupSettings.captain_role].includes(whitelistRole.id)) {
+                        if ([pickupSettings.blacklistRole.toString(), pickupSettings.promotionRole.toString(), pickupSettings.captainRole.toString()].includes(whitelistRole.id)) {
                             errors.push({ type: 'whitelist', errorMessage: 'can\'t set the same roles for different pickup specific roles' });
                             break;
                         }
@@ -169,7 +169,7 @@ export namespace Validator {
                             pickupSettings = await PickupModel.getPickupSettings(BigInt(guild.id), pickup);
                         }
 
-                        if ([pickupSettings.whitelist_role, pickupSettings.promotion_role, pickupSettings.captain_role].includes(blacklistRole.id)) {
+                        if ([pickupSettings.whitelistRole.toString(), pickupSettings.promotionRole.toString(), pickupSettings.captainRole.toString()].includes(blacklistRole.id)) {
                             errors.push({ type: 'blacklist', errorMessage: 'can\'t set the same roles for different pickup specific roles' });
                             break;
                         }
@@ -186,7 +186,7 @@ export namespace Validator {
                             pickupSettings = await PickupModel.getPickupSettings(BigInt(guild.id), pickup);
                         }
 
-                        if ([pickupSettings.blacklist_role, pickupSettings.whitelist_role, pickupSettings.captain_role].includes(promotionRole.id)) {
+                        if ([pickupSettings.blacklistRole.toString(), pickupSettings.whitelistRole.toString(), pickupSettings.captainRole.toString()].includes(promotionRole.id)) {
                             errors.push({ type: 'promotion', errorMessage: 'can\'t set the same roles for different pickup specific roles' });
                             break;
                         }
@@ -203,7 +203,7 @@ export namespace Validator {
                             pickupSettings = await PickupModel.getPickupSettings(BigInt(guild.id), pickup);
                         }
 
-                        if ([pickupSettings.blacklist_role, pickupSettings.whitelist_role, pickupSettings.promotion_role].includes(captainRole.id)) {
+                        if ([pickupSettings.blacklistRole.toString(), pickupSettings.whitelistRole.toString(), pickupSettings.promotionRole.toString()].includes(captainRole.id)) {
                             errors.push({ type: 'captain', errorMessage: 'can\'t set the same roles for different pickup specific roles' });
                             break;
                         }
@@ -416,8 +416,8 @@ export namespace Validator {
                     case 'notify_message':
                         const toRespond = key.replace('_', ' ');
 
-                        if (value.length > 150) {
-                            errors.push({ type: key, errorMessage: `${toRespond} has to be shorter than 150 chars` });
+                        if (value.length > 200) {
+                            errors.push({ type: key, errorMessage: `${toRespond} has to be shorter than 200 chars` });
                             break;
                         }
 

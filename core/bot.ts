@@ -49,7 +49,7 @@ export default class Bot {
             const playersToRemoveExpire = new Map();
 
             expires.forEach(expire => {
-                const timeLeft = expire.expiration_date.getTime() - dateInMs;
+                const timeLeft = expire.pickup_expire.getTime() - dateInMs;
                 if (timeLeft <= 0) {
                     if (playersToRemoveExpire.has(expire.guild_id)) {
                         playersToRemoveExpire.get(expire.guild_id).push(expire.player_id);
@@ -127,7 +127,7 @@ export default class Bot {
             const playersToRemoveAos = new Map();
 
             playerAos.forEach(ao => {
-                const timeLeft = ao.expiration_date.getTime() - dateInMs;
+                const timeLeft = ao.ao_expire.getTime() - dateInMs;
                 if (timeLeft <= 0) {
                     if (timeLeft <= 0) {
                         if (playersToRemoveAos.has(ao.guild_id)) {

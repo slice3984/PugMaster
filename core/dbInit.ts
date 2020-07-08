@@ -32,9 +32,9 @@ export const createTables = () => new Promise(async (res, _req) => {
       global_whitelist_role BIGINT NULL,
       global_expire INT NULL DEFAULT 21600000,
       server_id INT NULL,
-      start_message VARCHAR(150) NULL,
-      sub_message VARCHAR(150) NULL,
-      notify_message VARCHAR(150) NULL,
+      start_message VARCHAR(200) NOT NULL DEFAULT '**%name** pickup started\n\n%teams\n\n%map[Map: **%map**]\n%ip[IP: **%ip**] %password[Password: **%password**]',
+      sub_message VARCHAR(200) NOT NULL DEFAULT 'sub required for **%name** pickup\n%ip[IP: **%ip**] %password[Password: **%password**]',
+      notify_message VARCHAR(200) NOT NULL DEFAULT 'your %name pickup started\n%ip[IP: **%ip**] %password[Password: **%password**]',
       last_promote DATETIME NULL,
       trust_check TINYINT NOT NULL DEFAULT 0,
       trust_time INT NOT NULL DEFAULT 86400000,
@@ -413,62 +413,57 @@ export const createTables = () => new Promise(async (res, _req) => {
         ON UPDATE CASCADE)      
         `,
     `
-    CREATE TABLE IF NOT EXISTS state_active_pickups (
+      CREATE TABLE IF NOT EXISTS state_pickup (
+        guild_id BIGINT NOT NULL,
+        pickup_config_id INT NOT NULL,
+        stage ENUM('fill', 'afk_check', 'picking_manual') NOT NULL DEFAULT 'fill',
+        INDEX fk_state_pickup_guild_id_idx (guild_id ASC) VISIBLE,
+        INDEX fk_state_pickup_pickup_config_id_idx (pickup_config_id ASC) VISIBLE,
+        UNIQUE(guild_id, pickup_config_id),
+        CONSTRAINT fk_state_pickup_guild_id
+          FOREIGN KEY (guild_id)
+          REFERENCES guilds (guild_id)
+          ON DELETE CASCADE
+          ON UPDATE CASCADE,
+        CONSTRAINT fk_state_pickup_pickup_config_id
+          FOREIGN KEY (pickup_config_id)
+          REFERENCES pickup_configs (id)
+          ON DELETE CASCADE
+          ON UPDATE CASCADE)
+      `,
+    `
+    CREATE TABLE IF NOT EXISTS state_pickup_players (
       guild_id BIGINT NOT NULL,
       player_id BIGINT NOT NULL,
-      pickup_config_id INT NOT NULL,
-      INDEX guild_id_idx (guild_id ASC) VISIBLE,
-      INDEX (pickup_config_id ASC) VISIBLE,
-      UNIQUE(guild_id, player_id, pickup_config_id),
-      CONSTRAINT fk_state_active_pickups
+      pickup_config_id INT NULL,
+      INDEX fk_state_pickup_players_guild_id_idx (guild_id ASC) VISIBLE,
+      INDEX fk_state_pickup_players_pickup_config_id_idx (pickup_config_id ASC) VISIBLE,
+      CONSTRAINT fk_state_pickup_players_guild_id
         FOREIGN KEY (guild_id)
         REFERENCES guilds (guild_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
-      CONSTRAINT fk_state_active_pickups_config
+      CONSTRAINT fk_state_pickup_players_pickup_config_id
         FOREIGN KEY (pickup_config_id)
         REFERENCES pickup_configs (id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE)      
-        `,
+        ON UPDATE CASCADE)
+      `,
     `
-    CREATE TABLE IF NOT EXISTS state_active_expires (
-      guild_id BIGINT NOT NULL,
-      player_id BIGINT NOT NULL,
-      expiration_date DATETIME NOT NULL,
-      INDEX guild_id_idx (guild_id ASC) VISIBLE,
-      UNIQUE(guild_id, player_id),
-      CONSTRAINT fk_state_active_expires
-        FOREIGN KEY (guild_id)
-        REFERENCES guilds (guild_id)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE)    
-        `,
-    `
-    CREATE TABLE IF NOT EXISTS state_active_aos (
-      guild_id BIGINT NOT NULL,
-      player_id BIGINT NOT NULL,
-      expiration_date DATETIME NOT NULL,
-      INDEX guild_id_idx (guild_id ASC) VISIBLE,
-      UNIQUE(guild_id, player_id),
-      CONSTRAINT fk_state_active_aos
-        FOREIGN KEY (guild_id)
-        REFERENCES guilds (guild_id)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE)  
-        `,
-    `
-    CREATE TABLE IF NOT EXISTS state_add_times (
-      guild_id BIGINT NOT NULL,
-      player_id BIGINT NOT NULL,
-      added_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      INDEX fk_state_add_times_idx (guild_id ASC) VISIBLE,
-      UNIQUE(guild_id, player_id),
-      CONSTRAINT fk_state_add_times
-        FOREIGN KEY (guild_id)
-        REFERENCES guilds (guild_id)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE)   
+      CREATE TABLE IF NOT EXISTS state_guild_player (
+        guild_id BIGINT NOT NULL,
+        player_id BIGINT NOT NULL,
+        ao_expire DATETIME NULL,
+        pickup_expire DATETIME NULL,
+        last_add DATETIME NULL,
+        is_afk TINYINT NULL,
+        INDEX fk_state_guild_player_guild_id_idx (guild_id ASC) VISIBLE,
+        UNIQUE(guild_id, player_id),
+        CONSTRAINT fk_state_guild_player_guild_id
+          FOREIGN KEY (guild_id)
+          REFERENCES guilds (guild_id)
+          ON DELETE CASCADE
+          ON UPDATE CASCADE)
       `
   ];
 

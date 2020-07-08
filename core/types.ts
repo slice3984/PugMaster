@@ -55,3 +55,19 @@ export interface ValidationError {
 }
 
 export type TimeError = 'exceeded' | 'subceeded' | 'invalid';
+
+export interface PickupSettings {
+    id: number;
+    name: string;
+    playerCount: number;
+    teamCount: number;
+    isDefaultPickup: boolean;
+    mapPoolId: number | null;
+    afkCheck: boolean;
+    pickMode: 'no_teams' | 'manual' | 'elo';
+    whitelistRole: bigint | null;
+    blacklistRole: bigint | null;
+    promotionRole: bigint | null;
+    captainRole: bigint | null;
+    serverId: number | null;
+}

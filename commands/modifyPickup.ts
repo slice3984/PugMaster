@@ -105,18 +105,18 @@ const command: Command = {
 
             const settings = await PickupModel.getPickupSettings(BigInt(message.guild.id), pickup);
 
-            const mapPoolName = settings.mappool_id ? await MappoolModel.getPoolName(BigInt(message.guild.id), settings.mappool_id) : '-';
-            const whitelistRole = settings.whitelist_role ? Util.getRole(message.guild, settings.whitelist_role) : null;
-            const blacklistRole = settings.blacklist_role ? Util.getRole(message.guild, settings.blacklist_role) : null;
-            const promotionRole = settings.promotion_role ? Util.getRole(message.guild, settings.promotion_role) : null;
-            const captainRole = settings.captain_role ? Util.getRole(message.guild, settings.captain_role) : null;
+            const mapPoolName = settings.mapPoolId ? await MappoolModel.getPoolName(BigInt(message.guild.id), settings.mapPoolId) : '-';
+            const whitelistRole = settings.whitelistRole ? Util.getRole(message.guild, settings.whitelistRole.toString()) : null;
+            const blacklistRole = settings.blacklistRole ? Util.getRole(message.guild, settings.blacklistRole.toString()) : null;
+            const promotionRole = settings.promotionRole ? Util.getRole(message.guild, settings.promotionRole.toString()) : null;
+            const captainRole = settings.captainRole ? Util.getRole(message.guild, settings.captainRole.toString()) : null;
 
             const infoString =
                 `__Configuration **${settings.name}** pickup__\n` +
-                `Players/Teams: **${settings.player_count}** / **${settings.team_count}**\n` +
-                `Default Pickup: **${settings.is_default_pickup ? 'yes' : 'no'}**\n` +
-                `AFK check: **${settings.afk_check ? 'enabled' : 'disabled'}**\n` +
-                `Pick mode: **${settings.pick_mode}**\n` +
+                `Players/Teams: **${settings.playerCount}** / **${settings.teamCount}**\n` +
+                `Default Pickup: **${settings.isDefaultPickup ? 'yes' : 'no'}**\n` +
+                `AFK check: **${settings.afkCheck ? 'enabled' : 'disabled'}**\n` +
+                `Pick mode: **${settings.pickMode}**\n` +
                 `Map pool: **${mapPoolName}**\n` +
                 `Whitelist role: **${whitelistRole ? whitelistRole.name : '-'}**\n` +
                 `Blacklist role: **${blacklistRole ? blacklistRole.name : '-'}**\n` +

@@ -83,37 +83,39 @@ export default class PlayerModel {
         const expireDate = new Date(new Date().getTime() + timeInMs);
 
         await db.execute(`
-        INSERT INTO state_active_expires VALUES (?, ?, ?)
-        ON DUPLICATE KEY UPDATE expiration_date = ?
+        INSERT INTO state_guild_player (guild_id, player_id, pickup_expire)
+        VALUES (?, ?, ?)
+        ON DUPLICATE KEY UPDATE pickup_expire = ?
         `, [guildId, playerId, expireDate, expireDate]);
         return;
     }
 
     static async removeExpires(guildId: bigint, ...playerIds) {
         await db.execute(`
-        DELETE FROM state_active_expires
+        UPDATE state_guild_player SET pickup_expire = null
         WHERE guild_id = ? AND player_id IN (${Array(playerIds.length).fill('?').join(',')})
-        `, [guildId, ...playerIds])
+        `, [guildId, ...playerIds]);
     }
 
     static async getExpires(guildId: bigint, ...playerIds): Promise<Date> {
         const expiresIn = await db.execute(`
-        SELECT expiration_date FROM state_active_expires
-        WHERE guild_id = ?
+        SELECT pickup_expire FROM state_guild_player
+        WHERE guild_id = ? AND pickup_expire IS NOT NULL
         AND player_id IN (${Array(playerIds.length).fill('?').join(',')})
         `, [guildId, ...playerIds]);
 
         if (!expiresIn[0][0]) {
             return null;
         }
-        return expiresIn[0].map(row => row.expiration_date);
+        return expiresIn[0].map(row => row.pickup_expire);
     }
 
     static async getAos(guildId: bigint, ...playerIds) {
         const aos = await db.execute(`
-        SELECT expiration_date, player_id FROM state_active_aos
+        SELECT ao_expire, player_id FROM state_guild_player
         WHERE guild_id = ?
         AND player_id IN (${Array(playerIds.length).fill('?').join(',')})
+        AND ao_expire IS NOT NULL
         `, [guildId, ...playerIds]);
 
         if (!aos[0][0]) {
@@ -127,8 +129,9 @@ export default class PlayerModel {
         const expireDate = new Date(new Date().getTime() + timeInMs);
 
         await db.execute(`
-        INSERT INTO state_active_aos VALUES (?, ?, ?)
-        ON DUPLICATE KEY UPDATE expiration_date = ?
+        INSERT INTO state_guild_player (guild_id, player_id, ao_expire)
+        VALUES (?, ?, ?)
+        ON DUPLICATE KEY UPDATE ao_expire = ?
         `, [guildId, playerId, expireDate, expireDate]);
 
         return;
@@ -136,8 +139,8 @@ export default class PlayerModel {
 
     static async removeAos(guildId: bigint, ...playerIds) {
         await db.execute(`
-        DELETE FROM state_active_aos WHERE
-        guild_id = ? AND player_id IN (${Array(playerIds.length).fill('?').join(',')})
+        UPDATE state_guild_player SET ao_expire = null
+        WHERE guild_id = ? AND player_id IN (${Array(playerIds.length).fill('?').join(',')})
         `, [guildId, ...playerIds]);
         return;
     }
@@ -361,5 +364,21 @@ export default class PlayerModel {
                 `, [guildId, playerId]);
             }
         }
+    }
+
+    static async isNotifyEnabled(guildId: bigint, playerId: bigint) {
+        const enabled = await db.execute(`
+        SELECT notifications FROM players
+        WHERE guild_id = ? AND user_id = ?
+        `, [guildId, playerId]);
+
+        return enabled[0][0].notifications;
+    }
+
+    static async toggleNotify(guildId: bigint, playerId: bigint) {
+        await db.execute(`
+        UPDATE players SET notifications = !notifications
+        WHERE guild_id = ? AND user_id = ?
+        `, [guildId, playerId]);
     }
 }

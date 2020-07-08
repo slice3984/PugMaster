@@ -176,13 +176,15 @@ export default class GuildModel {
 
         if (guildIds.length === 0) {
             expires = await db.query(`
-            SELECT guild_id, player_id, expiration_date FROM state_active_expires
+            SELECT guild_id, player_id, pickup_expire FROM state_guild_player
+            WHERE pickup_expire IS NOT NULL
             `);
         } else {
             expires = await db.execute(`
-            SELECT guild_id, player_id, expiration_date FROM state_active_expires
+            SELECT guild_id, player_id, pickup_expire FROM state_guild_player
             WHERE guild_id IN (${Array(guildIds.length).fill('?').join(',')})
-            `, [...guildIds])
+            AND pickup_expire IS NOT NULL
+            `, guildIds);
         }
         return expires[0];
     }
@@ -218,13 +220,15 @@ export default class GuildModel {
 
         if (guildIds.length === 0) {
             aos = await db.query(`
-            SELECT * FROM state_active_aos
+            SELECT guild_id, player_id, ao_expire FROM state_guild_player
+            WHERE ao_expire IS NOT NULL
             `);
         } else {
             aos = await db.execute(`
-            SELECT * FROM state_active_aos
+            SELECT guild_id, player_id, ao_expire FROM state_guild_player
             WHERE guild_id IN (${Array(guildIds.length).fill('?').join(',')})
-            `, [...guildIds]);
+            AND ao_expire IS NOT NULL
+            `, guildIds);
         }
 
         return aos[0];
@@ -233,13 +237,13 @@ export default class GuildModel {
     static async getAllAddedPlayers(guildId?: BigInt) {
         if (!guildId) {
             const players = await db.query(`
-            SELECT guild_id, player_id FROM state_active_pickups
+            SELECT guild_id, player_id FROM state_pickup_players
             `);
 
             return players[0];
         } else {
             const players = await db.execute(`
-            SELECT player_id FROM state_active_pickups
+            SELECT player_id FROM state_pickup_players
             WHERE guild_id = ?
             `, [guildId]);
 
@@ -345,5 +349,16 @@ export default class GuildModel {
         `, [guildSettings.warnExpiration, guildId]);
 
         return warns[0].reverse();
+    }
+
+    static async getPlayersWithNotify(guildId: bigint, ...playerIds): Promise<BigInt[]> {
+        const playersWithNotify = await db.execute(`
+        SELECT user_id FROM players
+        WHERE notifications = true
+        AND guild_id = ?
+        AND user_id IN (${Array(playerIds.length).fill('?').join(',')})
+        `, [guildId, ...playerIds]);
+
+        return playersWithNotify[0].map(player => BigInt(player.user_id));
     }
 }

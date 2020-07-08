@@ -1,7 +1,10 @@
 import Discord from 'discord.js';
 import GuildModel from '../models/guild';
 import Bot from './bot';
-import { ValidationError, TimeError } from './types';
+import { ValidationError, TimeError, PickupSettings } from './types';
+import { settings } from 'cluster';
+import MappoolModel from '../models/mappool';
+import ServerModel from '../models/server';
 
 export default class Util {
     private constructor() { }
@@ -168,5 +171,160 @@ export default class Util {
             }
         });
         return sum;
+    }
+
+    static async parseStartMessage(guildId: bigint, message: string, pickupSettings: PickupSettings, ...teams: BigInt[][]) {
+        // %name, %teams, %map, %ip, %password, #placeholder[only display if it exists]
+        const placeHolders = ['%name', '%teams', '%map', '%ip', '%password'];
+
+        // Remove conditions for placeholders which will always exist
+        message = message.replace(/(%name|%teams)\[(.*?)\]/g, '$2');
+
+        // Only allow one placeholder of each kind
+        placeHolders.forEach(placeholder => {
+            let alreadyUsed = false;
+            message = message.replace(new RegExp(`${placeholder}(?!\\[)`, 'gm'), match => {
+                if (!alreadyUsed) {
+                    alreadyUsed = true;
+                    return match;
+                }
+                return '';
+            });
+        });
+
+        // Replace with the correct values if possible
+        for (const placeholder of placeHolders) {
+            const toReplace = new RegExp(`${placeholder}(?!\\[)`);
+
+            let server;
+            switch (placeholder) {
+                case '%name':
+                    message = message.replace(placeholder, pickupSettings.name);
+                    break;
+                case '%teams':
+                    const formattedTeams = [];
+                    if (teams.length === 1) {
+                        formattedTeams.push('Players', teams[0].map(id => `<@${id.toString()}>`).join(', '));
+                    } else {
+                        teams.forEach((team, index) => {
+                            formattedTeams.push(`Team ${String.fromCharCode(65 + index)}`); // Team A, Team B..
+                            formattedTeams.push(team.map(id => `<@${id.toString()}>`).join(', '));
+                        });
+                    }
+                    message = message.replace(placeholder, formattedTeams.join('\n'));
+                    break;
+                case '%map':
+                    if (!pickupSettings.mapPoolId) {
+                        message = message.replace(/%map\[.*?\]/g, '');
+                        message = message.replace(toReplace, '');
+                        break;
+                    }
+
+                    const poolName = await MappoolModel.getPoolName(guildId, pickupSettings.mapPoolId);
+                    const maps = await MappoolModel.getMaps(guildId, poolName);
+
+                    message = message.replace(/(%map)\[(.*?)\]/g, '$2');
+                    message = message.replace(toReplace, maps[Math.floor(Math.random() * maps.length)]);
+                    break;
+                case '%ip':
+                    if (!pickupSettings.serverId) {
+                        message = message.replace(/%ip\[.*?\]/g, '');
+                        message = message.replace(toReplace, '');
+                        break;
+                    }
+
+                    if (!server) {
+                        server = await ServerModel.getServer(guildId, pickupSettings.serverId);
+                    }
+
+                    message = message.replace(/(%ip)\[(.*?)\]/g, '$2');
+                    message = message.replace(toReplace, server.ip);
+                    break;
+                case '%password':
+                    if (!pickupSettings.serverId) {
+                        message = message.replace(/%password\[.*?\]/g, '');
+                        message = message.replace(toReplace, '');
+                        break;
+                    }
+
+                    if (!server) {
+                        server = await ServerModel.getServer(guildId, pickupSettings.serverId);
+                    }
+
+                    if (!server.password) {
+                        message = message.replace(/%password\[.*?\]/g, '');
+                        message = message.replace(toReplace, '');
+                        break;
+                    }
+
+                    message = message.replace(/(%password)\[(.*?)\]/g, '$2');
+                    message = message.replace(toReplace, server.password);
+            }
+        }
+        return message;
+    }
+
+    static async parseNotifySubMessage(guildId: bigint, message: string, pickupSettings: PickupSettings) {
+        // %name, %ip, %password, #placeholder[only display if it exists]
+
+        const placeHolders = ['%name', '%ip', '%password'];
+
+        message = message.replace(/(%name)\[(.*?)\]/g, '$2');
+
+        placeHolders.forEach(placeholder => {
+            let alreadyUsed = false;
+            message = message.replace(new RegExp(`${placeholder}(?!\\[)`, 'gm'), match => {
+                if (!alreadyUsed) {
+                    alreadyUsed = true;
+                    return match;
+                }
+                return '';
+            });
+        });
+
+        for (const placeholder of placeHolders) {
+            const toReplace = new RegExp(`${placeholder}(?!\\[)`);
+
+            let server;
+            switch (placeholder) {
+                case '%name':
+                    message = message.replace(placeholder, pickupSettings.name);
+                    break;
+                case '%ip':
+                    if (!pickupSettings.serverId) {
+                        message = message.replace(/%ip\[.*?\]/g, '');
+                        message = message.replace(toReplace, '');
+                        break;
+                    }
+
+                    if (!server) {
+                        server = await ServerModel.getServer(guildId, pickupSettings.serverId);
+                    }
+
+                    message = message.replace(/(%ip)\[(.*?)\]/g, '$2');
+                    message = message.replace(toReplace, server.ip);
+                    break;
+                case '%password':
+                    if (!pickupSettings.serverId) {
+                        message = message.replace(/%password\[.*?\]/g, '');
+                        message = message.replace(toReplace, '');
+                        break;
+                    }
+
+                    if (!server) {
+                        server = await ServerModel.getServer(guildId, pickupSettings.serverId);
+                    }
+
+                    if (!server.password) {
+                        message = message.replace(/%password\[.*?\]/g, '');
+                        message = message.replace(toReplace, '');
+                        break;
+                    }
+
+                    message = message.replace(/(%password)\[(.*?)\]/g, '$2');
+                    message = message.replace(toReplace, server.password);
+            }
+        }
+        return message;
     }
 }
