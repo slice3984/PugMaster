@@ -71,3 +71,15 @@ export interface PickupSettings {
     captainRole: bigint | null;
     serverId: number | null;
 }
+
+export interface PickupInfo {
+    id: number;
+    name: string;
+    startedAt: Date;
+    playerNicks: String[];
+}
+
+export interface PlayerNicks {
+    oldNick: boolean;
+    players: { oldNick?: string; currentNick: string; id: number; userId: BigInt }[]
+}

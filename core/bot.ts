@@ -88,7 +88,7 @@ export default class Bot {
 
             globalExpires.forEach(expire => {
                 try {
-                    const timeLeft = (expire.added_at.getTime() + this.getGuild(expire.guild_id).globalExpireTime) - dateInMs;
+                    const timeLeft = (expire.last_add.getTime() + this.getGuild(expire.guild_id).globalExpireTime) - dateInMs;
 
                     // Ignore players with active expire
                     if (timeLeft <= 0) {

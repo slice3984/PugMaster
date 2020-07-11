@@ -3,6 +3,7 @@ import PickupModel from "../models/pickup";
 import PickupState from './pickupState';
 import Util from './util';
 import GuildModel from '../models/guild';
+import StatsModel from '../models/stats';
 
 export default class PickupStage {
     private constructor() { }
@@ -30,7 +31,7 @@ export default class PickupStage {
         }
     }
 
-    static async startPickup(guild: Discord.Guild, pickupConfigId: number, teams?: bigint[][]) {
+    static async startPickup(guild: Discord.Guild, pickupConfigId: number, teams?: bigint[][], captains?: bigint[]) {
         const aboutToStart = Array.from(await (await PickupModel.getActivePickups(BigInt(guild.id), false)).values())
             .find(pickup => pickup.configId === pickupConfigId);
 
@@ -75,7 +76,7 @@ export default class PickupStage {
             }
         }
 
-        // TODO: save stats
+        await StatsModel.storePickup(BigInt(guild.id), pickupConfigId, players, captains);
     }
 
     static async afkCheckStage(guild: Discord.Guild, pickupConfigId: number) {

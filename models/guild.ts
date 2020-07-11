@@ -194,12 +194,14 @@ export default class GuildModel {
 
         if (guildIds.length === 0) {
             addTimes = await db.query(`
-            SELECT * FROM state_add_times
+            SELECT last_add, guild_id, player_id FROM state_guild_player
+            WHERE last_add IS NOT NULL
             `);
         } else {
             addTimes = await db.execute(`
-            SELECT * FROM state_add_times
+            SELECT last_add, guild_id, player_id FROM state_guild_player
             WHERE guild_id IN (${Array(guildIds.length).fill('?').join(',')})
+            AND last_add IS NOT NULL
             `, [...guildIds])
         }
 
@@ -208,7 +210,7 @@ export default class GuildModel {
 
     static async removeAddTimes(guildId: bigint, ...playerIds) {
         await db.execute(`
-        DELETE FROM state_add_times
+        UPDATE state_guild_player SET last_add = null
         WHERE guild_id = ?
         AND player_id IN (${Array(playerIds.length).fill('?').join(',')})
         `, [guildId, ...playerIds]);

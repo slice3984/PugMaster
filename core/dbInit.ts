@@ -272,6 +272,7 @@ export const createTables = () => new Promise(async (res, _req) => {
       pickup_config_id INT NOT NULL,
       started_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       is_rated TINYINT NOT NULL DEFAULT 0,
+      has_teams TINYINT NOT NULL,
       INDEX guild_id_idx (guild_id ASC) VISIBLE,
       INDEX pickup_config_id_idx (pickup_config_id ASC) VISIBLE,
       PRIMARY KEY (id),
@@ -284,12 +285,14 @@ export const createTables = () => new Promise(async (res, _req) => {
         FOREIGN KEY (pickup_config_id)
         REFERENCES pickup_configs (id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE)      
+        ON UPDATE CASCADE) 
         `,
     `
     CREATE TABLE IF NOT EXISTS pickup_players (
       pickup_id INT NOT NULL,
       player_id INT NOT NULL,
+      team VARCHAR(2) NULL,
+      is_captain TINYINT NOT NULL DEFAULT 0,
       INDEX pickup_id_idx (pickup_id ASC) VISIBLE,
       INDEX player_id_idx (player_id ASC) VISIBLE,
       CONSTRAINT pickup_id
@@ -301,25 +304,18 @@ export const createTables = () => new Promise(async (res, _req) => {
         FOREIGN KEY (player_id)
         REFERENCES players (id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE)       
+        ON UPDATE CASCADE)  
         `,
     `
     CREATE TABLE IF NOT EXISTS rated_results (
-      player_id INT NOT NULL,
+      winner_team VARCHAR(2) NOT NULL,
       pickup_id INT NOT NULL,
-      result ENUM('win', 'loss', 'draw') NULL,
-      INDEX player_id_idx (player_id ASC) VISIBLE,
       INDEX pickup_id_idx (pickup_id ASC) VISIBLE,
-      CONSTRAINT fk_rated_results_player
-        FOREIGN KEY (player_id)
-        REFERENCES players (id)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
       CONSTRAINT fk_rated_results_pickup
         FOREIGN KEY (pickup_id)
         REFERENCES pickups (id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE)       
+        ON UPDATE CASCADE)
         `,
     `
     CREATE TABLE IF NOT EXISTS pickup_servers (

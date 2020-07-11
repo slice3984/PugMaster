@@ -1,8 +1,6 @@
 import Discord from 'discord.js';
 import Bot from '../bot';
 import CommandHandler from '../commandHandler';
-import PickupModel from '../../models/pickup';
-import Util from '../util';
 
 const commandHandler = new CommandHandler(Bot.getInstance());
 
@@ -15,11 +13,6 @@ module.exports = async (bot: Bot, message: Discord.Message) => {
     let parts;
     let cmd;
 
-    /*
-    const settings = await PickupModel.getPickupSettings(BigInt(message.guild.id), 1);
-    message.channel.send(await Util.parseStartMessage(BigInt(message.guild.id), message.content, settings,
-        [BigInt('252538619787476993'), BigInt('252538619787476993')], [BigInt('252538619787476993'), BigInt('252538619787476993')]));
-*/
     // Special commands: + / ++, - / -- & ??
     if (!message.content.startsWith(guildPrefix)) {
         if (!message.content.startsWith('+') ||

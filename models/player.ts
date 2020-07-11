@@ -1,5 +1,6 @@
 import db from '../core/db';
 import Bot from '../core/bot';
+import { PlayerNicks } from '../core/types';
 
 export default class PlayerModel {
     private constructor() { }
@@ -16,8 +17,8 @@ export default class PlayerModel {
     static async storeOrUpdatePlayer(guildId: bigint, playerId: bigint, nick: string) {
         // Get the current nick, no results => create user
         const nickAndId = await db.execute(`
-        SELECT current_nick, id FROM players WHERE user_id = ?
-        `, [playerId]);
+        SELECT current_nick, id FROM players WHERE user_id = ? AND guild_id = ?
+        `, [playerId, guildId]);
 
         // Player not stored
         if (nickAndId[0].length === 0) {
@@ -29,8 +30,8 @@ export default class PlayerModel {
             if (nickAndId[0][0].current_nick !== nick) {
                 // Update nick
                 await db.execute(`
-                UPDATE players SET current_nick = ? WHERE user_id = ?
-                `, [nick, playerId]);
+                UPDATE players SET current_nick = ? WHERE user_id = ? AND guild_id = ?
+                `, [nick, playerId, guildId]);
 
                 // Insert old nick
                 await db.execute(`
@@ -380,5 +381,82 @@ export default class PlayerModel {
         UPDATE players SET notifications = !notifications
         WHERE guild_id = ? AND user_id = ?
         `, [guildId, playerId]);
+    }
+
+    static async getPlayer(guildId: bigint, identifier: string): Promise<PlayerNicks | null> {
+        let oldNick = false;
+        let players = [];
+        let testWithUserId = false;
+
+        if (identifier.length < 20 && /^\d+$/.test(identifier)) {
+            testWithUserId = true;
+        }
+
+        let gotPlayersWithCurrentNick;
+
+        if (testWithUserId) {
+            gotPlayersWithCurrentNick = await db.execute(`
+            SELECT current_nick, id, user_id FROM players
+            WHERE guild_id = ? AND (current_nick = ? OR user_id = ?)
+            `, [guildId, identifier, BigInt(identifier)]);
+        } else {
+            gotPlayersWithCurrentNick = await db.execute(`
+            SELECT current_nick, id, user_id FROM players
+            WHERE guild_id = ? AND current_nick = ?
+            `, [guildId, identifier]);
+        }
+
+
+        if (gotPlayersWithCurrentNick[0].length) {
+            gotPlayersWithCurrentNick[0].forEach(player => {
+                players.push({
+                    currentNick: player.current_nick,
+                    id: player.id,
+                    userId: BigInt(player.user_id)
+                });
+            });
+        } else {
+            const playersWithOldNick = await db.execute(`
+            SELECT pn.nick, p.current_nick, p.id, p.user_id FROM player_nicks pn
+            JOIN players p ON pn.player_id = p.id
+            WHERE p.guild_id = ? AND pn.nick = ?
+            LIMIT 5
+            `, [guildId, identifier]);
+
+            if (playersWithOldNick[0].length) {
+                oldNick = true;
+
+                playersWithOldNick[0].forEach(player => {
+                    players.push({
+                        oldNick: player.nick,
+                        currentNick: player.current_nick,
+                        id: player.id,
+                        userId: BigInt(player.user_id)
+                    });
+                })
+            }
+        }
+
+        if (!players.length) {
+            return;
+        }
+
+        return {
+            oldNick,
+            players
+        }
+    }
+
+    static async getPlayerIdByUserId(guildId: bigint, userId: BigInt) {
+        const id = await db.execute(`
+        SELECT id FROM players
+        WHERE guild_id = ? AND user_id = ?
+        `, [guildId, userId]);
+
+        if (id[0][0]) {
+            return id[0][0].id;
+        }
+
+        return null;
     }
 }
