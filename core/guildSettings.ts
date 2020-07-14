@@ -11,9 +11,9 @@ export default class GuildSettings {
         private guild: Discord.Guild,
         private _id: bigint,
         private _prefix: string,
-        private _promotionRole: bigint,
         private _blacklistRole: bigint,
         private _whitelistRole: bigint,
+        private _promotionDelay: number,
         private _lastPromote: Date | null,
         private _globalExpireTime: number | null,
         private _trustTime: number,
@@ -61,9 +61,9 @@ export default class GuildSettings {
             return errors;
         }
 
-        const dbColumnNames = ['global_promotion_role', 'global_whitelist_role', 'global_blacklist_role',
+        const dbColumnNames = ['global_whitelist_role', 'global_blacklist_role',
             'server_id', 'warn_ban_time', 'warn_ban_time_multiplier', 'warn_expiration_time']
-        const keyNames = ['promotion', 'whitelist', 'blacklist', 'server', 'warn_bantime',
+        const keyNames = ['whitelist', 'blacklist', 'server', 'warn_bantime',
             'warn_bantime_multiplier', 'warn_expiration'];
 
         for (const property of properties) {
@@ -72,12 +72,12 @@ export default class GuildSettings {
             let dbColumn = keyNames.includes(key) ? dbColumnNames[keyNames.indexOf(key)] : key;
 
             // Convert to ms if required
-            if (['global_expire', 'warn_bantime', 'warn_expiration', 'warn_streak_expiration'].includes(key)) {
+            if (['global_expire', 'promotion_delay', 'warn_bantime', 'warn_expiration', 'warn_streak_expiration'].includes(key)) {
                 value = (Util.timeStringToTime(value) * 60 * 1000).toString();
             }
 
             // Get the role ids
-            if (value !== 'none' && ['promotion', 'whitelist', 'blacklist'].includes(key)) {
+            if (value !== 'none' && ['whitelist', 'blacklist'].includes(key)) {
                 value = Util.getRole(this.guild, value).id;
             }
 
@@ -95,9 +95,9 @@ export default class GuildSettings {
             switch (key) {
                 case 'prefix': this._prefix = value; break;
                 case 'global_expire': this._globalExpireTime = value ? +value : null; break;
-                case 'promotion': this._promotionRole = value ? BigInt(value) : null; break;
                 case 'whitelist': this._whitelistRole = value ? BigInt(value) : null; break;
                 case 'blacklist': this._blacklistRole = value ? BigInt(value) : null; break;
+                case 'promotion_delay': this._promotionDelay = value ? +value : null; break;
                 case 'server': this._defaultServer = value ? +value : null; break;
                 case 'start_message': this._startMessage = value; break;
                 case 'sub_message': this._subMessage = value; break;
@@ -129,6 +129,10 @@ export default class GuildSettings {
         this._disabledCommands = this._disabledCommands.filter(cmd => !commands.includes(cmd));
     }
 
+    public updateLastPromote() {
+        this._lastPromote = new Date();
+    }
+
     public get channels(): Map<bigint, ChannelType> {
         return this._channels;
     }
@@ -149,6 +153,10 @@ export default class GuildSettings {
         return this._globalExpireTime;
     }
 
+    public get promotionDelay(): number {
+        return this._promotionDelay;
+    }
+
     public get lastPromote(): Date | null {
         return this._lastPromote;
     }
@@ -159,10 +167,6 @@ export default class GuildSettings {
 
     public get blacklistRole(): bigint {
         return this._blacklistRole;
-    }
-
-    public get promotionRole(): bigint {
-        return this._promotionRole;
     }
 
     public get prefix(): string {

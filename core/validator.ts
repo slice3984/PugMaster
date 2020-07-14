@@ -152,8 +152,10 @@ export namespace Validator {
                             pickupSettings = await PickupModel.getPickupSettings(BigInt(guild.id), pickup);
                         }
 
-                        if ([pickupSettings.blacklistRole.toString(), pickupSettings.promotionRole.toString(), pickupSettings.captainRole.toString()].includes(whitelistRole.id)) {
-                            errors.push({ type: 'whitelist', errorMessage: 'can\'t set the same roles for different pickup specific roles' });
+                        if ([pickupSettings.blacklistRole ? pickupSettings.blacklistRole.toString() : null,
+                        pickupSettings.promotionRole ? pickupSettings.promotionRole.toString() : null,
+                        pickupSettings.captainRole ? pickupSettings.captainRole.toString() : null].includes(whitelistRole.id)) {
+                            errors.push({ type: 'blacklist', errorMessage: 'can\'t set the same roles for different pickup specific roles' });
                             break;
                         }
                         break;
@@ -169,7 +171,9 @@ export namespace Validator {
                             pickupSettings = await PickupModel.getPickupSettings(BigInt(guild.id), pickup);
                         }
 
-                        if ([pickupSettings.whitelistRole.toString(), pickupSettings.promotionRole.toString(), pickupSettings.captainRole.toString()].includes(blacklistRole.id)) {
+                        if ([pickupSettings.whitelistRole ? pickupSettings.whitelistRole.toString() : null,
+                        pickupSettings.promotionRole ? pickupSettings.promotionRole.toString() : null,
+                        pickupSettings.captainRole ? pickupSettings.captainRole.toString() : null].includes(blacklistRole.id)) {
                             errors.push({ type: 'blacklist', errorMessage: 'can\'t set the same roles for different pickup specific roles' });
                             break;
                         }
@@ -185,9 +189,10 @@ export namespace Validator {
                         if (!pickupSettings) {
                             pickupSettings = await PickupModel.getPickupSettings(BigInt(guild.id), pickup);
                         }
-
-                        if ([pickupSettings.blacklistRole.toString(), pickupSettings.whitelistRole.toString(), pickupSettings.captainRole.toString()].includes(promotionRole.id)) {
-                            errors.push({ type: 'promotion', errorMessage: 'can\'t set the same roles for different pickup specific roles' });
+                        if ([pickupSettings.blacklistRole ? pickupSettings.blacklistRole.toString() : null,
+                        pickupSettings.whitelistRole ? pickupSettings.whitelistRole.toString() : null,
+                        pickupSettings.captainRole ? pickupSettings.captainRole.toString() : null].includes(promotionRole.id)) {
+                            errors.push({ type: 'blacklist', errorMessage: 'can\'t set the same roles for different pickup specific roles' });
                             break;
                         }
                         break;
@@ -202,9 +207,10 @@ export namespace Validator {
                         if (!pickupSettings) {
                             pickupSettings = await PickupModel.getPickupSettings(BigInt(guild.id), pickup);
                         }
-
-                        if ([pickupSettings.blacklistRole.toString(), pickupSettings.whitelistRole.toString(), pickupSettings.promotionRole.toString()].includes(captainRole.id)) {
-                            errors.push({ type: 'captain', errorMessage: 'can\'t set the same roles for different pickup specific roles' });
+                        if ([pickupSettings.blacklistRole ? pickupSettings.blacklistRole.toString() : null,
+                        pickupSettings.promotionRole ? pickupSettings.promotionRole.toString() : null,
+                        pickupSettings.whitelistRole ? pickupSettings.whitelistRole.toString() : null].includes(captainRole.id)) {
+                            errors.push({ type: 'blacklist', errorMessage: 'can\'t set the same roles for different pickup specific roles' });
                             break;
                         }
                         break;
@@ -298,7 +304,7 @@ export namespace Validator {
 
     export namespace Guild {
         export function areValidKeys(...keys) {
-            const validKeys = ['prefix', 'global_expire', 'promotion', 'whitelist', 'blacklist', 'server',
+            const validKeys = ['prefix', 'global_expire', 'whitelist', 'blacklist', 'promotion_delay', 'server',
                 'start_message', 'sub_message', 'notify_message', 'warn_streaks', 'warns_until_ban', 'warn_streak_expiration',
                 'warn_expiration', 'warn_bantime', 'warn_bantime_multiplier'];
 
@@ -345,22 +351,6 @@ export namespace Validator {
                         if (guildSettings.globalExpireTime === validTime) {
                             errors.push({ type: key, errorMessage: `global expire is already set to ${Util.formatTime(validTime)}` });
                         }
-                    case 'promotion':
-                        const promotionRole = Util.getRole(guild, value);
-
-                        if (!promotionRole) {
-                            errors.push({ type: key, errorMessage: 'can\'t find the given role' });
-                            break;
-                        }
-
-                        if (BigInt(promotionRole.id) === guildSettings.promotionRole) {
-                            errors.push({ type: key, errorMessage: 'the given role is already set as promotion role' });
-                        }
-
-                        if ([guildSettings.promotionRole, guildSettings.whitelistRole, guildSettings.blacklistRole].includes(BigInt(promotionRole.id))) {
-                            errors.push({ type: key, errorMessage: 'can\'t use the same role twice in server settings' });
-                            break;
-                        }
                         break;
                     case 'whitelist':
                         const whitelistRole = Util.getRole(guild, value);
@@ -374,7 +364,7 @@ export namespace Validator {
                             errors.push({ type: key, errorMessage: 'the given role is already set as whitelist role' });
                         }
 
-                        if ([guildSettings.promotionRole, guildSettings.whitelistRole, guildSettings.blacklistRole].includes(BigInt(whitelistRole.id))) {
+                        if ([guildSettings.whitelistRole, guildSettings.blacklistRole].includes(BigInt(whitelistRole.id))) {
                             errors.push({ type: key, errorMessage: 'can\'t use the same role twice in server settings' });
                             break;
                         }
@@ -391,9 +381,27 @@ export namespace Validator {
                             errors.push({ type: key, errorMessage: 'the given role is already set as blacklist role' });
                         }
 
-                        if ([guildSettings.promotionRole, guildSettings.whitelistRole, guildSettings.blacklistRole].includes(BigInt(blacklistRole.id))) {
+                        if ([guildSettings.whitelistRole, guildSettings.blacklistRole].includes(BigInt(blacklistRole.id))) {
                             errors.push({ type: key, errorMessage: 'can\'t use the same role twice in server settings' });
                             break;
+                        }
+                        break;
+                    case 'promotion_delay':
+                        const validPromotionDelay = Util.validateTimeString(value, 43200000, 300000);
+
+                        if (validPromotionDelay === 'exceeded') {
+                            errors.push({ type: key, errorMessage: `max promotion delay time is ${Util.formatTime(43200000)}` });
+                            break;
+                        } else if (validPromotionDelay === 'subceeded') {
+                            errors.push({ type: key, errorMessage: `min promotion delay time is ${Util.formatTime(300000)}` });
+                            break;
+                        } else if (validPromotionDelay === 'invalid') {
+                            errors.push({ type: key, errorMessage: 'invalid time amounts given' });
+                            break;
+                        }
+
+                        if (guildSettings.promotionDelay === validPromotionDelay) {
+                            errors.push({ type: key, errorMessage: `promotion delay is already set to ${Util.formatTime(validPromotionDelay)}` });
                         }
                         break;
                     case 'server':

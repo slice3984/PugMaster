@@ -71,9 +71,9 @@ export default class GuildModel {
             guild,
             BigInt(guild.id),
             data.prefix,
-            data.global_promotion_role,
             data.global_blacklist_role,
             data.global_whitelist_role,
+            data.promotion_delay,
             data.last_promote,
             data.global_expire,
             data.trust_check ? data.trust_time : null,
@@ -255,6 +255,7 @@ export default class GuildModel {
 
     static async modifyGuild(guildId: bigint, key: string, value: string) {
         let newValue: string | number = value;
+        console.log(newValue);
 
         await db.execute(`
         UPDATE guilds SET ${key} = ?
@@ -362,5 +363,12 @@ export default class GuildModel {
         `, [guildId, ...playerIds]);
 
         return playersWithNotify[0].map(player => BigInt(player.user_id));
+    }
+
+    static async updateLastPromote(guildId: bigint) {
+        await db.execute(`
+        UPDATE guilds SET last_promote = CURRENT_TIMESTAMP
+        WHERE guild_id = ?
+        `, [guildId]);
     }
 }

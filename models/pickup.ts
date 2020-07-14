@@ -196,6 +196,44 @@ export default class PickupModel {
         }
     }
 
+    static async getMultiplePickupSettings(guildId: BigInt, ...pickups): Promise<PickupSettings[]> {
+        let settings;
+
+        if (typeof pickups[0] === 'number') {
+            settings = await db.execute(`
+            SELECT * FROM pickup_configs
+            WHERE guild_id = ? AND id IN (${Array(pickups.length).fill('?').join(',')})
+            `, [guildId, ...pickups]);
+        } else {
+            settings = await db.execute(`
+            SELECT * FROM pickup_configs
+            WHERE guild_id = ? AND name IN (${Array(pickups.length).fill('?').join(',')})
+            `, [guildId, ...pickups]);
+        }
+
+        settings = settings[0];
+
+        const results = [];
+
+        settings.forEach(settings => results.push({
+            id: settings.id,
+            name: settings.name,
+            playerCount: settings.player_count,
+            teamCount: settings.team_count,
+            isDefaultPickup: Boolean(settings.is_default_pickup),
+            mapPoolId: settings.mappool_id ? settings.mappool_id : null,
+            afkCheck: Boolean(settings.afk_check),
+            pickMode: settings.pick_mode,
+            whitelistRole: settings.whitelist_role ? BigInt(settings.whitelist_role) : null,
+            blacklistRole: settings.blacklist_role ? BigInt(settings.blacklist_role) : null,
+            promotionRole: settings.promotion_role ? BigInt(settings.promotion_role) : null,
+            captainRole: settings.captain_role ? BigInt(settings.captain_role) : null,
+            serverId: settings.server_id ? settings.server_id : null
+        }));
+
+        return results;
+    }
+
     static async modifyPickup(guildId: bigint, pickup: number | string, key: string, value: string) {
         let newValue: string | number = value;
 
