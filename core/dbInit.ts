@@ -36,6 +36,10 @@ export const createTables = () => new Promise(async (res, _req) => {
       notify_message VARCHAR(200) NOT NULL DEFAULT 'your %name pickup started\n%ip[IP: **%ip**] %password[Password: **%password**]',
       promotion_delay INT NOT NULL DEFAULT 3600000,
       last_promote DATETIME NULL,
+      iteration_time INT NOT NULL DEFAULT 20000,
+      afk_time INT NOT NULL DEFAULT 1800000,
+      afk_check_iterations TINYINT NOT NULL DEFAULT 2,
+      picking_iterations TINYINT NOT NULL DEFAULT 3,
       trust_check TINYINT NOT NULL DEFAULT 0,
       trust_time INT NOT NULL DEFAULT 86400000,
       warn_streaks TINYINT NOT NULL DEFAULT 3,
@@ -409,23 +413,26 @@ export const createTables = () => new Promise(async (res, _req) => {
         ON UPDATE CASCADE)      
         `,
     `
-      CREATE TABLE IF NOT EXISTS state_pickup (
-        guild_id BIGINT NOT NULL,
-        pickup_config_id INT NOT NULL,
-        stage ENUM('fill', 'afk_check', 'picking_manual') NOT NULL DEFAULT 'fill',
-        INDEX fk_state_pickup_guild_id_idx (guild_id ASC) VISIBLE,
-        INDEX fk_state_pickup_pickup_config_id_idx (pickup_config_id ASC) VISIBLE,
-        UNIQUE(guild_id, pickup_config_id),
-        CONSTRAINT fk_state_pickup_guild_id
-          FOREIGN KEY (guild_id)
-          REFERENCES guilds (guild_id)
-          ON DELETE CASCADE
-          ON UPDATE CASCADE,
-        CONSTRAINT fk_state_pickup_pickup_config_id
-          FOREIGN KEY (pickup_config_id)
-          REFERENCES pickup_configs (id)
-          ON DELETE CASCADE
-          ON UPDATE CASCADE)
+    CREATE TABLE IF NOT EXISTS state_pickup (
+      guild_id BIGINT NOT NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      pickup_config_id INT NOT NULL,
+      stage ENUM('fill', 'afk_check', 'picking_manual') NULL DEFAULT 'fill',
+      in_stage_since DATETIME NULL,
+      stage_iteration TINYINT NULL,
+      INDEX fk_state_pickup_guild_id_idx (guild_id ASC) VISIBLE,
+      INDEX fk_state_pickup_pickup_config_id_idx (pickup_config_id ASC) VISIBLE,
+      UNIQUE(pickup_config_id, guild_id),
+      CONSTRAINT fk_state_pickup_guild_id
+        FOREIGN KEY (guild_id)
+        REFERENCES guilds (guild_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+      CONSTRAINT fk_state_pickup_pickup_config_id
+        FOREIGN KEY (pickup_config_id)
+        REFERENCES pickup_configs (id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE)
       `,
     `
     CREATE TABLE IF NOT EXISTS state_pickup_players (
@@ -458,6 +465,24 @@ export const createTables = () => new Promise(async (res, _req) => {
         CONSTRAINT fk_state_guild_player_guild_id
           FOREIGN KEY (guild_id)
           REFERENCES guilds (guild_id)
+          ON DELETE CASCADE
+          ON UPDATE CASCADE)
+      `,
+    `
+      CREATE TABLE IF NOT EXISTS state_teams (
+        guild_id BIGINT NOT NULL,
+        pickup_config_id INT NOT NULL,
+        player_id BIGINT NOT NULL,
+        team VARCHAR(2) NULL,
+        INDEX fk_state_teams_pickup_config_id_idx (pickup_config_id ASC) VISIBLE,
+        CONSTRAINT fk_state_teams_guild_id
+          FOREIGN KEY (guild_id)
+          REFERENCES guilds (guild_id)
+          ON DELETE CASCADE
+          ON UPDATE CASCADE,
+        CONSTRAINT fk_state_teams_pickup_config_id
+          FOREIGN KEY (pickup_config_id)
+          REFERENCES pickup_configs (id)
           ON DELETE CASCADE
           ON UPDATE CASCADE)
       `

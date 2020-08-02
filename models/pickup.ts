@@ -25,6 +25,47 @@ export default class PickupModel {
         return;
     }
 
+    static async getActivePickup(guildId: bigint, nameOrConfigId: number | string):
+        Promise<{ name: string, players: { id: bigint | null, nick: string }[]; maxPlayers: number; configId: number }> {
+        let result;
+
+        if (typeof nameOrConfigId === 'number') {
+            result = await db.execute(`
+            SELECT c.id, c.name, s.player_id, c.player_count, p.current_nick FROM pickup_configs c
+            LEFT JOIN state_pickup_players s ON s.pickup_config_id = c.id
+            LEFT JOIN players p on p.user_id = s.player_id
+            WHERE c.guild_id = ? AND c.id = ?;
+            `, [guildId, nameOrConfigId]);
+        } else {
+            result = await db.execute(`
+            SELECT c.id, c.name, s.player_id, c.player_count, p.current_nick FROM pickup_configs c
+            LEFT JOIN state_pickup_players s ON s.pickup_config_id = c.id
+            LEFT JOIN players p on p.user_id = s.player_id
+            WHERE c.guild_id = ? AND c.name = ?;
+            `, [guildId, nameOrConfigId]);
+        }
+
+        if (!result[0].length) {
+            return;
+        }
+
+        const players = [];
+
+        for (const row of result[0]) {
+            players.push({
+                id: BigInt(row.player_id),
+                nick: row.current_nick
+            });
+        }
+
+        return {
+            name: result[0][0].name,
+            players,
+            maxPlayers: result[0][0].player_count,
+            configId: result[0][0].id
+        }
+    }
+
     static async getActivePickups(guildId: bigint, includingDefaults = false): Promise<Map<string,
         { name: string, players: { id: bigint | null, nick: string | null }[]; maxPlayers: number; configId: number }>> {
         let result;
@@ -254,5 +295,35 @@ export default class PickupModel {
             WHERE guild_id = ? AND name = ?
             `, [newValue, guildId, pickup]);
         }
+    }
+
+    static async setPending(guildId: bigint, pickupConfigId: number, stage: 'afk_check' | 'picking_manual' | 'fill') {
+        await db.execute(`
+        UPDATE state_pickup SET stage = ?, in_stage_since = CURRENT_TIMESTAMP, stage_iteration = 0
+        WHERE guild_id = ? AND pickup_config_id = ?
+        `, [stage, guildId, pickupConfigId]);
+    }
+
+    static async setPendings(guildId: bigint, stage: 'afk_check' | 'picking_manual' | 'fill', ...pickupConfigIds) {
+        await db.execute(`
+        UPDATE state_pickup SET stage = ?, in_stage_since = CURRENT_TIMESTAMP, stage_iteration = 0
+        WHERE guild_id = ? AND pickup_config_id IN (${Array(pickupConfigIds.length).fill('?').join(',')})
+        `, [stage, guildId, ...pickupConfigIds]);
+    }
+
+    static async incrementPendingIteration(guildId: BigInt, pickupConfigId: number) {
+        await db.execute(`
+        UPDATE state_pickup SET stage_iteration = stage_iteration + 1
+        WHERE guild_id = ? AND pickup_config_id = ?
+        `, [guildId, pickupConfigId]);
+    }
+
+    static async isInStage(guildId: bigint, pickupConfigId: number, stage: 'afk_check' | 'picking_manual' | 'fill') {
+        const inStage = await db.execute(`
+        SELECT COUNT(*) as pending FROM state_pickup
+        WHERE guild_id = ? AND pickup_config_id = ? AND stage = ?
+        `, [guildId, pickupConfigId, stage]);
+
+        return inStage[0][0].pending;
     }
 }

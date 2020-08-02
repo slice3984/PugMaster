@@ -141,8 +141,12 @@ export default class Util {
         return stringParts.join(shorten ? ' ' : ' and ');
     }
 
-    static validateTimeString(timeString: string, maxInMs: number, minInMs: number): TimeError | number {
-        if (!/^(\d+[mhdw]\s*)+$/m.test(timeString)) {
+    static validateTimeString(timeString: string, maxInMs: number, minInMs: number, seconds = false): TimeError | number {
+        if (!seconds && !/^(\d+[mhdw]\s*)+$/m.test(timeString)) {
+            return 'invalid';
+        }
+
+        if (seconds && !/^(\d+[smhdw]\s*)+$/m.test(timeString)) {
             return 'invalid';
         }
 
@@ -154,7 +158,13 @@ export default class Util {
             }
         }
 
-        const time = Util.timeStringToTime(timeString) * 60 * 1000;
+        let time;
+
+        if (seconds) {
+            time = Util.timeStringToTime(timeString, seconds) * 1000;
+        } else {
+            time = Util.timeStringToTime(timeString, seconds) * 60 * 1000;
+        }
 
         if (time > maxInMs) {
             return 'exceeded';
@@ -167,8 +177,15 @@ export default class Util {
         return time;
     }
 
-    static timeStringToTime(timeString: string) {
-        const regex = /(\d+)[mhdw]/g;
+    static timeStringToTime(timeString: string, seconds = false) {
+        let regex;
+
+        if (seconds) {
+            regex = /(\d+)[smhdw]/g;
+        } else {
+            regex = /(\d+)[mhdw]/g;
+        }
+
         const matches = timeString.match(regex);
         let sum = 0;
 
@@ -180,18 +197,37 @@ export default class Util {
             const amount = match.charAt(match.length - 1);
             const time = match.substr(0, match.length - 1);
 
-            switch (amount) {
-                case 'm':
-                    sum += +time;
-                    break;
-                case 'h':
-                    sum += +time * 60;
-                    break;
-                case 'd':
-                    sum += +time * 60 * 24;
-                    break;
-                case 'w':
-                    sum += +time * 60 * 24 * 7;
+            if (seconds) {
+                switch (amount) {
+                    case 's':
+                        sum += +time;
+                        break;
+                    case 'm':
+                        sum += +time * 60;
+                        break;
+                    case 'h':
+                        sum += +time * 60 * 60;
+                        break;
+                    case 'd':
+                        sum += +time * 60 * 60 * 24;
+                        break;
+                    case 'w':
+                        sum += +time * 60 * 60 * 24 * 7;
+                }
+            } else {
+                switch (amount) {
+                    case 'm':
+                        sum += +time;
+                        break;
+                    case 'h':
+                        sum += +time * 60;
+                        break;
+                    case 'd':
+                        sum += +time * 60 * 24;
+                        break;
+                    case 'w':
+                        sum += +time * 60 * 24 * 7;
+                }
             }
         });
         return sum;

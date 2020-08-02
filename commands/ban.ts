@@ -83,7 +83,7 @@ const command: Command = {
                 }
             }
             await message.channel.send(msg);
-            await PickupState.removePlayer(message.member);
+            await PickupState.removePlayer(BigInt(message.guild.id), BigInt(player.id));
         } else {
             const regex = /^\s*(?<time>(?:\d+[mhdw]\s+)*\d+[mhdw])\s*(?<reason>.*?)$/g;
             const merged = params.slice(1).join(' ');
@@ -140,7 +140,7 @@ const command: Command = {
             }
 
             await message.channel.send(msg);
-            await PickupState.removePlayer(message.member);
+            await PickupState.removePlayer(BigInt(message.guild.id), BigInt(player.id));
         }
     }
 }

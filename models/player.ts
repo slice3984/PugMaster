@@ -459,4 +459,23 @@ export default class PlayerModel {
 
         return null;
     }
+
+    static async getPlayerState(guildId: bigint, userId: bigint):
+        Promise<{ aoExpire: Date | null; pickupExpire: Date | null, lastAdd: Date | null, isAfk: boolean }> {
+        const results = await db.execute(`
+        SELECT ao_expire, pickup_expire, last_add, is_afk FROM state_guild_player
+        WHERE guild_id = ? and player_id = ?
+        `, [guildId, userId]);
+
+        if (results[0][0]) {
+            return {
+                aoExpire: results[0][0].ao_expire,
+                pickupExpire: results[0][0].pickup_expire,
+                lastAdd: results[0][0].last_add,
+                isAfk: results[0][0].is_afk ? Boolean(results[0][0].is_afk) : false
+            }
+        }
+
+        return null;
+    }
 }

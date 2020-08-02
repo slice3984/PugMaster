@@ -88,7 +88,7 @@ const command: Command = {
             const activeAndDefaultPickups = Array.from(await (await PickupModel.getActivePickups(BigInt(message.guild.id), true)).values());
 
             let validPickups = activeAndDefaultPickups
-                .filter(pickup => !(playerAddedTo.includes(pickup.configId) || pickup.maxPlayers <= 2)) // Only autoadd on 2+ player pickups
+                .filter(pickup => !(playerAddedTo.includes(pickup.configId) || pickup.maxPlayers <= 2 || pickup.players.length === pickup.maxPlayers)) // Only autoadd on 2+ player pickups
                 .map(pickup => pickup.configId);
 
             if (validPickups.length === 0) {
@@ -118,8 +118,24 @@ const command: Command = {
                 return message.reply(`Pickup${params.length > 1 ? 's' : ''} not found`);
             }
 
-            const playerAddedTo = await PickupModel.isPlayerAdded(BigInt(message.guild.id), BigInt(message.member.id), ...existingPickups.map(pickup => pickup.id));
-            let validPickups = existingPickups.filter(pickup => !playerAddedTo.includes(pickup.id));
+            const activeAndDefaultPickups = Array.from(await (await PickupModel.getActivePickups(BigInt(message.guild.id), true)).values());
+
+            let validPickups = existingPickups.filter(pickup => {
+                const activePickup = activeAndDefaultPickups.find(pu => pu.configId === pickup.id);
+
+                if (activePickup) {
+                    // Already added to the pickup
+                    if (activePickup.players.map(player => player.id).includes(BigInt(message.author.id))) {
+                        return false;
+                    }
+
+                    // Pickup is full and in pending state
+                    if (activePickup.maxPlayers === activePickup.players.length) {
+                        return false;
+                    }
+                }
+                return true;
+            });
 
             if (validPickups.length === 0) {
                 return;

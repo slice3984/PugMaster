@@ -305,7 +305,7 @@ export namespace Validator {
     export namespace Guild {
         export function areValidKeys(...keys) {
             const validKeys = ['prefix', 'global_expire', 'whitelist', 'blacklist', 'promotion_delay', 'server',
-                'start_message', 'sub_message', 'notify_message', 'warn_streaks', 'warns_until_ban', 'warn_streak_expiration',
+                'start_message', 'sub_message', 'notify_message', 'iteration_time', 'afk_time', 'afk_check_iterations', 'picking_iterations', 'warn_streaks', 'warns_until_ban', 'warn_streak_expiration',
                 'warn_expiration', 'warn_bantime', 'warn_bantime_multiplier'];
 
             const invalidKeys = keys.filter(key => !validKeys.includes(key));
@@ -437,6 +437,54 @@ export namespace Validator {
 
                         if (guildSettings[propertyNames[key]] === value) {
                             errors.push({ type: key, errorMessage: `${toRespond} is already set to this value` });
+                            break;
+                        }
+                        break;
+                    case 'iteration_time':
+                        const iterationTime = Util.validateTimeString(value, 300000, 10000, true);
+
+                        if (iterationTime === 'exceeded') {
+                            errors.push({ type: key, errorMessage: `max iteration time is ${Util.formatTime(300000)}` });
+                            break;
+                        } else if (iterationTime === 'subceeded') {
+                            errors.push({ type: key, errorMessage: `min iteration time is ${Util.formatTime(10000)}` });
+                            break;
+                        } else if (iterationTime === 'invalid') {
+                            errors.push({ type: key, errorMessage: 'invalid time amounts given' });
+                            break;
+                        }
+
+                        if (guildSettings.iterationTime === iterationTime) {
+                            errors.push({ type: key, errorMessage: `iteration time is already set to ${Util.formatTime(iterationTime)}` });
+                        }
+                        break;
+                    case 'afk_time':
+                        const afkTime = Util.validateTimeString(value, 21600000, 300000);
+
+                        if (afkTime === 'exceeded') {
+                            errors.push({ type: key, errorMessage: `max afk time is ${Util.formatTime(21600000)}` });
+                            break;
+                        } else if (afkTime === 'subceeded') {
+                            errors.push({ type: key, errorMessage: `min afk time is ${Util.formatTime(300000)}` });
+                            break;
+                        } else if (afkTime === 'invalid') {
+                            errors.push({ type: key, errorMessage: 'invalid time amounts given' });
+                            break;
+                        }
+
+                        if (guildSettings.afkTime === afkTime) {
+                            errors.push({ type: key, errorMessage: `afk time is already set to ${Util.formatTime(afkTime)}` });
+                        }
+                        break;
+                    case 'afk_check_iterations':
+                    case 'picking_iterations':
+                        if (!/^\d+$/.test(value)) {
+                            errors.push({ type: key, errorMessage: 'amount has to be a number' });
+                            break;
+                        }
+
+                        if (+value < 1 || +value > 5) {
+                            errors.push({ type: key, errorMessage: `${key.replace('_', ' ')} has to be a number between 1-5` });
                             break;
                         }
                         break;

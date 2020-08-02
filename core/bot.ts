@@ -9,12 +9,14 @@ import BotModel from '../models/bot';
 import PickupModel from '../models/pickup';
 import PlayerModel from '../models/player';
 import Util from './util';
+import PickupState from './pickupState';
 
 export default class Bot {
     private static instance: Bot;
     private commands: Map<string, Command> = new Map();
     private guilds: Map<bigint, GuildSettings> = new Map();
     private client: Discord.Client;
+    private anyPickupPending: boolean = true;
 
     private constructor() {
         this.initBot();
@@ -69,9 +71,7 @@ export default class Bot {
 
             for (const [guild, players] of playersToRemoveExpire.entries()) {
                 try {
-                    await PickupModel.removePlayers(BigInt(guild), ...players);
-                    await PlayerModel.removeExpires(BigInt(guild), ...players);
-
+                    await PickupState.removePlayers(BigInt(guild), true, null, ...players);
                     const guildObj = this.client.guilds.cache.get(guild);
                     const pickupChannel = await getPickupChannel(guildObj);
                     const playerObjs = players.map(player => guildObj.members.cache.get(player));
@@ -95,7 +95,6 @@ export default class Bot {
                         if (leftExpires.has(expire.guild_id) && leftExpires.get(expire.guild_id).includes(expire.player_id)) {
                             return;
                         }
-
                         if (playersToRemoveGlobalExpire.has(expire.guild_id)) {
                             playersToRemoveGlobalExpire.get(expire.guild_id).push(expire.player_id);
                         } else {
@@ -109,9 +108,7 @@ export default class Bot {
 
             for (const [guild, players] of playersToRemoveGlobalExpire.entries()) {
                 try {
-                    await PickupModel.removePlayers(BigInt(guild), ...players);
-                    await GuildModel.removeAddTimes(BigInt(guild), ...players);
-
+                    await PickupState.removePlayers(BigInt(guild), true, null, ...players);
                     const guildObj = this.client.guilds.cache.get(guild);
                     const pickupChannel = await getPickupChannel(guildObj);
                     const playerObjs = players.map(player => guildObj.members.cache.get(player));
@@ -183,8 +180,7 @@ export default class Bot {
                     const toRemoveIds = toRemoveObjs.map(player => player.id);
 
                     if (toRemoveIds.length) {
-                        await PickupModel.removePlayers(BigInt(guild), ...toRemoveIds);
-                        await GuildModel.removeAddTimes(BigInt(guild), ...toRemoveIds);
+                        await PickupState.removePlayers(BigInt(guild), true, null, ...players);
                     }
 
                     pickupChannel.send(`${toPing.join(', ')} ${toNick.map(player => player.displayName).join(', ')} your allow offline ran out`);
@@ -362,5 +358,13 @@ export default class Bot {
 
     getCommandNames() {
         return [...this.commands.keys()];
+    }
+
+    setAnyPickupPending(isPending: boolean) {
+        this.anyPickupPending = isPending;
+    }
+
+    isAnyPickupPending() {
+        return this.anyPickupPending;
     }
 }

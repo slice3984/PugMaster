@@ -15,7 +15,7 @@ const command: Command = {
     exec: async (bot, message, params) => {
         if (params.length === 0) {
             // Remove from all pickups
-            await PickupState.removePlayer(message.member);
+            await PickupState.removePlayer(BigInt(message.guild.id), BigInt(message.member.id));
             return;
         }
 
@@ -32,7 +32,7 @@ const command: Command = {
             return;
         }
 
-        await PickupState.removePlayer(message.member, true, ...validPickups.map(pickup => pickup.id));
+        await PickupState.removePlayer(BigInt(message.guild.id), BigInt(message.member.id), true, ...validPickups.map(pickup => pickup.id));
     }
 }
 

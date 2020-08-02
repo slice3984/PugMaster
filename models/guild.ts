@@ -1,5 +1,5 @@
 import Discord from 'discord.js';
-import { ChannelType } from '../core/types';
+import { ChannelType, PendingPickup } from '../core/types';
 import GuildSettings from '../core/guildSettings';
 import Bot from '../core/bot';
 import db from '../core/db';
@@ -84,6 +84,10 @@ export default class GuildModel {
             data.start_message,
             data.sub_message,
             data.notify_message,
+            data.iteration_time,
+            data.afk_time,
+            data.afk_check_iterations,
+            data.picking_iterations,
             data.warn_streaks,
             data.warns_until_ban,
             data.warn_streak_expiration,
@@ -217,6 +221,14 @@ export default class GuildModel {
         return;
     }
 
+    static async resetPlayerStates(guildId: bigint, ...playerIds) {
+        await db.execute(`
+        UPDATE state_guild_player 
+        SET pickup_expire = null, pickup_expire = null, last_add = null, is_afk = null
+        WHERE guild_id = ? AND player_id IN (${Array(playerIds.length).fill('?').join(',')})
+        `, [guildId, ...playerIds]);
+    }
+
     static async getAllAos(...guildIds) {
         let aos;
 
@@ -255,7 +267,6 @@ export default class GuildModel {
 
     static async modifyGuild(guildId: bigint, key: string, value: string) {
         let newValue: string | number = value;
-        console.log(newValue);
 
         await db.execute(`
         UPDATE guilds SET ${key} = ?
@@ -370,5 +381,198 @@ export default class GuildModel {
         UPDATE guilds SET last_promote = CURRENT_TIMESTAMP
         WHERE guild_id = ?
         `, [guildId]);
+    }
+
+    static async getPendingPickup(guildId: bigint, pickupConfigId: number): Promise<PendingPickup> {
+        const data = await db.execute(`
+        SELECT sp.guild_id, p.current_nick, p.user_id, pc.id, pc.name, pc.player_count, sp.in_stage_since, sp.stage_iteration, sp.stage, st.team
+        FROM state_pickup sp
+        JOIN state_pickup_players spp ON spp.pickup_config_id = sp.pickup_config_id
+        JOIN players p ON p.user_id = spp.player_id
+        JOIN pickup_configs pc ON sp.pickup_config_id = pc.id
+        LEFT JOIN state_teams st ON (sp.pickup_config_id = st.pickup_config_id AND spp.player_id = st.player_id)
+        WHERE sp.stage != 'fills' AND sp.guild_id = ? AND pc.id = ?
+        `, [guildId, pickupConfigId]);
+
+        if (!data[0].length) {
+            return null;
+        }
+
+        const teams = [];
+        const playersLeft = [];
+        let amountPlayersAdded = 0;
+
+        data[0].forEach(row => {
+            if (row.stage === 'afk_check') {
+                if (!teams.length) {
+                    teams.push({
+                        name: 'A',
+                        players: []
+                    });
+                }
+                teams[0].players.push({
+                    id: BigInt(row.user_id),
+                    nick: row.current_nick
+                });
+            } else {
+                if (row.team) {
+                    const index = teams.findIndex(team => team.name === row.team);
+                    if (index < 0) {
+                        teams.push({
+                            name: row.team,
+                            players: [{
+                                id: BigInt(row.user_id),
+                                nick: row.current_nick
+                            }]
+                        });
+
+                        amountPlayersAdded++;
+                    } else {
+                        teams[index].players.push({
+                            id: BigInt(row.user_id),
+                            nick: row.current_nick
+                        });
+
+                        amountPlayersAdded++;
+                    }
+                } else {
+                    playersLeft.push({
+                        id: BigInt(row.user_id),
+                        nick: row.current_nick
+                    });
+
+                    amountPlayersAdded++;
+                }
+            }
+        });
+
+        return {
+            pickupConfigId: data[0][0].id,
+            name: data[0][0].name,
+            maxPlayers: data[0][0].player_count,
+            amountPlayersAdded,
+            pendingSince: data[0][0].in_stage_since,
+            currentIteration: data[0][0].stage_iteration,
+            stage: data[0][0].stage,
+            // @ts-ignore
+            teams,
+            // @ts-ignore
+            playersLeft
+        }
+    }
+
+    static async getPendingPickups(...guildIds: bigint[]): Promise<Map<BigInt, PendingPickup[]>> {
+        const data = await db.execute(`
+        SELECT sp.guild_id, p.current_nick, p.user_id, pc.id, pc.name, pc.player_count, sp.in_stage_since, sp.stage_iteration, sp.stage, st.team
+        FROM state_pickup sp
+        JOIN state_pickup_players spp ON spp.pickup_config_id = sp.pickup_config_id
+        JOIN players p ON p.user_id = spp.player_id
+        JOIN pickup_configs pc ON sp.pickup_config_id = pc.id
+        LEFT JOIN state_teams st ON (sp.pickup_config_id = st.pickup_config_id AND spp.player_id = st.player_id)
+        WHERE sp.guild_id IN (${Array(guildIds.length).fill('?').join(',')})
+        AND sp.stage != 'fill'
+        ORDER BY sp.in_stage_since
+        `, guildIds);
+
+        if (!data[0].length) {
+            return null;
+        }
+
+        const guilds = new Map();
+        data[0].forEach(row => {
+            if (!guilds.has(BigInt(row.guild_id))) {
+                guilds.set(BigInt(row.guild_id), [{
+                    pickupConfigId: row.id,
+                    name: row.name,
+                    maxPlayers: row.player_count,
+                    amountPlayersAdded: 0,
+                    pendingSince: row.in_stage_since,
+                    currentIteration: row.stage_iteration,
+                    stage: row.stage,
+                    teams: [],
+                    playersLeft: []
+                }]);
+            }
+
+            const guildRef = guilds.get(BigInt(row.guild_id));
+            let pickupIndex = guildRef.findIndex(pickup => pickup.pickupConfigId === row.id);
+
+            if (pickupIndex < 0) {
+                guildRef.push({
+                    pickupConfigId: row.id,
+                    name: row.name,
+                    maxPlayers: row.player_count,
+                    amountPlayersAdded: 0,
+                    pendingSince: row.in_stage_since,
+                    currentIteration: row.stage_iteration,
+                    stage: row.stage,
+                    teams: [],
+                    playersLeft: []
+                });
+                pickupIndex = guildRef.length - 1;
+            }
+
+            const pickup = guildRef[pickupIndex];
+
+            if (row.stage === 'afk_check') {
+                if (!pickup.teams.length) {
+                    pickup.teams.push({
+                        name: 'A',
+                        players: []
+                    });
+                }
+                pickup.teams[0].players.push({
+                    id: BigInt(row.user_id),
+                    nick: row.current_nick
+                });
+
+                pickup.amountPlayersAdded++;
+            } else {
+                if (row.team) {
+                    const index = pickup.teams.findIndex(team => team.name === row.team);
+                    if (index < 0) {
+                        pickup.teams.push({
+                            name: row.team,
+                            players: [{
+                                id: BigInt(row.user_id),
+                                nick: row.current_nick
+                            }]
+                        });
+
+                        pickup.amountPlayersAdded++;
+                    } else {
+                        pickup.teams[index].players.push({
+                            id: BigInt(row.user_id),
+                            nick: row.current_nick
+                        });
+
+                        pickup.amountPlayersAdded++;
+                    }
+                } else {
+                    pickup.playersLeft.push({
+                        id: BigInt(row.user_id),
+                        nick: row.current_nick
+                    });
+
+                    pickup.amountPlayersAdded++;
+                }
+            }
+        });
+
+        return guilds;
+    }
+
+    static async setAfks(guildId: bigint, ...playerIds) {
+        await db.execute(`
+        UPDATE state_guild_player SET is_afk = true
+        WHERE guild_id = ? AND player_id IN (${Array(playerIds.length).fill('?').join(',')})
+        `, [guildId, ...playerIds]);
+    }
+
+    static async removeAfks(guildId: bigint, ...playerIds) {
+        await db.execute(`
+        UPDATE state_guild_player SET is_afk = null
+        WHERE guild_id = ? AND player_id IN (${Array(playerIds.length).fill('?').join(',')})
+        `, [guildId, ...playerIds]);
     }
 }

@@ -39,6 +39,10 @@ const command: Command = {
             const startMessage = settings.startMessage || '-';
             const subMessage = settings.subMessage || '-';
             const notifyMessage = settings.notifyMessage || '-';
+            const iterationTime = Util.formatTime(settings.iterationTime);
+            const afkTime = Util.formatTime(settings.afkTime);
+            const afkCheckIterations = settings.afkCheckIterations;
+            const pickingIterations = settings.pickingIterations;
             const warnStreaks = settings.warnStreaks;
             const warnsUntilBan = settings.warnsUntilBan;
             const warnStreakExpiration = Util.formatTime(settings.warnStreakExpiration);
@@ -54,9 +58,13 @@ const command: Command = {
                 `Default blacklist: **${blacklistRole ? blacklistRole.name : '-'}**\n` +
                 `Promotion delay: **${promotionDelay}**\n` +
                 `Default Server: **${defaultServer}**\n` +
-                `Start message:\n${startMessage}\n` +
-                `Sub message:\n${subMessage}\n` +
-                `Notify message:\n${notifyMessage}\n` +
+                `Start message:\n||${startMessage}||\n` +
+                `Sub message:\n||${subMessage}||\n` +
+                `Notify message:\n||${notifyMessage}||\n` +
+                `Iteration time: **${iterationTime}**\n` +
+                `Afk time: **${afkTime}**\n` +
+                `Afk check iterations: **${afkCheckIterations}**\n` +
+                `Picking iterations: **${pickingIterations}**\n` +
                 `Max warn streaks: **${warnStreaks}**\n` +
                 `Warns until ban: **${warnsUntilBan}**\n` +
                 `Warn streak expiration: **${warnStreakExpiration}**\n` +

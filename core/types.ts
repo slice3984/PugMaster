@@ -83,3 +83,24 @@ export interface PlayerNicks {
     oldNick: boolean;
     players: { oldNick?: string; currentNick: string; id: number; userId: BigInt }[]
 }
+
+export interface PendingPickup {
+    pickupConfigId: number;
+    name: string;
+    maxPlayers: number;
+    amountPlayersAdded: number; // Required in case of player removes / auto removes
+    pendingSince: Date;
+    currentIteration: number;
+    stage: 'afk_check' | 'picking_manual';
+    teams: [
+        {
+            name: string,
+            players: [
+                {
+                    id: bigint, nick: string
+                }
+            ]
+        }
+    ];
+    playersLeft: [{ id: bigint, nick: string }] // Only required for manual picking
+}

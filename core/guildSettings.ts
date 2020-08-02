@@ -7,6 +7,8 @@ import ServerModel from '../models/server';
 
 // Only storing frequently accessed data and sync with db
 export default class GuildSettings {
+    pendingPickups = new Map();
+
     constructor(
         private guild: Discord.Guild,
         private _id: bigint,
@@ -24,6 +26,10 @@ export default class GuildSettings {
         private _startMessage: string,
         private _subMessage: string,
         private _notifyMessage: string,
+        private _iterationTime: number,
+        private _afkTime: number,
+        private _afkCheckIterations: number,
+        private _pickingIterations: number,
         private _warnStreaks: number,
         private _warnsUntilBan: number,
         private _warnStreakExpiration: number,
@@ -38,8 +44,8 @@ export default class GuildSettings {
         for (const prop of properties) {
 
             if (prop.value === 'none') {
-                if (['prefix', 'warn_streaks', 'warn_streak_expiration', 'warn_expiration', 'warn_bantime',
-                    'warn_bantime_multiplier', 'warns_until_ban'].includes(prop.key)) {
+                if (['prefix', 'warn_streaks', 'iteration_time', 'afk_time', 'afk_check_iterations', 'picking_iterations', 'warn_streak_expiration',
+                    'warn_expiration', 'warn_bantime', 'warn_bantime_multiplier', 'warns_until_ban'].includes(prop.key)) {
                     errors.push({ type: 'none', errorMessage: `you can't disable property ${prop.key}` });
                 } else {
                     continue;
@@ -72,8 +78,13 @@ export default class GuildSettings {
             let dbColumn = keyNames.includes(key) ? dbColumnNames[keyNames.indexOf(key)] : key;
 
             // Convert to ms if required
-            if (['global_expire', 'promotion_delay', 'warn_bantime', 'warn_expiration', 'warn_streak_expiration'].includes(key)) {
+            if (['global_expire', 'promotion_delay', 'afk_time', 'warn_bantime', 'warn_expiration', 'warn_streak_expiration'].includes(key)) {
                 value = (Util.timeStringToTime(value) * 60 * 1000).toString();
+            }
+
+            // Special case for iteration time which can be in seconds
+            if (['iteration_time'].includes(key)) {
+                value = (Util.timeStringToTime(value, true) * 1000).toString();
             }
 
             // Get the role ids
@@ -102,6 +113,10 @@ export default class GuildSettings {
                 case 'start_message': this._startMessage = value; break;
                 case 'sub_message': this._subMessage = value; break;
                 case 'notify_message': this._notifyMessage = value; break;
+                case 'iteration_time': this._iterationTime = +value; break;
+                case 'afk_time': this._afkTime = +value; break;
+                case 'afk_check_iterations': this._afkCheckIterations = +value; break;
+                case 'picking_iterations': this._pickingIterations = +value; break;
                 case 'warn_streaks': this._warnStreaks = value ? +value : null; break;
                 case 'warns_until_ban': this._warnsUntilBan = value ? +value : null; break;
                 case 'warn_streak_expiration': this._warnStreakExpiration = +value; break;
@@ -175,6 +190,20 @@ export default class GuildSettings {
 
     public get id(): bigint {
         return this._id;
+    }
+
+    public get pickingIterations(): number {
+        return this._pickingIterations;
+    }
+    public get afkCheckIterations(): number {
+        return this._afkCheckIterations;
+    }
+    public get iterationTime(): number {
+        return this._iterationTime;
+    }
+
+    public get afkTime(): number {
+        return this._afkTime;
     }
 
     public get warnBanTimeMultiplier(): number {
