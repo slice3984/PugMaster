@@ -234,6 +234,8 @@ export default class Util {
     }
 
     static async parseStartMessage(guildId: bigint, message: string, pickupSettings: PickupSettings, ...teams: BigInt[][]) {
+        const guildSettings = Bot.getInstance().getGuild(guildId);
+
         // %name, %teams, %map, %ip, %password, #placeholder[only display if it exists]
         const placeHolders = ['%name', '%teams', '%map', '%ip', '%password'];
 
@@ -288,7 +290,7 @@ export default class Util {
                     message = message.replace(toReplace, maps[Math.floor(Math.random() * maps.length)]);
                     break;
                 case '%ip':
-                    if (!pickupSettings.serverId) {
+                    if (!pickupSettings.serverId && !guildSettings.defaultServer) {
                         message = message.replace(/\n%ip\[.*?\]\n/g, '\n');
                         message = message.replace(/%ip\[.*?\]/g, '');
                         message = message.replace(toReplace, '');
@@ -296,14 +298,18 @@ export default class Util {
                     }
 
                     if (!server) {
-                        server = await ServerModel.getServer(guildId, pickupSettings.serverId);
+                        if (pickupSettings.serverId) {
+                            server = await ServerModel.getServer(guildId, pickupSettings.serverId);
+                        } else {
+                            server = await ServerModel.getServer(guildId, guildSettings.defaultServer);
+                        }
                     }
 
                     message = message.replace(/(%ip)\[(.*?)\]/g, '$2');
                     message = message.replace(toReplace, server.ip);
                     break;
                 case '%password':
-                    if (!pickupSettings.serverId) {
+                    if (!pickupSettings.serverId && !guildSettings.defaultServer) {
                         message = message.replace(/\n%password\[.*?\]\n/g, '\n');
                         message = message.replace(/%password\[.*?\]/g, '');
                         message = message.replace(toReplace, '');
@@ -311,7 +317,11 @@ export default class Util {
                     }
 
                     if (!server) {
-                        server = await ServerModel.getServer(guildId, pickupSettings.serverId);
+                        if (pickupSettings.serverId) {
+                            server = await ServerModel.getServer(guildId, pickupSettings.serverId);
+                        } else {
+                            server = await ServerModel.getServer(guildId, guildSettings.defaultServer);
+                        }
                     }
 
                     if (!server.password) {
@@ -329,8 +339,9 @@ export default class Util {
     }
 
     static async parseNotifySubMessage(guildId: bigint, message: string, pickupSettings: PickupSettings) {
-        // %name, %ip, %password, #placeholder[only display if it exists]
+        const guildSettings = Bot.getInstance().getGuild(guildId);
 
+        // %name, %ip, %password, #placeholder[only display if it exists]
         const placeHolders = ['%name', '%ip', '%password'];
 
         message = message.replace(/(%name)\[(.*?)\]/g, '$2');
@@ -355,7 +366,7 @@ export default class Util {
                     message = message.replace(placeholder, pickupSettings.name);
                     break;
                 case '%ip':
-                    if (!pickupSettings.serverId) {
+                    if (!pickupSettings.serverId && !guildSettings.defaultServer) {
                         message = message.replace(/\n%ip\[.*?\]\n/g, '\n');
                         message = message.replace(/%ip\[.*?\]/g, '');
                         message = message.replace(toReplace, '');
@@ -363,14 +374,18 @@ export default class Util {
                     }
 
                     if (!server) {
-                        server = await ServerModel.getServer(guildId, pickupSettings.serverId);
+                        if (pickupSettings.serverId) {
+                            server = await ServerModel.getServer(guildId, pickupSettings.serverId);
+                        } else {
+                            server = await ServerModel.getServer(guildId, guildSettings.defaultServer);
+                        }
                     }
 
                     message = message.replace(/(%ip)\[(.*?)\]/g, '$2');
                     message = message.replace(toReplace, server.ip);
                     break;
                 case '%password':
-                    if (!pickupSettings.serverId) {
+                    if (!pickupSettings.serverId && !guildSettings.defaultServer) {
                         message = message.replace(/\n%password\[.*?\]\n/g, '\n');
                         message = message.replace(/%password\[.*?\]/g, '');
                         message = message.replace(toReplace, '');
@@ -378,7 +393,11 @@ export default class Util {
                     }
 
                     if (!server) {
-                        server = await ServerModel.getServer(guildId, pickupSettings.serverId);
+                        if (pickupSettings.serverId) {
+                            server = await ServerModel.getServer(guildId, pickupSettings.serverId);
+                        } else {
+                            server = await ServerModel.getServer(guildId, guildSettings.defaultServer);
+                        }
                     }
 
                     if (!server.password) {

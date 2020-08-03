@@ -106,6 +106,7 @@ const command: Command = {
             const settings = await PickupModel.getPickupSettings(BigInt(message.guild.id), pickup);
 
             const mapPoolName = settings.mapPoolId ? await MappoolModel.getPoolName(BigInt(message.guild.id), settings.mapPoolId) : '-';
+            const serverName = settings.serverId ? await (await ServerModel.getServer(BigInt(message.guild.id), settings.serverId)).name : '-';
             const whitelistRole = settings.whitelistRole ? Util.getRole(message.guild, settings.whitelistRole.toString()) : null;
             const blacklistRole = settings.blacklistRole ? Util.getRole(message.guild, settings.blacklistRole.toString()) : null;
             const promotionRole = settings.promotionRole ? Util.getRole(message.guild, settings.promotionRole.toString()) : null;
@@ -118,6 +119,7 @@ const command: Command = {
                 `AFK check: **${settings.afkCheck ? 'enabled' : 'disabled'}**\n` +
                 `Pick mode: **${settings.pickMode}**\n` +
                 `Map pool: **${mapPoolName}**\n` +
+                `Server: **${serverName}**\n` +
                 `Whitelist role: **${whitelistRole ? whitelistRole.name : '-'}**\n` +
                 `Blacklist role: **${blacklistRole ? blacklistRole.name : '-'}**\n` +
                 `Promotion role: **${promotionRole ? promotionRole.name : '-'}**\n` +

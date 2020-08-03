@@ -391,7 +391,7 @@ export default class GuildModel {
         JOIN players p ON p.user_id = spp.player_id
         JOIN pickup_configs pc ON sp.pickup_config_id = pc.id
         LEFT JOIN state_teams st ON (sp.pickup_config_id = st.pickup_config_id AND spp.player_id = st.player_id)
-        WHERE sp.stage != 'fills' AND sp.guild_id = ? AND pc.id = ?
+        WHERE sp.stage != 'fill' AND sp.guild_id = ? AND pc.id = ?
         `, [guildId, pickupConfigId]);
 
         if (!data[0].length) {

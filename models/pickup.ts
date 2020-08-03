@@ -98,6 +98,29 @@ export default class PickupModel {
         return pickups;
     }
 
+    static async getAllPickups(guildId: bigint):
+        Promise<{ id: number, name: string, added: number, max: number }[]> {
+        const results = await db.execute(`
+        SELECT pc.id, pc.name, COUNT(sp.player_id) as added, pc.player_count FROM state_pickup_players sp
+        RIGHT JOIN pickup_configs pc ON sp.pickup_config_id = pc.id
+        WHERE pc.guild_id = ?
+        GROUP BY pc.id ORDER BY added DESC, pc.player_count DESC;
+        `, [guildId]);
+
+        const pickups = [];
+
+        results[0].forEach(row => {
+            pickups.push({
+                id: row.id,
+                name: row.name,
+                added: row.added,
+                max: row.player_count
+            });
+        });
+
+        return pickups;
+    }
+
     static async getAddedPlayers() {
         const players = await db.query(`
         SELECT player_id, guild_id FROM state_pickup_players
