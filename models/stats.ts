@@ -248,4 +248,43 @@ export default class StatsModel {
 
         return stats;
     }
+
+    static async getLastActive(guildId: bigint, limit: number, period: number, pickup?: string):
+        Promise<{ id: bigint, amount: number }[]> {
+        let results = [];
+        let data;
+
+        if (!pickup) {
+            data = await db.execute(`
+            SELECT count(ps.user_id) as amount, ps.user_id FROM pickups p
+            JOIN pickup_players pp ON p.id = pp.pickup_id
+            JOIN players ps ON pp.player_id = ps.id
+            WHERE p.guild_id = ? AND ((NOW() - INTERVAL ? DAY) < p.started_at)
+            GROUP BY pp.player_id
+            ORDER BY amount DESC
+            LIMIT ?
+            `, [guildId, period, limit]);
+
+        } else {
+            data = await db.execute(`
+            SELECT count(ps.user_id) as amount, ps.user_id FROM pickups p
+            JOIN pickup_players pp ON p.id = pp.pickup_id
+            JOIN players ps ON pp.player_id = ps.id
+            JOIN pickup_configs pc ON p.pickup_config_id = pc.id
+            WHERE p.guild_id = ? AND ((NOW() - INTERVAL ? DAY) < p.started_at) AND pc.name = ?
+            GROUP BY pp.player_id
+            ORDER BY amount DESC
+            LIMIT ?
+            `, [guildId, period, pickup, limit])
+        }
+
+        data[0].forEach(row => {
+            results.push({
+                id: BigInt(row.user_id),
+                amount: row.amount
+            });
+        })
+
+        return results;
+    }
 }
