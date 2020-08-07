@@ -94,7 +94,11 @@ export default class StatsModel {
                 JOIN pickup_players pp ON pp.player_id = p.id
                 JOIN pickups ps ON pp.pickup_id = ps.id
                 JOIN pickup_configs pc ON ps.pickup_config_id = pc.id
-                WHERE ps.id = (SELECT MAX(id) FROM pickups WHERE guild_id = ? AND pc.name = ?)            
+                WHERE ps.id = (
+					SELECT MAX(ps.id) FROM pickups ps
+                    JOIN pickup_configs pc ON ps.pickup_config_id = pc.id
+                    WHERE pc.guild_id = ? AND pc.name = ?
+				)           
             `, [guildId, identifier.value]);
             } else {
                 // By player
@@ -129,5 +133,119 @@ export default class StatsModel {
         } else {
             return null;
         }
+    }
+
+    static async getTop(guildId: bigint, period: 'alltime' | 'day' | 'week' | 'month' | 'year', limit: number):
+        Promise<{ nick: string, amount: number }[]> {
+        let results;
+        let intervalTime;
+
+        switch (period) {
+            case 'day':
+                intervalTime = 'DAY';
+                break;
+            case 'week':
+                intervalTime = 'WEEK';
+                break;
+            case 'month':
+                intervalTime = 'MONTH';
+                break;
+            case 'year':
+                intervalTime = 'YEAR';
+        }
+
+        if (period === 'alltime') {
+            results = await db.execute(`
+            SELECT p.current_nick, COUNT(pp.player_id) as amount FROM pickup_players pp
+            JOIN players p ON pp.player_id = p.id
+            WHERE p.guild_id = ?
+            GROUP BY pp.player_id ORDER BY amount DESC
+            LIMIT ?
+            `, [guildId, limit]);
+        } else {
+            results = await db.execute(`
+            SELECT p.current_nick, COUNT(pp.player_id) as amount FROM pickup_players pp
+            JOIN pickups ps ON pp.pickup_id = ps.id
+            JOIN players p ON pp.player_id = p.id
+            WHERE p.guild_id = ? AND ((NOW() - INTERVAL 1 ${intervalTime})  < ps.started_at)
+            GROUP BY pp.player_id ORDER BY amount DESC
+            LIMIT ?
+            `, [guildId, limit]);
+        }
+
+        const top = [];
+
+        results[0].forEach(row => {
+            top.push({
+                nick: row.current_nick,
+                amount: row.amount
+            });
+        });
+
+        return top;
+    }
+
+    static async getStats(guildId: bigint, identifier?: string | number) {
+        let results;
+        const stats = [];
+
+        // All pickups
+        if (!identifier) {
+            results = await db.execute(`
+            SELECT COUNT(p.id) as amount, pc.name FROM pickups p
+            JOIN pickup_configs pc ON pc.id = p.pickup_config_id
+            WHERE p.guild_id = ?
+            GROUP BY p.pickup_config_id
+            ORDER BY amount DESC;
+            `, [guildId]);
+
+            results[0].forEach(row => {
+                stats.push({
+                    name: row.name,
+                    amount: row.amount
+                });
+            })
+        }
+
+        // Specific pickup
+        if (identifier && typeof identifier === 'string') {
+            results = await db.execute(`
+            SELECT COUNT(p.id) as amount, pc.name FROM pickups p
+            JOIN pickup_configs pc ON pc.id = p.pickup_config_id
+            WHERE p.guild_id = ? AND pc.name = ?
+            `, [guildId, identifier]);
+
+            if (!results[0][0].name) {
+                return stats;
+            }
+
+            stats.push({
+                name: results[0][0].name,
+                amount: results[0][0].amount
+            });
+        }
+
+        // By player
+        if (identifier && typeof identifier === 'number') {
+            results = await db.execute(`
+            SELECT COUNT(p.id) as amount, pc.name, pl.current_nick FROM pickups p
+            JOIN pickup_players pp ON pp.pickup_id = p.id
+            JOIN pickup_configs pc ON p.pickup_config_id = pc.id
+            JOIN players pl ON pp.player_id = pl.id
+            WHERE p.guild_id = ? AND pl.id = ?
+            GROUP BY p.pickup_config_id
+            ORDER BY amount DESC;
+            `, [guildId, identifier]);
+
+            results[0].forEach(row => {
+                stats.push({
+                    name: row.name,
+                    amount: row.amount,
+                    nick: row.current_nick
+                });
+            })
+        }
+
+        return stats;
     }
 }

@@ -32,7 +32,7 @@ const command: Command = {
         PlayerModel.storeOrUpdatePlayer(BigInt(message.guild.id), BigInt(player.id), player.displayName);
 
         // Check if this warn is a ban
-        const activeWarns = await PlayerModel.getActiveWarns(BigInt(message.guild.id), BigInt(message.member.id));
+        const activeWarns = await PlayerModel.getActiveWarns(BigInt(message.guild.id), BigInt(player.id));
 
         if (guildSettings.warnsUntilBan <= activeWarns.length + 1) {
             const reason = params.slice(1).join(' ');
@@ -46,7 +46,7 @@ const command: Command = {
             const guildSettings = bot.getGuild(message.guild.id);
 
             // Get current warn streak
-            const warnsInStreak = await PlayerModel.getWarnsInStreak(BigInt(message.guild.id), BigInt(message.member.id));
+            const warnsInStreak = await PlayerModel.getWarnsInStreak(BigInt(message.guild.id), BigInt(player.id));
 
             // Also add the current warn
             let currentStreak = Math.floor((warnsInStreak + 1) / guildSettings.warnsUntilBan);
@@ -82,7 +82,7 @@ const command: Command = {
             const reasonToDisplay = reasonParts.join('/');
 
             await PlayerModel.warnPlayer(BigInt(message.guild.id), BigInt(message.member.id), BigInt(player.id), reason || null);
-            await PlayerModel.setActiveWarnsToFalse(BigInt(message.guild.id), BigInt(message.member.id));
+            await PlayerModel.setActiveWarnsToFalse(BigInt(message.guild.id), BigInt(player.id));
             await PlayerModel.unbanPlayer(BigInt(message.guild.id), BigInt(player.id));
             await PlayerModel.banPlayer(BigInt(message.guild.id), BigInt(message.member.id), BigInt(player.id), banTime, true, reasonToDisplay);
 
