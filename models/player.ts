@@ -460,6 +460,14 @@ export default class PlayerModel {
         return null;
     }
 
+    static async resetPlayerState(guildId: bigint, userId: bigint) {
+        await db.execute(`
+        UPDATE state_guild_player
+        SET pickup_expire = null, last_add = null, is_afk = null
+        WHERE guild_id = ? AND player_id = ?
+        `, [guildId, userId]);
+    }
+
     static async getPlayerState(guildId: bigint, userId: bigint):
         Promise<{ aoExpire: Date | null; pickupExpire: Date | null, lastAdd: Date | null, isAfk: boolean }> {
         const results = await db.execute(`

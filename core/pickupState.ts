@@ -179,7 +179,7 @@ export default class PickupState {
         const playerAddedTo = await PickupModel.isPlayerAdded(guildId, playerId);
 
         if (!playerAddedTo.length) {
-            PlayerModel.removeExpires(guildId, playerId);
+            await PlayerModel.resetPlayerState(guildId, playerId);
         }
 
         if (showStatus) {
