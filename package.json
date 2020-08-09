@@ -6,7 +6,8 @@
   "scripts": {
     "build:www": "cross-env NODE_ENV=production webpack --config webpack.www.config.js --mode=production",
     "dev:www": "cross-env NODE_ENV=development webpack --config webpack.www.config.js --watch",
-    "build:bot": "cross-env NODE_ENV=production webpack --config webpack.bot.config.js --mode=production",
+    "build:bot_old": "cross-env NODE_ENV=production webpack --config webpack.bot.config.js --mode=production",
+    "build:bot": "tsc -p ./tsconfig.bot.json",
     "debug:bot": "cross-env TS_NODE_PROJECT=tsconfig.bot.json DEV=true node --inspect=5858 -r ts-node/register ./app.ts",
     "dev:bot": "nodemon"
   },
@@ -65,6 +66,7 @@
     "express": "^4.17.1",
     "express-mysql-session": "^2.1.4",
     "express-session": "^1.17.1",
+    "ffmpeg-static": "^4.2.6",
     "mysql2": "^2.1.0"
   }
 }

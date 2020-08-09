@@ -2,7 +2,7 @@ import fs from 'fs';
 import { Config } from './types';
 
 export default class ConfigTool {
-    static configPath = process.env.DEV ? './config.json' : __dirname + '/config.json';
+    static configPath = './config.json';
     static config: Config;
 
     static doesConfigExist(): Promise<Boolean> {

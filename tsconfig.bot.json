@@ -6,6 +6,14 @@
         "target": "ES2019",
         "noImplicitAny": false,
         "moduleResolution": "node",
-        "sourceMap": true
-    }
+        "sourceMap": false,
+        "outDir": "dist"
+    },
+    "files": [
+        "app.ts"
+    ],
+    "include": [
+        "./commands/**/*",
+        "./core/**/*"
+    ]
 }

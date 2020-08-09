@@ -43,8 +43,11 @@ module.exports = {
         })
     ],
     optimization: {
-        minimize: true,
+        minimize: false,
         minimizer: [new TerserPlugin({
+            terserOptions: {
+                keep_fnames: true
+            },
             test: /\.js(\?.*)?$/i,
         })],
     },

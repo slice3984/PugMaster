@@ -50,6 +50,7 @@ export const createTables = () => new Promise(async (res, _req) => {
       warn_ban_time_multiplier TINYINT NOT NULL DEFAULT 2,
       last_check DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       PRIMARY KEY (guild_id))
+      ENGINE = InnoDB;
         `,
     `
     CREATE TABLE IF NOT EXISTS guild_channels (
@@ -63,12 +64,14 @@ export const createTables = () => new Promise(async (res, _req) => {
         REFERENCES guilds (guild_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE) 
+        ENGINE = InnoDB;
         `,
     `
     CREATE TABLE IF NOT EXISTS commands (
       name VARCHAR(20) NOT NULL,
       disabled TINYINT NOT NULL DEFAULT 0,
-      PRIMARY KEY (name))        
+      PRIMARY KEY (name))
+      ENGINE = InnoDB;    
         `,
     `
     CREATE TABLE IF NOT EXISTS guild_disabled_commands (
@@ -88,6 +91,7 @@ export const createTables = () => new Promise(async (res, _req) => {
         REFERENCES commands (name)
         ON DELETE CASCADE
         ON UPDATE CASCADE)      
+        ENGINE = InnoDB;
         `,
     `
     CREATE TABLE IF NOT EXISTS guild_command_settings (
@@ -104,7 +108,8 @@ export const createTables = () => new Promise(async (res, _req) => {
         FOREIGN KEY (command_name)
         REFERENCES commands (name)
         ON DELETE CASCADE
-        ON UPDATE CASCADE)      
+        ON UPDATE CASCADE)
+        ENGINE = InnoDB;  
         `,
     `
     CREATE TABLE IF NOT EXISTS guild_roles (
@@ -118,6 +123,7 @@ export const createTables = () => new Promise(async (res, _req) => {
         REFERENCES guilds (guild_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE)
+        ENGINE = InnoDB;
         `,
     `
     CREATE TABLE IF NOT EXISTS guild_role_command_permissions (
@@ -134,12 +140,14 @@ export const createTables = () => new Promise(async (res, _req) => {
         FOREIGN KEY (command_name)
         REFERENCES commands (name)
         ON DELETE CASCADE
-        ON UPDATE CASCADE)      
+        ON UPDATE CASCADE)
+        ENGINE = InnoDB;   
         `,
     `
     CREATE TABLE IF NOT EXISTS bot_permissions (
       permission_name VARCHAR(45) NOT NULL,
-      PRIMARY KEY (permission_name))        
+      PRIMARY KEY (permission_name))
+      ENGINE = InnoDB;     
         `,
     `
     CREATE TABLE IF NOT EXISTS guild_role_bot_permissions (
@@ -157,7 +165,8 @@ export const createTables = () => new Promise(async (res, _req) => {
         FOREIGN KEY (bot_permission_name)
         REFERENCES bot_permissions (permission_name)
         ON DELETE CASCADE
-        ON UPDATE CASCADE)      
+        ON UPDATE CASCADE)
+        ENGINE = InnoDB;     
         `,
     `
     CREATE TABLE IF NOT EXISTS players (
@@ -174,7 +183,8 @@ export const createTables = () => new Promise(async (res, _req) => {
         FOREIGN KEY (guild_id)
         REFERENCES guilds (guild_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE)      
+        ON UPDATE CASCADE)
+        ENGINE = InnoDB;     
         `,
     `
     CREATE TABLE IF NOT EXISTS player_settings (
@@ -186,7 +196,8 @@ export const createTables = () => new Promise(async (res, _req) => {
         FOREIGN KEY (player_id)
         REFERENCES players (id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE)     
+        ON UPDATE CASCADE)
+        ENGINE = InnoDB;    
         `,
     `
     CREATE TABLE IF NOT EXISTS player_nicks (
@@ -199,7 +210,8 @@ export const createTables = () => new Promise(async (res, _req) => {
         FOREIGN KEY (player_id)
         REFERENCES players (id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE)   
+        ON UPDATE CASCADE)
+        ENGINE = InnoDB;  
         `,
     `
     CREATE TABLE IF NOT EXISTS pickup_configs (
@@ -223,7 +235,8 @@ export const createTables = () => new Promise(async (res, _req) => {
         FOREIGN KEY (guild_id)
         REFERENCES guilds (guild_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE)     
+        ON UPDATE CASCADE)
+        ENGINE = InnoDB;    
         `,
     `
     CREATE TABLE IF NOT EXISTS maps (
@@ -236,7 +249,8 @@ export const createTables = () => new Promise(async (res, _req) => {
         FOREIGN KEY (guild_id)
         REFERENCES guilds (guild_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE)      
+        ON UPDATE CASCADE)
+        ENGINE = InnoDB;      
         `,
     `
     CREATE TABLE IF NOT EXISTS map_pool_names (
@@ -251,6 +265,7 @@ export const createTables = () => new Promise(async (res, _req) => {
         REFERENCES guilds (guild_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE)
+        ENGINE = InnoDB;
         `,
     `
     CREATE TABLE IF NOT EXISTS map_pool_maps (
@@ -267,7 +282,8 @@ export const createTables = () => new Promise(async (res, _req) => {
         FOREIGN KEY (map_id)
         REFERENCES maps (id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE)      
+        ON UPDATE CASCADE)
+        ENGINE = InnoDB;      
         `,
     `
     CREATE TABLE IF NOT EXISTS pickups (
@@ -289,7 +305,8 @@ export const createTables = () => new Promise(async (res, _req) => {
         FOREIGN KEY (pickup_config_id)
         REFERENCES pickup_configs (id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE) 
+        ON UPDATE CASCADE)
+        ENGINE = InnoDB; 
         `,
     `
     CREATE TABLE IF NOT EXISTS pickup_players (
@@ -308,7 +325,8 @@ export const createTables = () => new Promise(async (res, _req) => {
         FOREIGN KEY (player_id)
         REFERENCES players (id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE)  
+        ON UPDATE CASCADE)
+        ENGINE = InnoDB; 
         `,
     `
     CREATE TABLE IF NOT EXISTS rated_results (
@@ -320,6 +338,7 @@ export const createTables = () => new Promise(async (res, _req) => {
         REFERENCES pickups (id)
         ON DELETE CASCADE
         ON UPDATE CASCADE)
+        ENGINE = InnoDB;
         `,
     `
     CREATE TABLE IF NOT EXISTS pickup_servers (
@@ -333,7 +352,8 @@ export const createTables = () => new Promise(async (res, _req) => {
         FOREIGN KEY (guild_id)
         REFERENCES guilds (guild_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE)        
+        ON UPDATE CASCADE)
+        ENGINE = InnoDB;       
         `,
     `
     CREATE TABLE IF NOT EXISTS guild_settings (
@@ -345,12 +365,14 @@ export const createTables = () => new Promise(async (res, _req) => {
         FOREIGN KEY (guild_id)
         REFERENCES guilds (guild_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE)     
+        ON UPDATE CASCADE)
+        ENGINE = InnoDB;     
         `,
     `
     CREATE TABLE IF NOT EXISTS banned_guilds (
       guild_id BIGINT NOT NULL,
-      PRIMARY KEY (guild_id))      
+      PRIMARY KEY (guild_id))
+      ENGINE = InnoDB;     
         `,
     `
     CREATE TABLE IF NOT EXISTS bans (
@@ -381,7 +403,8 @@ export const createTables = () => new Promise(async (res, _req) => {
         FOREIGN KEY (issuer_player_id)
         REFERENCES players (id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE)    
+        ON UPDATE CASCADE)
+        ENGINE = InnoDB;
         `,
     `
     CREATE TABLE IF NOT EXISTS warns (
@@ -410,7 +433,8 @@ export const createTables = () => new Promise(async (res, _req) => {
         FOREIGN KEY (issuer_player_id)
         REFERENCES players (id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE)      
+        ON UPDATE CASCADE)
+        ENGINE = InnoDB;     
         `,
     `
     CREATE TABLE IF NOT EXISTS state_pickup (
@@ -433,6 +457,7 @@ export const createTables = () => new Promise(async (res, _req) => {
         REFERENCES pickup_configs (id)
         ON DELETE CASCADE
         ON UPDATE CASCADE)
+        ENGINE = InnoDB;
       `,
     `
     CREATE TABLE IF NOT EXISTS state_pickup_players (
@@ -451,6 +476,7 @@ export const createTables = () => new Promise(async (res, _req) => {
         REFERENCES pickup_configs (id)
         ON DELETE CASCADE
         ON UPDATE CASCADE)
+        ENGINE = InnoDB;
       `,
     `
       CREATE TABLE IF NOT EXISTS state_guild_player (
@@ -467,6 +493,7 @@ export const createTables = () => new Promise(async (res, _req) => {
           REFERENCES guilds (guild_id)
           ON DELETE CASCADE
           ON UPDATE CASCADE)
+          ENGINE = InnoDB;
       `,
     `
       CREATE TABLE IF NOT EXISTS state_teams (
@@ -485,6 +512,7 @@ export const createTables = () => new Promise(async (res, _req) => {
           REFERENCES pickup_configs (id)
           ON DELETE CASCADE
           ON UPDATE CASCADE)
+          ENGINE = InnoDB;
       `
   ];
 
