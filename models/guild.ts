@@ -76,7 +76,8 @@ export default class GuildModel {
             data.promotion_delay,
             data.last_promote,
             data.global_expire,
-            data.trust_check ? data.trust_time : null,
+            data.trust_time ? data.trust_time : null,
+            data.explicit_trust ? data.explicit_trust : null,
             disabledCommands,
             commandSettings,
             channels,
@@ -350,7 +351,12 @@ export default class GuildModel {
 
         // https://mariadb.com/kb/en/why-is-order-by-in-a-from-subquery-ignored/
         const warns = await db.execute(`
-        SELECT COUNT(w_temp.id) AS warns, w_temp.* FROM (
+        SELECT COUNT(w_temp.id) AS warns,
+        w_temp.player,
+        MAX(w_temp.issuer) AS issuer,
+        MAX(w_temp.warned_at) AS warned_at,
+        MAX(w_temp.reason) AS reason,
+        w_temp.id, MAX(w_temp.warnid) AS warnid FROM (
             SELECT p.current_nick AS player, p2.current_nick AS issuer, w.warned_at, w.reason, p.id, w.id AS warnid FROM warns w
             JOIN players p ON w.player_id = p.id
             JOIN players p2 ON w.issuer_player_id = p2.id
@@ -388,7 +394,7 @@ export default class GuildModel {
         SELECT sp.guild_id, p.current_nick, p.user_id, pc.id, pc.name, pc.player_count, sp.in_stage_since, sp.stage_iteration, sp.stage, st.team
         FROM state_pickup sp
         JOIN state_pickup_players spp ON spp.pickup_config_id = sp.pickup_config_id
-        JOIN players p ON p.user_id = spp.player_id
+        JOIN players p ON p.user_id = spp.player_id AND p.guild_id = spp.guild_id
         JOIN pickup_configs pc ON sp.pickup_config_id = pc.id
         LEFT JOIN state_teams st ON (sp.pickup_config_id = st.pickup_config_id AND spp.player_id = st.player_id)
         WHERE sp.stage != 'fill' AND sp.guild_id = ? AND pc.id = ?
@@ -466,7 +472,7 @@ export default class GuildModel {
         SELECT sp.guild_id, p.current_nick, p.user_id, pc.id, pc.name, pc.player_count, sp.in_stage_since, sp.stage_iteration, sp.stage, st.team
         FROM state_pickup sp
         JOIN state_pickup_players spp ON spp.pickup_config_id = sp.pickup_config_id
-        JOIN players p ON p.user_id = spp.player_id
+        JOIN players p ON p.user_id = spp.player_id AND p.guild_id = spp.guild_id
         JOIN pickup_configs pc ON sp.pickup_config_id = pc.id
         LEFT JOIN state_teams st ON (sp.pickup_config_id = st.pickup_config_id AND spp.player_id = st.player_id)
         WHERE sp.guild_id IN (${Array(guildIds.length).fill('?').join(',')})

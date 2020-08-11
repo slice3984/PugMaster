@@ -102,7 +102,7 @@ export default class PickupStage {
             const user = (await Util.getUser(guild, id.toString()) as Discord.GuildMember);
 
             if (user) {
-                if (user.lastMessage && ((user.lastMessage.createdTimestamp + 60 * 1000) < timestamp)) {
+                if (user.lastMessage && ((user.lastMessage.createdTimestamp + guildSettings.afkTime) < timestamp)) {
                     afkPlayers.push(user);
                 } else {
                     readyPlayers.push(user);

@@ -32,6 +32,8 @@ const command: Command = {
             const settings = bot.getGuild(message.guild.id);
 
             const globalExpireTime = settings.globalExpireTime ? Util.formatTime(settings.globalExpireTime) : 'disabled';
+            const trustTime = settings.trustTime ? Util.formatTime(settings.trustTime) : 'disabled';
+            const explicitTrust = settings.explicitTrust ? 'enabled' : 'disabled';
             const whitelistRole = settings.whitelistRole ? Util.getRole(message.guild, settings.whitelistRole.toString()) : null;
             const blacklistRole = settings.blacklistRole ? Util.getRole(message.guild, settings.blacklistRole.toString()) : null;
             const promotionDelay = Util.formatTime(settings.promotionDelay);
@@ -54,6 +56,8 @@ const command: Command = {
                 `**__Server configuration__**\n` +
                 `Prefix: **${settings.prefix}**\n` +
                 `Global expire: **${globalExpireTime}**\n` +
+                `Trust time: **${trustTime}**\n` +
+                `Explicit trust: **${explicitTrust}**\n` +
                 `Default whitelist: **${whitelistRole ? whitelistRole.name : '-'}**\n` +
                 `Default blacklist: **${blacklistRole ? blacklistRole.name : '-'}**\n` +
                 `Promotion delay: **${promotionDelay}**\n` +

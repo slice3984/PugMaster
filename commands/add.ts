@@ -31,6 +31,18 @@ const command: Command = {
             }
         }
 
+        if (guildSettings.explicitTrust) {
+            const alreadyTrusted = await PlayerModel.arePlayersTrusted(BigInt(message.guild.id), message.member.id);
+
+            if (!alreadyTrusted.length) {
+                const playedBefore = await PickupModel.playedBefore(BigInt(message.guild.id), BigInt(message.author.id));
+
+                if (!playedBefore) {
+                    return message.reply('no previous pickup game found for you, you need to be trusted to add');
+                }
+            }
+        }
+
         // Ban check
         const isBanned = await PlayerModel.isPlayerBanned(BigInt(message.guild.id), BigInt(message.member.id));
         if (isBanned) {

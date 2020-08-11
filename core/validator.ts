@@ -304,7 +304,7 @@ export namespace Validator {
 
     export namespace Guild {
         export function areValidKeys(...keys) {
-            const validKeys = ['prefix', 'global_expire', 'whitelist', 'blacklist', 'promotion_delay', 'server',
+            const validKeys = ['prefix', 'global_expire', 'trust_time', 'explicit_trust', 'whitelist', 'blacklist', 'promotion_delay', 'server',
                 'start_message', 'sub_message', 'notify_message', 'iteration_time', 'afk_time', 'afk_check_iterations', 'picking_iterations', 'warn_streaks', 'warns_until_ban', 'warn_streak_expiration',
                 'warn_expiration', 'warn_bantime', 'warn_bantime_multiplier'];
 
@@ -350,6 +350,30 @@ export namespace Validator {
 
                         if (guildSettings.globalExpireTime === validTime) {
                             errors.push({ type: key, errorMessage: `global expire is already set to ${Util.formatTime(validTime)}` });
+                        }
+                        break;
+                    case 'trust_time':
+                        const validTrustTime = Util.validateTimeString(value, 1209600000, 900000);
+
+                        if (validTrustTime === 'exceeded') {
+                            errors.push({ type: key, errorMessage: `max trust time is ${Util.formatTime(1209600000)}` });
+                            break;
+                        } else if (validTrustTime === 'subceeded') {
+                            errors.push({ type: key, errorMessage: `min trust time is ${Util.formatTime(900000)}` });
+                            break;
+                        } else if (validTrustTime === 'invalid') {
+                            errors.push({ type: key, errorMessage: 'invalid time amounts given' });
+                            break;
+                        }
+
+                        if (guildSettings.trustTime === validTrustTime) {
+                            errors.push({ type: key, errorMessage: `trust time is already set to ${Util.formatTime(validTrustTime)}` });
+                        }
+                        break;
+                    case 'explicit_trust':
+                        if (!['true', 'false'].includes(value)) {
+                            errors.push({ type: key, errorMessage: 'value has to be true or false' });
+                            break;
                         }
                         break;
                     case 'whitelist':

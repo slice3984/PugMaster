@@ -19,6 +19,7 @@ export default class GuildSettings {
         private _lastPromote: Date | null,
         private _globalExpireTime: number | null,
         private _trustTime: number,
+        private _explicitTrust: boolean | null,
         private _disabledCommands: string[],
         private _commandSettings: Map<string, any[]>,
         private _channels: Map<bigint, ChannelType>,
@@ -78,7 +79,7 @@ export default class GuildSettings {
             let dbColumn = keyNames.includes(key) ? dbColumnNames[keyNames.indexOf(key)] : key;
 
             // Convert to ms if required
-            if (['global_expire', 'promotion_delay', 'afk_time', 'warn_bantime', 'warn_expiration', 'warn_streak_expiration'].includes(key)) {
+            if (['global_expire', 'trust_time', 'promotion_delay', 'afk_time', 'warn_bantime', 'warn_expiration', 'warn_streak_expiration'].includes(key)) {
                 value = (Util.timeStringToTime(value) * 60 * 1000).toString();
             }
 
@@ -97,6 +98,11 @@ export default class GuildSettings {
                 value = await (await ServerModel.getServerIds(BigInt(this.id), value))[0];
             }
 
+            // explicit trust
+            if (key === 'explicit_trust') {
+                value = value.toLocaleLowerCase() === 'true' ? '1' : '0';
+            }
+
             if (value === 'none') {
                 value = null;
             }
@@ -106,6 +112,8 @@ export default class GuildSettings {
             switch (key) {
                 case 'prefix': this._prefix = value; break;
                 case 'global_expire': this._globalExpireTime = value ? +value : null; break;
+                case 'trust_time': this._trustTime = value ? +value : null; break;
+                case 'explicit_trust': this._explicitTrust = value ? value === '1' ? true : false : null; break;
                 case 'whitelist': this._whitelistRole = value ? BigInt(value) : null; break;
                 case 'blacklist': this._blacklistRole = value ? BigInt(value) : null; break;
                 case 'promotion_delay': this._promotionDelay = value ? +value : null; break;
@@ -162,6 +170,10 @@ export default class GuildSettings {
 
     public get trustTime(): number {
         return this._trustTime;
+    }
+
+    public get explicitTrust(): boolean | null {
+        return this._explicitTrust;
     }
 
     public get globalExpireTime(): number {

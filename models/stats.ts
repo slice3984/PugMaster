@@ -213,9 +213,10 @@ export default class StatsModel {
             SELECT COUNT(p.id) as amount, pc.name FROM pickups p
             JOIN pickup_configs pc ON pc.id = p.pickup_config_id
             WHERE p.guild_id = ? AND pc.name = ?
+            GROUP BY pc.name
             `, [guildId, identifier]);
 
-            if (!results[0][0].name) {
+            if (!results[0].length) {
                 return stats;
             }
 

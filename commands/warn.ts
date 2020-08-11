@@ -29,7 +29,7 @@ const command: Command = {
             return message.reply(`given player not found`);
         }
 
-        PlayerModel.storeOrUpdatePlayer(BigInt(message.guild.id), BigInt(player.id), player.displayName);
+        await PlayerModel.storeOrUpdatePlayer(BigInt(message.guild.id), BigInt(player.id), player.displayName);
 
         // Check if this warn is a ban
         const activeWarns = await PlayerModel.getActiveWarns(BigInt(message.guild.id), BigInt(player.id));

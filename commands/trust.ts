@@ -29,14 +29,14 @@ const command: Command = {
         }
 
         // Make sure they are not trusted already
-        const alreadyTrusted = await PlayerModel.arePlayersTrusted(BigInt(message.guild.id), validatedUsers.map(user => user.id));
+        const alreadyTrusted = await PlayerModel.arePlayersTrusted(BigInt(message.guild.id), ...validatedUsers.map(user => user.id));
         const toTrust = validatedUsers.filter(user => !alreadyTrusted.includes(user.id));
 
         if (toTrust.length === 0) {
             return message.reply(`the player${validatedUsers.length > 1 ? 's are' : ' is'} already trusted (${validatedUsers.map(user => user.displayName).join(', ')})`);
         }
 
-        await PlayerModel.trustPlayers(BigInt(message.guild.id), toTrust.map(user => user.id));
+        await PlayerModel.trustPlayers(BigInt(message.guild.id), ...toTrust.map(user => user.id));
         message.reply(`successfully trusted ${toTrust.map(user => user.displayName).join(', ')}`);
     }
 }

@@ -11,6 +11,7 @@ const command: Command = {
     global: false,
     perms: false,
     exec: async (bot, message, params) => {
+        await PlayerModel.storeOrUpdatePlayer(BigInt(message.guild.id), BigInt(message.member.id), message.member.displayName);
         const isEnabled = await PlayerModel.isNotifyEnabled(BigInt(message.guild.id), BigInt(message.member.id));
 
         if (params.length >= 1) {

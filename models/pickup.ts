@@ -33,14 +33,14 @@ export default class PickupModel {
             result = await db.execute(`
             SELECT c.id, c.name, s.player_id, c.player_count, p.current_nick FROM pickup_configs c
             LEFT JOIN state_pickup_players s ON s.pickup_config_id = c.id
-            LEFT JOIN players p on p.user_id = s.player_id
+            LEFT JOIN players p on p.user_id = s.player_id AND p.guild_id = s.guild_id
             WHERE c.guild_id = ? AND c.id = ?;
             `, [guildId, nameOrConfigId]);
         } else {
             result = await db.execute(`
             SELECT c.id, c.name, s.player_id, c.player_count, p.current_nick FROM pickup_configs c
             LEFT JOIN state_pickup_players s ON s.pickup_config_id = c.id
-            LEFT JOIN players p on p.user_id = s.player_id
+            LEFT JOIN players p on p.user_id = s.player_id AND p.guild_id = s.guild_id
             WHERE c.guild_id = ? AND c.name = ?;
             `, [guildId, nameOrConfigId]);
         }
@@ -72,16 +72,16 @@ export default class PickupModel {
 
         if (!includingDefaults) {
             result = await db.execute(`
-            SELECT c.id, c.name, player_id, c.player_count, p.current_nick FROM state_pickup_players
-            JOIN pickup_configs c ON pickup_config_id = id 
-            JOIN players p ON user_id = player_id
-            WHERE c.guild_id = ?
+            SELECT c.guild_id, c.id, c.name, player_id, c.player_count, p.current_nick FROM state_pickup_players spp
+            JOIN pickup_configs c ON spp.pickup_config_id = c.id
+            JOIN players p ON p.user_id = spp.player_id AND p.guild_id = spp.guild_id 
+            WHERE spp.guild_id = ?
             `, [guildId]);
         } else {
             result = await db.execute(`
-            SELECT c.id, c.name, s.player_id, c.player_count, p.current_nick FROM pickup_configs c
-            LEFT JOIN state_pickup_players s ON s.pickup_config_id = c.id
-            LEFT JOIN players p on p.user_id = s.player_id
+			SELECT c.guild_id, c.id, c.name, s.player_id, c.player_count, p.current_nick FROM pickup_configs c
+            LEFT JOIN state_pickup_players s ON s.pickup_config_id = c.id AND s.guild_id = c.guild_id
+            LEFT JOIN players p on p.user_id = s.player_id AND p.guild_id = c.guild_id
             WHERE c.guild_id = ? AND (s.player_id IS NOT NULL OR c.is_default_pickup = true)
             `, [guildId]);
         }
@@ -348,5 +348,21 @@ export default class PickupModel {
         `, [guildId, pickupConfigId, stage]);
 
         return inStage[0][0].pending;
+    }
+
+    static async playedBefore(guildId: bigint, playerId: BigInt):
+        Promise<boolean> {
+        const playedBefore = await db.execute(`
+        SELECT 1 as played FROM pickup_players pp
+        JOIN players ps ON pp.player_id = ps.id
+        WHERE ps.guild_id = ? AND ps.user_id = ?
+        LIMIT 1
+        `, [guildId, playerId]);
+
+        if (!playedBefore[0].length) {
+            return false;
+        } else {
+            return true;
+        }
     }
 }

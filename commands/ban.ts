@@ -64,7 +64,7 @@ const command: Command = {
                 }
             }
 
-            //await PlayerModel.banPlayer(BigInt(message.guild.id), BigInt(message.member.id), BigInt(player.id), 0, params.slice(2).join(' ') || null);
+            await PlayerModel.banPlayer(BigInt(message.guild.id), BigInt(message.member.id), BigInt(player.id), 0, false, params.slice(2).join(' ') || null);
 
             if (player instanceof GuildMember) {
                 msg += `${player.displayName} got permanently banned ${params.slice(2).join(' ') ? 'Reason: ' + params.slice(2).join(' ') : ''}`;
