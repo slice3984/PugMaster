@@ -24,7 +24,7 @@ const command: Command = {
             }
 
             const timeDif = new Date().getTime() - pickup.startedAt.getTime();
-            message.channel.send(`#${pickup.id} ${pickup.name} - ${Util.formatTime(timeDif)} ago: ${pickup.playerNicks.join(', ')}`);
+            message.channel.send(`#${pickup.id} ${pickup.name} - ${Util.formatTime(timeDif)} ago: ${pickup.playerNicks.map(nick => `\`${nick}\``).join(', ')}`);
         } else {
             const identifier = params.join(' ');
             let pickup;
@@ -40,7 +40,7 @@ const command: Command = {
                 }
 
                 const timeDif = new Date().getTime() - pickup.startedAt.getTime();
-                return message.channel.send(`#${pickup.id} ${pickup.name} - ${Util.formatTime(timeDif)} ago: ${pickup.playerNicks.join(', ')}`);
+                return message.channel.send(`#${pickup.id} ${pickup.name} - ${Util.formatTime(timeDif)} ago: ${pickup.playerNicks.map(nick => `\`${nick}\``).join(', ')}`);
             } else {
                 // Check for player
                 const nicks = await PlayerModel.getPlayer(BigInt(message.guild.id), identifier);
@@ -66,7 +66,7 @@ const command: Command = {
                 }
 
                 const timeDif = new Date().getTime() - pickup.startedAt.getTime();
-                return message.channel.send(`#${pickup.id} ${pickup.name} - ${Util.formatTime(timeDif)} ago: ${pickup.playerNicks.join(', ')}`);
+                return message.channel.send(`#${pickup.id} ${pickup.name} - ${Util.formatTime(timeDif)} ago: ${pickup.playerNicks.map(nick => `\`${nick}\``).join(', ')}`);
             }
         }
     }

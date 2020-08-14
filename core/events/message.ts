@@ -5,7 +5,7 @@ import CommandHandler from '../commandHandler';
 const commandHandler = new CommandHandler(Bot.getInstance());
 
 module.exports = async (bot: Bot, message: Discord.Message) => {
-    if (message.channel.type === 'dm' || message.member.user.bot) {
+    if (message.channel.type === 'dm' || !message.member || message.member.user.bot) {
         return;
     }
 
@@ -15,13 +15,18 @@ module.exports = async (bot: Bot, message: Discord.Message) => {
 
     // Special commands: + / ++, - / -- & ??
     if (!message.content.startsWith(guildPrefix)) {
-        if (!message.content.startsWith('+') ||
-            !message.content.startsWith('-') ||
+        if (!message.content.startsWith('+') &&
+            !message.content.startsWith('-') &&
             !message.content.startsWith('??')) {
-            parts = message.content.split(' ');
-            cmd = parts.shift();
-        } else {
             return;
+        } else {
+            parts = message.content.split(' ');
+
+            // Pickup has to be right next to +, -
+            if (parts[0].length === 1) {
+                return;
+            }
+            cmd = parts.shift();
         }
     } else {
         parts = message.content.split(' ');

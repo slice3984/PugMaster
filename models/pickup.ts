@@ -25,6 +25,13 @@ export default class PickupModel {
         return;
     }
 
+    static async removePickups(guildId: bigint, ...pickupConfigIds) {
+        await db.execute(`
+        DELETE FROM pickup_configs
+        WHERE guild_id = ? AND id IN (${Array(pickupConfigIds.length).fill('?').join(',')}) 
+        `, [guildId, ...pickupConfigIds]);
+    }
+
     static async getActivePickup(guildId: bigint, nameOrConfigId: number | string):
         Promise<{ name: string, players: { id: bigint | null, nick: string }[]; maxPlayers: number; configId: number }> {
         let result;

@@ -10,8 +10,7 @@ export default class Util {
     private constructor() { }
 
     static async getUser(guild: Discord.Guild, identifier: string, global = false) {
-        let id: string | RegExpMatchArray = identifier.match(/<@!(\d+)>/);
-
+        let id: string | RegExpMatchArray = identifier.match(/<@!?(\d+)>/);
         if (!id) {
             if (!/\d+/.test(identifier)) {
                 return null;

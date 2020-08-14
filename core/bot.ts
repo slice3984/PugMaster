@@ -75,8 +75,9 @@ export default class Bot {
                     const guildObj = this.client.guilds.cache.get(guild);
                     const pickupChannel = await getPickupChannel(guildObj);
                     const playerObjs = players.map(player => guildObj.members.cache.get(player));
+                    const prefix = this.getGuild(guildObj.id).prefix;
 
-                    pickupChannel.send(`${playerObjs.join(', ')} you got removed from all pickups, expire ran out`);
+                    pickupChannel.send(`${playerObjs.join(', ')} you got removed from all pickups, ${prefix}expire ran out`);
                     guildsToShowStatus.add(guild);
                 } catch (_err) {
                     console.error('[ERROR] Failed to retrieve required data in expire check');

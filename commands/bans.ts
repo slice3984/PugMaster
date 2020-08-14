@@ -16,7 +16,7 @@ const command: Command = {
         }
     ],
     global: true,
-    perms: true,
+    perms: false,
     exec: async (bot, message, params, defaults) => {
         if (params.length === 0) {
             const bans = await GuildModel.getBans(BigInt(message.guild.id), 'timed', 11);
