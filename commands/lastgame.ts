@@ -66,7 +66,15 @@ const command: Command = {
                 }
 
                 const timeDif = new Date().getTime() - pickup.startedAt.getTime();
-                return message.channel.send(`#${pickup.id} ${pickup.name} - ${Util.formatTime(timeDif)} ago: ${pickup.playerNicks.map(nick => `\`${nick}\``).join(', ')}`);
+                const players = pickup.playerNicks.map(nick => {
+                    if (nick === nicks.players[0].currentNick) {
+                        return `**>**\`${nick}\``;
+                    } else {
+                        return `\`${nick}\``;
+                    }
+                }).join(', ');
+
+                return message.channel.send(`#${pickup.id} ${pickup.name} - ${Util.formatTime(timeDif)} ago: ${players}`);
             }
         }
     }

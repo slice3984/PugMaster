@@ -230,6 +230,14 @@ export default class GuildModel {
         `, [guildId, ...playerIds]);
     }
 
+    static async clearUnusedPlayerStates() {
+        await db.query(`
+        DELETE FROM state_guild_player
+        WHERE ao_expire IS NULL AND pickup_expire IS NULL
+        AND last_add IS NULL AND is_afk IS NULL
+        `);
+    }
+
     static async getAllAos(...guildIds) {
         let aos;
 

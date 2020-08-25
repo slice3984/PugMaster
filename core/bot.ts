@@ -34,6 +34,7 @@ export default class Bot {
             await this.registerCommands();
             await this.registerEventListeners();
             this.mainLoop();
+            this.secondaryLoop();
         });
     }
 
@@ -214,6 +215,13 @@ export default class Bot {
                 }
             }
         }, 10 * 1000);
+    }
+
+    private secondaryLoop() {
+        setInterval(async () => {
+            // Clear unused state guild players
+            await GuildModel.clearUnusedPlayerStates();
+        }, 6 * 60 * 60 * 1000);
     }
 
     private async registerEventListeners() {

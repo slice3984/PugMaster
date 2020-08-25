@@ -41,16 +41,35 @@ export default class PickupState {
             }
         }
 
-        const genPickupInfo = pickup => `**${pickup.name}** [ **${pickup.players.length}** / **${pickup.maxPlayers}** ]`;
+        const genPickupInfo = (pickup, modified) => {
+            let name;
+            let added;
+            let required;
+
+            if (modified) {
+                name = `**${pickup.name}**`;
+                added = `**${pickup.players.length}**`;
+                required = `**${pickup.maxPlayers}**`;
+            } else {
+                name = pickup.name;
+                added = pickup.players.length;
+                required = pickup.maxPlayers;
+            }
+
+            return `${name} [ ${added} / ${required}${modified ? ' ᐃ ' : ''} ]`;
+        };
 
         const pickups = Array.from((await PickupModel.getActivePickups(BigInt(member.guild.id))).values())
             .sort((a, b) => b.players.length - a.players.length);
         let msg = '';
-        if (pickupIds.length > 1) {
-            pickups.forEach(pickup => msg += `${genPickupInfo(pickup)} `);
-        } else {
-            msg = genPickupInfo(pickups.find(pickup => pickup.configId == pickupIds[0]));
-        }
+        pickups.forEach(pickup => {
+            if (pickupIds.includes(pickup.configId)) {
+                msg += `${genPickupInfo(pickup, true)} `;
+            } else {
+                msg += `${genPickupInfo(pickup, false)} `;
+            }
+        });
+
         return pickupChannel.send(msg);
     }
 
@@ -162,8 +181,9 @@ export default class PickupState {
 
     static async removePlayer(guildId: bigint, playerId: bigint, showStatus = true, ...pickupIds: number[]) {
         // TODO: Check if the pickup is pending and abort
+        let isAddedToAnyPickup;
         if (pickupIds.length === 0) {
-            const isAddedToAnyPickup = await PickupModel.isPlayerAdded(guildId, playerId);
+            isAddedToAnyPickup = await PickupModel.isPlayerAdded(guildId, playerId);
             if (isAddedToAnyPickup.length === 0) {
                 return;
             }
@@ -184,8 +204,48 @@ export default class PickupState {
 
         if (showStatus) {
             const guild = Bot.getInstance().getClient().guilds.cache.get(guildId.toString());
-            if (guild) {
-                await PickupState.showPickupStatus(guild);
+            const pickupChannel = await Util.getPickupChannel(guild);
+            const pickups = Array.from((await PickupModel.getActivePickups(BigInt(guildId))).values())
+                .sort((a, b) => b.players.length - a.players.length);
+
+            const genPickupInfo = (pickup, modified) => {
+                let name;
+                let added;
+                let required;
+
+                if (modified) {
+                    name = `**${pickup.name}**`;
+                    added = `**${pickup.players.length}**`;
+                    required = `**${pickup.maxPlayers}**`;
+                } else {
+                    name = pickup.name;
+                    added = pickup.players.length;
+                    required = pickup.maxPlayers;
+                }
+
+                return `${name} [ ${added} / ${required}${modified ? ' ᐁ ' : ''} ]`;
+            };
+
+            if (pickupChannel) {
+                let msg = '';
+                let ids;
+
+                if (pickupIds.length === 0) {
+                    ids = isAddedToAnyPickup;
+                } else {
+                    ids = pickupIds;
+                }
+
+                pickups.forEach(pickup => {
+
+                    if (ids.includes(pickup.configId)) {
+                        msg += `${genPickupInfo(pickup, true)} `;
+                    } else {
+                        msg += `${genPickupInfo(pickup, false)} `;
+                    }
+                });
+
+                return pickupChannel.send(msg)
             }
         }
     }

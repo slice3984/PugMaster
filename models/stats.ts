@@ -229,13 +229,13 @@ export default class StatsModel {
         // By player
         if (identifier && typeof identifier === 'number') {
             results = await db.execute(`
-            SELECT COUNT(p.id) as amount, pc.name, pl.current_nick FROM pickups p
+            SELECT COUNT(p.id) as amount, pc.name, ANY_VALUE(pl.current_nick) as current_nick FROM pickups p
             JOIN pickup_players pp ON pp.pickup_id = p.id
             JOIN pickup_configs pc ON p.pickup_config_id = pc.id
             JOIN players pl ON pp.player_id = pl.id
             WHERE p.guild_id = ? AND pl.id = ?
             GROUP BY p.pickup_config_id
-            ORDER BY amount DESC;
+            ORDER BY amount DESC
             `, [guildId, identifier]);
 
             results[0].forEach(row => {

@@ -3,13 +3,14 @@ import db from '../core/db';
 export default class PermissionModel {
     private constructor() { }
 
-    static async getRoleCommandPermissions(guildId: bigint, roleId: bigint) {
+    static async getRoleCommandPermissions(guildId: bigint, ...roleIds: bigint[]) {
+        console.log(roleIds.join(', '))
         const roles = await db.execute(`
-        SELECT command_name FROM guild_roles
+        SELECT DISTINCT command_name FROM guild_roles
         JOIN guild_role_command_permissions
         ON role_id = guild_role_id
-        WHERE guild_id = ? AND role_id = ?
-        `, [guildId, roleId]);
+        WHERE guild_id = ? AND role_id IN (${Array(roleIds.length).fill('?').join(',')})
+        `, [guildId, ...roleIds]);
 
 
         if (roles[0].length > 0) {
