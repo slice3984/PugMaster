@@ -56,7 +56,7 @@ export default class PickupState {
                 required = pickup.maxPlayers;
             }
 
-            return `${name} [ ${added} / ${required}${modified ? ' ᐃ ' : ''} ]`;
+            return `${name} [ ${added} / ${required}${modified ? ' ᐃ' : ''} ]`;
         };
 
         const pickups = Array.from((await PickupModel.getActivePickups(BigInt(member.guild.id))).values())
@@ -223,7 +223,7 @@ export default class PickupState {
                     required = pickup.maxPlayers;
                 }
 
-                return `${name} [ ${added} / ${required}${modified ? ' ᐁ ' : ''} ]`;
+                return `${name} [ ${added} / ${required}${modified ? ' ᐁ' : ''} ]`;
             };
 
             if (pickupChannel) {

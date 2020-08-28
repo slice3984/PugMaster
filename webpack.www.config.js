@@ -5,6 +5,7 @@ const TerserPlugin = require('terser-webpack-plugin');
 const LiveReloadPlugin = require('webpack-livereload-plugin');
 
 const wwwDir = './www/';
+const viewsDir = './views/';
 
 module.exports = {
     mode: process.env.ENV || 'development',
@@ -57,10 +58,14 @@ module.exports = {
             filename: 'www/[name]/style.css',
             chunkFilename: '[id].css',
         }),
-        new CopyWebpackPlugin([
-            { from: wwwDir + 'homepage/img', to: './www/homepage/img' },
-            { from: wwwDir + 'webinterface/img', to: './www/webinterface/img' }
-        ]),
+        new CopyWebpackPlugin({
+            patterns: [
+                { from: wwwDir + 'homepage/img', to: './www/homepage/img' },
+                { from: wwwDir + 'webinterface/img', to: './www/webinterface/img' },
+                { from: viewsDir, to: './views' }
+            ]
+        }
+        ),
         new LiveReloadPlugin(),
     ],
     optimization: {

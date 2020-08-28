@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/www/homepage/style.css">
+
+    <title>Welcome</title>
+</head>
+
+<body>
+    <header class="header">
+        <div class="header__content">
+            <h1 class="header__heading">PickupBot</h1>
+            <nav class="nav">
+                <ul class="nav__nav">
+                    <li><a href="#" id="active">Home</a></li>
+                    <li><a href="#">Stats</a></li>
+                    <li><a href="#">Help</a></li>
+                    <li><a href="#">Login</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main">
+        <%- include('../homepage/home') %>
+    </main>
+
+    <% if (liveReload) { %>
+    <script src="http://localhost:35729/livereload.js"></script>
+    <% } %>
+</body>
+
+</html>

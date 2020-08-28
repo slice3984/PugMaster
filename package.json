@@ -9,7 +9,7 @@
     "build:bot_old": "cross-env NODE_ENV=production webpack --config webpack.bot.config.js --mode=production",
     "build:bot": "tsc -p ./tsconfig.bot.json",
     "debug:bot": "cross-env TS_NODE_PROJECT=tsconfig.bot.json DEV=true node --inspect=5858 -r ts-node/register ./app.ts",
-    "dev:bot": "nodemon"
+    "dev:bot": "cross-env DEBUG=true nodemon"
   },
   "nodemonConfig": {
     "ignore": [
