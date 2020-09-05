@@ -6,6 +6,7 @@ import PickupModel from '../models/pickup';
 
 const command: Command = {
     cmd: 'lastgame',
+    category: 'info',
     aliases: ['lg'],
     shortDesc: 'Show the overall last game or by pickup/player',
     desc: 'Show the overall last game or by pickup/player',

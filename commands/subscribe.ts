@@ -3,6 +3,7 @@ import PickupModel from '../models/pickup';
 
 const command: Command = {
     cmd: 'subscribe',
+    category: 'pickup',
     shortDesc: 'Subscribe to one or multiple pickus to get notified on promotions',
     desc: 'Subscribe to one or multiple pickus to get notified on promotions',
     args: [

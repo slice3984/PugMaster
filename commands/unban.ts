@@ -4,6 +4,7 @@ import PlayerModel from '../models/player';
 
 const command: Command = {
     cmd: 'unban',
+    category: 'admin',
     shortDesc: 'Unban players',
     desc: 'Unban players',
     args: [

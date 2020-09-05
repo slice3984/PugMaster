@@ -267,7 +267,7 @@ export default class PlayerModel {
         SELECT p.current_nick, w.reason FROM warns w
         JOIN players p ON w.player_id = p.id
         WHERE w.guild_id = ? AND p.user_id = ?
-        AND DATE_ADD(w.warned_at, INTERVAL (? / 1000) SECOND) > CURRENT_DATE()
+        AND DATE_ADD(w.warned_at, INTERVAL (? / 1000) SECOND) > CURRENT_TIMESTAMP
         AND w.is_active = true
         `, [guildId, playerId, guildSettings.warnExpiration]);
 

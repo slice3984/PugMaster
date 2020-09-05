@@ -4,6 +4,7 @@ import Util from '../core/util';
 
 const command: Command = {
     cmd: 'warns',
+    category: 'info',
     shortDesc: 'List warned players',
     desc: 'List warned players',
     defaults: [

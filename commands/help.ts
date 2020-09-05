@@ -2,6 +2,7 @@ import { Command } from '../core/types';
 
 const command: Command = {
     cmd: 'help',
+    category: 'info',
     aliases: ['h'],
     shortDesc: 'Shows how to use a given command',
     desc: 'Shows usage, aliases and explains how to use a command',

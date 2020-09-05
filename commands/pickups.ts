@@ -3,6 +3,7 @@ import PickupModel from '../models/pickup';
 
 const command: Command = {
     cmd: 'pickups',
+    category: 'info',
     shortDesc: 'Shows available pickups',
     desc: 'Shows available pickups',
     global: true,

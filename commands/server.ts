@@ -3,6 +3,7 @@ import ServerModel from '../models/server';
 
 const command: Command = {
     cmd: 'server',
+    category: 'info',
     shortDesc: 'Shows stored servers',
     desc: 'Shows stored servers',
     args: [

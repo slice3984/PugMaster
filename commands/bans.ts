@@ -4,6 +4,7 @@ import Util from '../core/util';
 
 const command: Command = {
     cmd: 'bans',
+    category: 'info',
     shortDesc: 'List banned players',
     desc: 'List banned players',
     args: [

@@ -1,20 +1,36 @@
 .header {
     color: #fff;
-    height: 100%;
-    background: rgb(238, 174, 202);
-    background: #393b44;
-    box-shadow: 0 5px 10px 1px rgba(0, 0, 0, 0.1);
+    background: $white;
+    box-shadow: 0 5px 10px 1px rgba(200, 200, 200, 0.1);
+    border: 1px solid #ccc;
+    border-bottom: 2px solid $white-2;
+
     &__heading {
         padding: 1rem;
+        color: $dark;
     }
 
     & .nav {
+        &__point {
+            display: flex;
+            justify-content: center;
+            align-content: center;
+            text-align: center;
+            vertical-align: center;
+
+            & div {
+                display: flex;
+                align-items: center;
+            }
+        }
+
         &__nav {
             list-style: none;
             display: flex;
             align-items: center;
             justify-content: center;
             height: 100%;
+
             & li {
                 cursor: pointer;
                 display: flex;
@@ -27,10 +43,10 @@
 
                 & a {
                     text-decoration: none;
-                    color: #fff;
+                    color: $dark;
 
                     &:hover {
-                        text-decoration: #ff69b4 overline;
+                        text-decoration: $hotpink overline;
                     }
                 }
             }
@@ -38,21 +54,31 @@
     }
 }
 
+.icon {
+    height: 2.25rem;
+    width: 2.25rem;
+    fill: $dark;
+    margin-right: 0.5rem;
+}
+
 .box {
-    margin: 1rem;
-    width: 40%;
-    color: #fff;
-    background-color: #393b44;
+    color: $dark;
+    width: 70%;
+    font-size: 1.5rem;
+    background-color: $white;
     border-radius: 5px;
+    border-radius: 1rem 1rem 1rem 1rem;
 
     &__heading {
         font-weight: 800;
         font-size: 1.5rem;
+        color: $white;
         text-align: center;
         padding: 1rem;
-        background-color: #393b44;
+        background-color: $dark;
         margin-bottom: 1rem;
-        border-bottom: 1px solid #ff69b4;
+        border-bottom: 1px solid $white-2;
+        border-radius: 1rem 1rem 0 0;
     }
 
     &__content {
@@ -66,9 +92,133 @@
     &--right {
         align-self: flex-end;
     }
+
+    &--wide {
+        width: 50%;
+    }
+
+    &--centered {
+        margin: 2rem auto;
+    }
 }
 
-#active {
-    text-decoration: #ff69b4 overline;
+.features-box {
+    padding: 1rem 1rem;
+
+    & ul {
+        list-style-position: inside;
+    }
+
+    & > p {
+        margin-bottom: 0.25rem;
+    }
+}
+
+.github {
+    margin-top: 1rem;
+    display: flex;
+
+    & svg {
+        margin-left: 0.5rem;
+    }
+
+    & a {
+        text-decoration: none;
+        color: $hotpink;
+        margin-left: 0.5rem;
+    }
+}
+
+.discord-invite {
+    display: flex;
+    background-color: $dark;
+    color: $white;
+    justify-content: space-between;
+    padding: 1rem;
+    margin: 2rem;
+    border: 1px solid $white;
+    border-radius: 3rem;
+
+    &__link {
+        text-decoration: none;
+        color: $hotpink;
+    }
+}
+
+.commands-box {
+    &__heading {
+        margin: 0;
+    }
+
+    &__command {
+        width: 100%;
+    }
+
+    &__content {
+        margin-top: 2rem;
+        display: flex;
+        align-items: flex-start;
+    }
+
+    &__categories {
+        display: flex;
+        justify-content: space-evenly;
+        width: 100%;
+
+        & a {
+            width: 100%;
+            text-align: center;
+            padding: 0.25rem;
+            text-decoration: none;
+        }
+    }
+
+    &__list {
+        margin-right: 1rem;
+        flex-flow: column;
+
+        & a {
+            display: block;
+            text-decoration: none;
+            width: 15rem;
+            &:not(:first-child) {
+                padding: 0.5rem 0;
+            }
+        }
+    }
+}
+
+.command {
+    width: 100%;
+    border: 2px solid $dark;
+    border-radius: 0.5rem;
+
+    &__title {
+        background-color: $dark;
+        color: $white;
+        font-weight: 800;
+        text-align: center;
+        padding: 0.5rem;
+    }
+
+    &__content {
+        padding: 1rem;
+        display: flex;
+        justify-content: space-evenly;
+    }
+}
+
+.hidden {
+    display: none;
+}
+
+.active {
+    text-decoration: $hotpink overline;
     font-weight: 600;
+}
+
+.active-command-nav {
+    background-color: $dark;
+    border-radius: 1rem;
+    color: $white;
 }

@@ -6,6 +6,7 @@ import PickupStage from '../core/PickupStage';
 
 const command: Command = {
     cmd: 'ready',
+    category: 'pickup',
     aliases: ['r'],
     shortDesc: 'Ready up for a pickup when you are marked as AFK',
     desc: 'Ready up for a pickup when you are marked as AFK',

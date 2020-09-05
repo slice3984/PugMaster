@@ -5,6 +5,7 @@ import PickupState from '../core/pickupState';
 
 const command: Command = {
     cmd: 'remove_pickups',
+    category: 'admin',
     shortDesc: 'Remove one or multiple pickups',
     desc: 'Remove one or multiple pickups',
     args: [

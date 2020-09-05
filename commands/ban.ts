@@ -6,6 +6,7 @@ import PickupState from '../core/pickupState';
 
 const command: Command = {
     cmd: 'ban',
+    category: 'admin',
     shortDesc: 'Ban a player for a given time amount or permanent',
     desc: 'Ban a player for a given time amount or permanent',
     args: [

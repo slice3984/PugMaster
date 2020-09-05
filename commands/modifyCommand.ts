@@ -3,6 +3,7 @@ import { Validator } from '../core/validator';
 
 const command: Command = {
     cmd: 'modify_command',
+    category: 'admin',
     aliases: ['modify_cmd'],
     shortDesc: 'Disable/enable or modify commands',
     desc: 'Disable/enable or modify commands',

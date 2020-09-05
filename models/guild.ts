@@ -368,7 +368,7 @@ export default class GuildModel {
             SELECT p.current_nick AS player, p2.current_nick AS issuer, w.warned_at, w.reason, p.id, w.id AS warnid FROM warns w
             JOIN players p ON w.player_id = p.id
             JOIN players p2 ON w.issuer_player_id = p2.id
-            WHERE DATE_ADD(w.warned_at, INTERVAL (? / 1000) SECOND) > CURRENT_DATE()
+            WHERE DATE_ADD(w.warned_at, INTERVAL (? / 1000) SECOND) > CURRENT_TIMESTAMP
             AND w.guild_id = ? AND is_active = true
             ORDER BY w.warned_at DESC
             LIMIT 18446744073709551615) AS w_temp

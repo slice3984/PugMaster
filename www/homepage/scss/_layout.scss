@@ -1,29 +1,19 @@
 .header {
-    width: 50%;
-    margin: 0.5rem auto;
+    margin: 0 auto;
     align-items: center;
-    transform: skewX(30deg);
-    border: 1px solid #ccc;
 
     &__content {
         display: flex;
         justify-content: space-between;
-
-        transform: skewX(-30deg);
     }
 }
 
 .main {
-    width: 60%;
-    margin: 1.5rem auto;
+    padding: 1rem;
     font-size: 1.25rem;
 }
 
-.home {
-    &__top {
-        display: flex;
-        flex-flow: column;
-        align-items: center;
-        justify-content: space-evenly;
-    }
+.commands-box {
+    display: flex;
+    flex-flow: column;
 }

@@ -4,6 +4,7 @@ import MappoolModel from '../models/mappool';
 
 const command: Command = {
     cmd: 'create_mappool',
+    category: 'admin',
     aliases: ['create_mp'],
     shortDesc: 'Creates a map pool which can be assigned to pickups',
     desc: 'Creates a map pool which can be assigned to pickups',

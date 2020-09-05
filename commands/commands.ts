@@ -4,6 +4,7 @@ import PermissionModel from '../models/permission';
 
 const command: Command = {
     cmd: 'commands',
+    category: 'info',
     aliases: ['cmds'],
     shortDesc: 'Shows all available commands to you (Excludes commands with missing permissions)',
     desc: 'Shows all available commands to you (Excludes commands with missing permissions)',

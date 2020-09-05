@@ -3,6 +3,7 @@ import ServerModel from '../models/server';
 
 const command: Command = {
     cmd: 'remove_server',
+    category: 'admin',
     aliases: ['remove_sv'],
     shortDesc: 'Removes one or multiple servers',
     desc: 'Removes one or multiple servers',

@@ -7,6 +7,7 @@ import PickupModel from '../models/pickup';
 
 const command: Command = {
     cmd: 'players',
+    category: 'info',
     shortDesc: 'Shows players who played in the last x days, for a pickup or overall',
     desc: 'Shows players who played in the last x days, for a pickup or overall',
     args: [

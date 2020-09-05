@@ -3,6 +3,7 @@ import StatsModel from '../models/stats';
 
 const command: Command = {
     cmd: 'top',
+    category: 'info',
     shortDesc: 'Shows top 10 players based on amount of played pickups',
     desc: 'Shows top 10 players based on amount of played pickups',
     args: [

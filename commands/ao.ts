@@ -4,6 +4,7 @@ import Util from '../core/util';
 
 const command: Command = {
     cmd: 'ao',
+    category: 'pickup',
     shortDesc: 'Enables / disables or shows the status of your allow offline/afk',
     desc: 'Enables / disables or shows the status of your allow offline/afk, ao prevents removal on offline and afk status',
     args: [

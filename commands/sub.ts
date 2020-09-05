@@ -6,6 +6,7 @@ import GuildModel from '../models/guild';
 
 const command: Command = {
     cmd: 'sub',
+    category: 'pickup',
     shortDesc: 'Call for a sub for the latest pickup',
     desc: 'Call for a sub for the latest pickup',
     defaults: [

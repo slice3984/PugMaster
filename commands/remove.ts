@@ -4,6 +4,7 @@ import PickupState from '../core/pickupState';
 
 const command: Command = {
     cmd: 'remove',
+    category: 'pickup',
     aliases: ['-'],
     shortDesc: 'Remove from one or multiple pickups',
     desc: 'Remove from one or multiple pickups',

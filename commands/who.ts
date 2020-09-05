@@ -4,6 +4,7 @@ import PickupModel from '../models/pickup';
 
 const command: Command = {
     cmd: 'who',
+    category: 'info',
     aliases: ['??'],
     shortDesc: 'Show the pickup status of one or multiple pickups',
     desc: 'Show the pickup status of one or multiple pickups',

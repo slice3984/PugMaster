@@ -4,6 +4,7 @@ import ServerModel from '../models/server';
 
 const command: Command = {
     cmd: 'create_server',
+    category: 'admin',
     aliases: ['create_sv'],
     shortDesc: 'Creates a server which can be assigned to pickups',
     desc: 'Creates a server which can be assigned to pickups',

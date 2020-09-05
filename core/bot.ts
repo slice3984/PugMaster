@@ -12,6 +12,7 @@ import Util from './util';
 import PickupState from './pickupState';
 
 export default class Bot {
+    private botIsReady = false;
     private static instance: Bot;
     private commands: Map<string, Command> = new Map();
     private guilds: Map<bigint, GuildSettings> = new Map();
@@ -35,7 +36,12 @@ export default class Bot {
             await this.registerEventListeners();
             this.mainLoop();
             this.secondaryLoop();
+            this.botIsReady = true;
         });
+    }
+
+    isBotReady() {
+        return this.botIsReady;
     }
 
     private mainLoop() {

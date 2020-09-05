@@ -3,6 +3,7 @@ import GuildModel from '../models/guild';
 
 const command: Command = {
     cmd: 'pickup',
+    category: 'admin',
     shortDesc: 'Setup channel for pickups',
     desc: 'Sets the channel to the type given as argument',
     args: [

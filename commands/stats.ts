@@ -4,6 +4,7 @@ import PlayerModel from '../models/player';
 
 const command: Command = {
     cmd: 'stats',
+    category: 'info',
     shortDesc: 'Shows the stats for a given pickup/player or all pickups in general',
     desc: 'Shows the stats for a given pickup/player or all pickups in general',
     args: [

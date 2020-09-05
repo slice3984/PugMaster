@@ -36,6 +36,9 @@ export default class ConfigTool {
         "MAX_WARN_EXPIRATION_TIME": "1209600000",
         "MAX_WARN_BANTIME": "604800000",
         "MAX_WARN_BANTIME_MULTIPLIER": "5" 
+    },
+    "webserver": {
+        "port": "1337"
     }
 }`, 'utf8');
     }

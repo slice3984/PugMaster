@@ -4,6 +4,7 @@ import PlayerModel from '../models/player';
 
 const command: Command = {
     cmd: 'unwarn',
+    category: 'admin',
     shortDesc: 'Remove the last warn of a given player or all warns',
     desc: 'Remove the last warn of a given player or all warns',
     args: [

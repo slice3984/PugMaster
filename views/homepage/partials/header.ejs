@@ -1,0 +1,49 @@
+<header class="header">
+    <div class="header__content">
+        <h1 class="header__heading">PickupBot</h1>
+        <nav class="nav">
+            <ul class="nav__nav">
+                <li><a href="/">
+                        <div class="nav__point<%- page == 'home' ? ' active' : '' %>" id="home-nav">
+                            <svg xmlns:xlink="http://www.w3.org/1999/xlink" class="icon">
+                                <use xlink:href="/www/homepage/img/sprite.svg#icon-home"></use>
+                            </svg>
+                            <div>Home</div>
+                        </div>
+                    </a></li>
+                <li><a href="/stats">
+                        <div class="nav__point<%- page == 'stats' ? ' active' : '' %>" id="stats-nav">
+                            <svg xmlns:xlink="http://www.w3.org/1999/xlink" class="icon">
+                                <use xlink:href="/www/homepage/img/sprite.svg#icon-stats"></use>
+                            </svg>
+                            <div>Stats</div>
+                        </div>
+                    </a></li>
+                <li><a href="/commands">
+                        <div class="nav__point<%- page == 'commands' ? ' active' : '' %>" id="commands-nav">
+                            <svg xmlns:xlink="http://www.w3.org/1999/xlink" class="icon">
+                                <use xlink:href="/www/homepage/img/sprite.svg#icon-commands"></use>
+                            </svg>
+                            <div>Commands</div>
+                        </div>
+                    </a></li>
+                <li><a href="/help">
+                        <div class="nav__point<%- page == 'help' ? ' active' : '' %>" id="help-nav">
+                            <svg xmlns:xlink="http://www.w3.org/1999/xlink" class="icon">
+                                <use xlink:href="/www/homepage/img/sprite.svg#icon-help"></use>
+                            </svg>
+                            <div>Help</div>
+                        </div>
+                    </a></li>
+                <li><a href="/login">
+                        <div class="nav__point<%- page == 'login' ? ' active' : '' %>" id="login-nav">
+                            <svg xmlns:xlink="http://www.w3.org/1999/xlink" class="icon">
+                                <use xlink:href="/www/homepage/img/sprite.svg#icon-login"></use>
+                            </svg>
+                            <div>Login</div>
+                        </div>
+                    </a></li>
+            </ul>
+        </nav>
+    </div>
+</header>

@@ -4,6 +4,7 @@ import ServerModel from '../models/server';
 
 const command: Command = {
     cmd: 'modify_bot',
+    category: 'admin',
     shortDesc: 'Modify server specific settings',
     desc: 'Modify server specific settings',
     args: [

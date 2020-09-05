@@ -6,6 +6,7 @@ import PickupState from '../core/pickupState';
 
 const command: Command = {
     cmd: 'add',
+    category: 'pickup',
     aliases: ['+'],
     shortDesc: 'Add to one or multiple pickups',
     desc: 'Add to one or multiple pickups',

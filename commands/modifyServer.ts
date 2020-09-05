@@ -4,6 +4,7 @@ import { Validator } from '../core/validator';
 
 const command: Command = {
     cmd: 'modify_server',
+    category: 'admin',
     aliases: ['modify_sv'],
     shortDesc: 'Change the ip or password of a stored server',
     desc: 'Change the ip or password of a stored server',

@@ -8,6 +8,7 @@ import ServerModel from '../models/server';
 
 const command: Command = {
     cmd: 'modify_pickup',
+    category: 'admin',
     aliases: ['modify_pu'],
     shortDesc: 'Modify or show the settings of a pickup',
     desc: 'Modify or show the settings of a pickup',

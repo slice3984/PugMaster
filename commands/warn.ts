@@ -6,6 +6,7 @@ import PickupState from '../core/pickupState';
 
 const command: Command = {
     cmd: 'warn',
+    category: 'admin',
     shortDesc: 'Warn a player',
     desc: 'Warn a player',
     args: [

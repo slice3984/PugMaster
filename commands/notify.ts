@@ -3,6 +3,7 @@ import PlayerModel from '../models/player';
 
 const command: Command = {
     cmd: 'notify',
+    category: 'pickup',
     shortDesc: 'DM notification on pickup start',
     desc: 'DM notification on pickup start',
     args: [

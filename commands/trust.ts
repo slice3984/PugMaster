@@ -5,6 +5,7 @@ import Util from '../core/util';
 
 const command: Command = {
     cmd: 'trust',
+    category: 'admin',
     shortDesc: 'Trust a player to bypass the join date restriction',
     desc: 'Trust a player to bypass the join date restriction',
     args: [

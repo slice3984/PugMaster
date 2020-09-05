@@ -4,7 +4,6 @@ export default class PermissionModel {
     private constructor() { }
 
     static async getRoleCommandPermissions(guildId: bigint, ...roleIds: bigint[]) {
-        console.log(roleIds.join(', '))
         const roles = await db.execute(`
         SELECT DISTINCT command_name FROM guild_roles
         JOIN guild_role_command_permissions

@@ -4,6 +4,7 @@ import PermissionModel from '../models/permission';
 
 const command: Command = {
     cmd: 'permission',
+    category: 'admin',
     aliases: ['perm'],
     shortDesc: 'Sets or shows permissions for a given role',
     desc: 'Shows command permissions or sets/revokes them for a given role',

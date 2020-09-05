@@ -5,6 +5,7 @@ import PickupModel from '../models/pickup';
 
 const command: Command = {
     cmd: 'expire',
+    category: 'pickup',
     shortDesc: 'Set or show the amount of time after you get removed from all pickups',
     desc: 'Set or show the amount of time after you get removed from all pickups',
     args: [

@@ -4,6 +4,7 @@ import MappoolModel from '../models/mappool';
 
 const command: Command = {
     cmd: 'modify_mappool',
+    category: 'admin',
     aliases: ['modify_mp'],
     shortDesc: 'Add/Remove maps from a map pool or delete it',
     desc: 'Add/Remove maps from a map pool or delete it',

@@ -18,6 +18,9 @@ export interface Config {
         MAX_WARN_EXPIRATION_TIME: string;
         MAX_WARN_BANTIME: string;
         MAX_WARN_BANTIME_MULTIPLIER: string;
+    };
+    webserver: {
+        port: string;
     }
 };
 
@@ -31,6 +34,7 @@ interface DefaultValue {
 
 export interface Command {
     cmd: string;
+    category: 'pickup' | 'info' | 'admin';
     aliases?: string[];
     shortDesc: string;
     desc: string;

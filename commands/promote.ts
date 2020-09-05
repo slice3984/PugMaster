@@ -6,6 +6,7 @@ import { GuildMember } from 'discord.js';
 
 const command: Command = {
     cmd: 'promote',
+    category: 'pickup',
     shortDesc: 'Promote a pickup with set promotion role',
     desc: 'Promote a pickup with set promotion role',
     args: [

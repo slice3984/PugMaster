@@ -4,6 +4,7 @@ import ServerModel from '../models/server';
 
 const command: Command = {
     cmd: 'ip',
+    category: 'info',
     shortDesc: 'Displays the IP & Password for a given pickup if set',
     desc: 'Displays the IP & Password for a given pickup if set',
     args: [

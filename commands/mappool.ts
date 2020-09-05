@@ -4,6 +4,7 @@ import { Validator } from '../core/validator';
 
 const command: Command = {
     cmd: 'mappool',
+    category: 'info',
     aliases: ['mp'],
     shortDesc: 'List map pools or show the maps of a specified one',
     desc: 'List map pools or show the maps of specified one',

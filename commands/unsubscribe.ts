@@ -3,6 +3,7 @@ import PickupModel from '../models/pickup';
 
 const command: Command = {
     cmd: 'unsubscribe',
+    category: 'pickup',
     shortDesc: 'Unsubscribe from one or multiple pickups',
     desc: 'Unsubscribe from one or multiple pickups',
     args: [

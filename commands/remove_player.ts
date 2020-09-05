@@ -6,6 +6,7 @@ import PickupState from '../core/pickupState';
 
 const command: Command = {
     cmd: 'remove_player',
+    category: 'admin',
     shortDesc: 'Removes a player from all pickups',
     desc: 'Removes a player from all pickups',
     args: [

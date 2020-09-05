@@ -1,14 +1,8 @@
-import path from 'path';
-
-import express from 'express';
 import Bot from './core/bot';
 import ConfigTool from './core/configTool';
-
 import { checkDb, createTables } from './core/dbInit';
+import webserver from './webserver';
 
-const app = express();
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
 
 (async () => {
     // Config check
@@ -29,30 +23,14 @@ app.set('view engine', 'ejs');
         }
 
         // Starting discord bot
-        Bot.getInstance();
+        const bot = Bot.getInstance();
 
-        // Web frontend & Backend
-        if (process.env.DEBUG) {
-            app.disable('view cache');
-            app.use('/www/homepage', express.static(path.join(__dirname, 'dist', 'www', 'homepage')));
-            app.use('/www/webinterface', express.static(path.join(__dirname, 'dist', 'www', 'webinterface')));
-        } else {
-            app.use('/www/homepage', express.static(path.join(__dirname, 'www', 'homepage')));
-            app.use('/www/webinterface', express.static(path.join(__dirname, 'www', 'webinterface')));
-        }
-
-        app.get('/', (req: express.Request, res: express.Response) => {
-            res.render('pages/homepage', {
-                liveReload: process.env.DEBUG
-            });
-        });
-
-        app.get('/webinterface', (req: express.Request, res: express.Response) => {
-            res.render('pages/webinterface', {
-                liveReload: process.env.DEBUG
-            })
-        });
-
-        app.listen(8080);
+        // Make sure the bot loaded everything
+        const interval = setInterval(() => {
+            if (bot.isBotReady()) {
+                webserver(bot);
+                clearInterval(interval);
+            }
+        }, 100);
     }
 })();

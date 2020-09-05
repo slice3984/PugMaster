@@ -3,6 +3,7 @@ import PickupModel from '../models/pickup';
 
 const command: Command = {
     cmd: 'create_pickups',
+    category: 'admin',
     shortDesc: 'Creates one or multiple pickups',
     desc: 'Creates one or multiple pickups',
     args: [
