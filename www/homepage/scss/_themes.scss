@@ -1,0 +1,247 @@
+// Default dark theme
+body {
+    color: $white;
+    background-color: $dark-2;
+
+    & .header {
+        background: $dark-primary;
+        box-shadow: 0px 5px 10px 1px opacify(darken($dark-2, 3), 0.3);
+        border: 1px solid $dark-2;
+        border-bottom: 2px solid $dark-2;
+
+        &__heading {
+            color: $white;
+
+            & h1 {
+                & a,
+                & a:active {
+                    color: $white-1;
+                }
+            }
+        }
+
+        & .nav {
+            &__nav {
+                & li {
+                    &:hover {
+                        border-bottom: 2px solid $white-2;
+                    }
+
+                    & a {
+                        color: $white;
+                    }
+                }
+            }
+        }
+    }
+
+    & .icon {
+        fill: $white-2;
+    }
+
+    & .box {
+        background-color: $dark;
+
+        &__heading {
+            color: $white-2;
+            background-color: darken($dark-primary, 5);
+            border-bottom: 1px solid $dark-2;
+        }
+    }
+
+    & .github {
+        & a {
+            color: $white;
+        }
+    }
+
+    & .discord-invite {
+        background-color: $dark-2;
+        color: $white;
+        border: 1px solid $dark-primary;
+
+        &__link {
+            color: $white;
+        }
+    }
+
+    & .commands-box {
+        &__nav {
+            border: 1px solid $dark;
+
+            &:hover {
+                border: 1px solid $dark-primary;
+            }
+        }
+
+        &__list {
+            & a {
+                color: $white-2;
+            }
+        }
+
+        &__categories {
+            & a {
+                color: $white-2;
+            }
+        }
+    }
+
+    & .command {
+        border: 2px solid $dark-primary;
+
+        &__title {
+            color: $white-2;
+            background-color: $dark-primary;
+        }
+
+        &__content {
+            background-color: $dark-2;
+        }
+    }
+
+    & .active--underline {
+        border-bottom: 2px solid $white-2;
+    }
+
+    & .active-command-nav {
+        color: $white;
+        background-color: $dark-primary;
+    }
+
+    & .theme-switcher {
+        .icon {
+            fill: $yellow;
+        }
+
+        &:hover {
+            & .icon {
+                fill: $dark;
+            }
+        }
+    }
+}
+
+// light theme
+.light-theme {
+    color: $dark;
+    background-color: $white-1;
+
+    & .header {
+        background: $white;
+        box-shadow: 0 5px 10px 1px rgba(200, 200, 200, 0.1);
+        border: 1px solid #ccc;
+        border-bottom: 2px solid $white-2;
+
+        &__heading {
+            color: $dark;
+
+            & h1 {
+                & a,
+                & a:active {
+                    color: $dark;
+                }
+            }
+        }
+
+        & .nav {
+            &__nav {
+                & li {
+                    &:hover {
+                        border-bottom: 2px solid $hotpink;
+                    }
+
+                    & a {
+                        color: $dark;
+                    }
+                }
+            }
+        }
+    }
+
+    & .icon {
+        fill: $dark;
+    }
+
+    & .box {
+        background-color: $white;
+
+        &__heading {
+            color: $white;
+            background-color: $dark;
+            border-bottom: 1px solid $white-2;
+        }
+    }
+
+    & .github {
+        & a {
+            color: $hotpink;
+        }
+    }
+
+    & .discord-invite {
+        background-color: $dark;
+        color: $white;
+        border: 1px solid $white;
+
+        &__link {
+            color: $hotpink;
+        }
+    }
+
+    & .commands-box {
+        &__nav {
+            border: 1px solid $white;
+
+            &:hover {
+                border-color: $dark;
+            }
+        }
+
+        &__list {
+            & a {
+                color: $dark;
+            }
+        }
+
+        &__categories {
+            & a {
+                color: $dark;
+            }
+        }
+    }
+
+    & .command {
+        border: 2px solid $dark;
+
+        &__title {
+            color: $white;
+            background-color: $dark;
+        }
+
+        &__content {
+            background-color: $white-2;
+        }
+    }
+
+    & .active--underline {
+        border-bottom: 2px solid $hotpink;
+    }
+
+    & .active-command-nav {
+        color: $white !important;
+        background-color: $dark;
+    }
+
+    & .theme-switcher {
+        .icon {
+            fill: $dark;
+        }
+
+        &:hover {
+            & .icon {
+                fill: $yellow;
+            }
+        }
+    }
+}

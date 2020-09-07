@@ -1,13 +1,14 @@
 .header {
-    color: #fff;
-    background: $white;
-    box-shadow: 0 5px 10px 1px rgba(200, 200, 200, 0.1);
-    border: 1px solid #ccc;
-    border-bottom: 2px solid $white-2;
-
     &__heading {
+        display: flex;
         padding: 1rem;
-        color: $dark;
+
+        & h1 {
+            & a {
+                text-decoration: none;
+                user-select: none;
+            }
+        }
     }
 
     & .nav {
@@ -28,12 +29,16 @@
             list-style: none;
             display: flex;
             align-items: center;
+            align-content: center;
             justify-content: center;
             height: 100%;
 
             & li {
                 cursor: pointer;
+                height: 100%;
                 display: flex;
+                justify-content: center;
+                align-content: center;
                 font-size: 1.5rem;
                 margin: 0 1rem;
 
@@ -43,41 +48,45 @@
 
                 & a {
                     text-decoration: none;
-                    color: $dark;
-
-                    &:hover {
-                        text-decoration: $hotpink overline;
-                    }
+                    margin: auto 0;
                 }
             }
         }
     }
 }
 
+.theme-switcher {
+    cursor: pointer;
+
+    &:hover {
+        transform: scale(1.1);
+    }
+
+    & .icon {
+        transition: 100ms ease-in;
+    }
+
+    transition: 100ms ease-in;
+}
+
 .icon {
     height: 2.25rem;
     width: 2.25rem;
-    fill: $dark;
     margin-right: 0.5rem;
 }
 
 .box {
-    color: $dark;
     width: 70%;
     font-size: 1.5rem;
-    background-color: $white;
     border-radius: 5px;
     border-radius: 1rem 1rem 1rem 1rem;
 
     &__heading {
         font-weight: 800;
         font-size: 1.5rem;
-        color: $white;
         text-align: center;
         padding: 1rem;
-        background-color: $dark;
         margin-bottom: 1rem;
-        border-bottom: 1px solid $white-2;
         border-radius: 1rem 1rem 0 0;
     }
 
@@ -124,30 +133,32 @@
 
     & a {
         text-decoration: none;
-        color: $hotpink;
         margin-left: 0.5rem;
+        font-weight: 800;
     }
 }
 
 .discord-invite {
     display: flex;
-    background-color: $dark;
-    color: $white;
     justify-content: space-between;
     padding: 1rem;
     margin: 2rem;
-    border: 1px solid $white;
     border-radius: 3rem;
 
     &__link {
         text-decoration: none;
-        color: $hotpink;
     }
 }
 
 .commands-box {
     &__heading {
         margin: 0;
+    }
+
+    &__nav {
+        &:hover {
+            border-radius: 1rem;
+        }
     }
 
     &__command {
@@ -181,6 +192,11 @@
             display: block;
             text-decoration: none;
             width: 15rem;
+
+            &:hover {
+                font-weight: 800;
+            }
+
             &:not(:first-child) {
                 padding: 0.5rem 0;
             }
@@ -190,12 +206,9 @@
 
 .command {
     width: 100%;
-    border: 2px solid $dark;
     border-radius: 0.5rem;
 
     &__title {
-        background-color: $dark;
-        color: $white;
         font-weight: 800;
         text-align: center;
         padding: 0.5rem;
@@ -213,12 +226,9 @@
 }
 
 .active {
-    text-decoration: $hotpink overline;
     font-weight: 600;
 }
 
 .active-command-nav {
-    background-color: $dark;
     border-radius: 1rem;
-    color: $white;
 }

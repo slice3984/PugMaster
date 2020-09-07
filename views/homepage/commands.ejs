@@ -3,7 +3,6 @@
 
 <head>
     <%- include('../homepage/partials/head') %>
-    <script async defer src="/www/homepage/app.js"></script>
     <title>Commands</title>
 </head>
 
@@ -15,32 +14,22 @@
             <div class="box__content">
                 <div class="commands-box">
                     <div class="commands-box__categories">
-                        <a href="#" class="active-command-nav" id="pickup-nav">Pickup</a>
-                        <a href="#" id="info-nav">Info</a>
-                        <a href="#" id="admin-nav">Admin</a>
+                        <a href="#" class="commands-box__nav" id="pickup-nav">Pickup</a>
+                        <a href="#" class="commands-box__nav" id="info-nav">Info</a>
+                        <a href="#" class="commands-box__nav" id="admin-nav">Admin</a>
                     </div>
                     <div class="commands-box__content">
                         <div class="commands-box__list" id="command-list">
-
-                            <% commands.forEach((group, index) => { 
-                                    if (!index) {
-                                    %>
-                            <div id="<%- group[0].category %>">
-                                <% } else { %>
-                                <div id="<%- group[0].category %>" class="hidden">
-                                    <% } %>
-                                    <% group.forEach((command, indexCommand) => {
-                                        if (!index && !indexCommand) {
-                                        %>
-                                    <a href="#" class="active"><%= command.cmd %></a>
-                                    <% } else { %>
-                                    <a href="#"><%= command.cmd %></a>
-                                    <% } %>
-                                    <% }); %>
-                                </div>
+                            <% commands.forEach((group, index) => { %>
+                            <div id="<%- group[0].category %>" class="hidden">
+                                <% group.forEach((command, indexCommand) => { %>
+                                <a href="#<%- command.cmd %>" id="<%- `${command.cmd}-link` %>"><%= command.cmd %></a>
                                 <% }); %>
-
                             </div>
+                            <% }); %>
+
+                        </div>
+                        <div class="commands-box__command" id="command-box">
                             <% commands.forEach((group, index) => { 
                                 group.forEach((command, indexCommand) => {
                                     const name = command.cmd;
@@ -52,30 +41,25 @@
                                         command.args.forEach(arg => usage += `${arg.name} `);
                                     }
                             %>
-                            <%# Display the first command %>
-                            <% if (!index && !indexCommand) { %>
-                            <div class="commands-box__command" id="command-box">
-                                <div class="command">
-                                    <% } else { %>
-                                    <div class="command hidden">
-                                        <% } %>
-                                        <div class="command__title"><%- name %></div>
-                                        <div class="command__content">
-                                            <div class="command__content__properties">
-                                                <p>Description</p>
-                                                <p>Aliases</p>
-                                                <p>Usage</p>
-                                                <% if (command.args) { 
+                            <div class="command hidden" id="<%- `${command.cmd}-content` %>">
+
+                                <div class="command__title"><%- name %></div>
+                                <div class="command__content">
+                                    <div class="command__content__properties">
+                                        <p>Description</p>
+                                        <p>Aliases</p>
+                                        <p>Usage</p>
+                                        <% if (command.args) { 
                                                 command.args.forEach(arg => {    
                                             %>
-                                                <p><%= arg.name %></p>
-                                                <% })} %>
-                                            </div>
-                                            <div class="command__content__values">
-                                                <p><%= description %></p>
-                                                <p><%= aliases %></p>
-                                                <p><%= usage %></p>
-                                                <% if (command.args) { 
+                                        <p><%= arg.name %></p>
+                                        <% })} %>
+                                    </div>
+                                    <div class="command__content__values">
+                                        <p><%= description %></p>
+                                        <p><%= aliases %></p>
+                                        <p><%= usage %></p>
+                                        <% if (command.args) { 
                                                 command.args.forEach(arg => { 
                                                     let desc;
                                                     switch (arg.desc) {
@@ -92,20 +76,20 @@
                                                             desc = arg.desc;
                                                     }
                                             %>
-                                                <p><%= desc %></p>
-                                                <% })} %>
-                                            </div>
-                                        </div>
+                                        <p><%= desc %></p>
+                                        <% })} %>
                                     </div>
-                                    <% }); %>
-                                    <% }); %>
                                 </div>
                             </div>
+                            <% }); %>
+                            <% }); %>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
+    </div>
 </body>
 
 </html>
