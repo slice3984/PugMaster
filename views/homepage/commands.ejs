@@ -43,7 +43,13 @@
                             %>
                             <div class="command hidden" id="<%- `${command.cmd}-content` %>">
 
-                                <div class="command__title"><%- name %></div>
+                                <div class="command__title">
+                                    <span> <%- name %></span>
+                                    <% if (command.defaults) { %>
+                                    <div class="command__defaults-button">Defaults</div>
+                                    <% } %>
+
+                                </div>
                                 <div class="command__content">
                                     <div class="command__content__properties">
                                         <p>Description</p>
@@ -79,6 +85,31 @@
                                         <p><%= desc %></p>
                                         <% })} %>
                                     </div>
+                                    <% if (command.defaults) { %>
+                                    <div class="command__content__defaults hidden">
+                                        <% command.defaults.forEach(defaultObj => { 
+                                                const name = defaultObj.name;
+                                                const desc = defaultObj.desc;
+                                                const type = defaultObj.type;
+                                                const value = defaultObj.value;
+
+                                                let possibleValues;
+                                                if (type === 'string') {
+                                                    possibleValues = defaultObj.possibleValues.join(', ');
+                                                } else {
+                                                    possibleValues = `from ${defaultObj.possibleValues.from} to ${defaultObj.possibleValues.to}`;
+                                                }
+                                        %>
+                                        <div class="command__default">
+                                            <h3><%- name %></h3>
+                                            <p>Description: <%= desc %></p>
+                                            <span>Type: <%- type %></span>
+                                            <span>Default Value: <%= value %></span>
+                                            <span>Possible values: <%= possibleValues %></span>
+                                        </div>
+                                        <% }); %>
+                                    </div>
+                                    <% } %>
                                 </div>
                             </div>
                             <% }); %>

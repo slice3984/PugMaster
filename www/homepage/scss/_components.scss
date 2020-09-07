@@ -209,15 +209,52 @@
     border-radius: 0.5rem;
 
     &__title {
+        font-size: 1.5rem;
+        position: relative;
+        display: flex;
+        justify-content: center;
         font-weight: 800;
-        text-align: center;
-        padding: 0.5rem;
+        margin-left: auto;
+
+        & span {
+            padding: 0.5rem 0;
+        }
+    }
+
+    &__defaults-button {
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        padding: 0.5rem 1rem;
+        border-radius: 10%;
+        user-select: none;
+        cursor: pointer;
+        transition: 200ms ease-in;
     }
 
     &__content {
         padding: 1rem;
         display: flex;
         justify-content: space-evenly;
+
+        &__defaults {
+            justify-self: flex-start;
+        }
+    }
+
+    &__default {
+        &:not(:last-child) {
+            margin-bottom: 2rem;
+        }
+
+        & h3 {
+            font-size: 1.5rem;
+        }
+
+        & span {
+            display: block;
+        }
     }
 }
 

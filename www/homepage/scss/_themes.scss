@@ -44,7 +44,7 @@ body {
 
         &__heading {
             color: $white-2;
-            background-color: darken($dark-primary, 5);
+            background-color: $dark-primary-2;
             border-bottom: 1px solid $dark-2;
         }
     }
@@ -93,6 +93,14 @@ body {
         &__title {
             color: $white-2;
             background-color: $dark-primary;
+        }
+
+        &__defaults-button {
+            background-color: $dark-primary-2;
+
+            &:hover {
+                background-color: darken($dark-primary-2, 2);
+            }
         }
 
         &__content {
@@ -217,6 +225,14 @@ body {
         &__title {
             color: $white;
             background-color: $dark;
+        }
+
+        &__defaults-button {
+            background-color: lighten($dark, 8);
+
+            &:hover {
+                background-color: darken($dark, 2);
+            }
         }
 
         &__content {

@@ -87,5 +87,26 @@ if (document.getElementById('commands')) {
                 id++;
             })
         }
+    });
+
+    // Defaults
+    const defaultButtonEls = document.querySelectorAll('.command__defaults-button');
+    defaultButtonEls.forEach(node => {
+        node.addEventListener('click', () => {
+            const parentCommandEl = node.parentElement.parentElement;
+
+            const properties = parentCommandEl.querySelector('.command__content__properties');
+            const values = parentCommandEl.querySelector('.command__content__values');
+            const defaultContainerEl = parentCommandEl.querySelector('.command__content__defaults');
+            const showsInfo = !properties.classList.contains('hidden');
+
+            node.textContent = node.textContent === 'Info' ? 'Defaults' : 'Info';
+
+            properties.classList.toggle('hidden');
+            values.classList.toggle('hidden');
+            defaultContainerEl.classList.toggle('hidden');
+            console.log(parentCommandEl, properties, values, showsInfo);
+        });
     })
+
 }
