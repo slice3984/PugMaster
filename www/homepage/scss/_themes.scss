@@ -128,6 +128,20 @@ body {
             }
         }
     }
+
+    & .help-box {
+        &__chapters {
+            border-right: 1px solid rgba($white, 0.1);
+        }
+
+        & a {
+            color: $white-2;
+        }
+    }
+
+    & .help-active {
+        text-shadow: 0 0 0.9px $white, 0 0 0.9px $white, 0 0 0.9px $white;
+    }
 }
 
 // light theme
@@ -238,6 +252,20 @@ body {
         &__content {
             background-color: $white-2;
         }
+    }
+
+    & .help-box {
+        &__chapters {
+            border-right: 1px solid rgba($dark, 0.1);
+        }
+
+        & a {
+            color: $dark;
+        }
+    }
+
+    & .help-active {
+        text-shadow: 0 0 0.9px $dark-2, 0 0 0.9px $dark-2, 0 0 0.9px $dark-2;
     }
 
     & .active--underline {

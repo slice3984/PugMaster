@@ -21,7 +21,6 @@ toggle.addEventListener('click', () => {
 if (document.getElementById('commands')) {
     const commandListParentEl = Array.from(document.getElementById('command-list').children);
     const commandBoxEl = Array.of(document.getElementById('command-box').children)[0];
-    const commandLinkEls = [];
     const categories = ['pickup', 'info', 'admin'];
     let activeCommandPoint;
     let activeCommand;
@@ -98,15 +97,47 @@ if (document.getElementById('commands')) {
             const properties = parentCommandEl.querySelector('.command__content__properties');
             const values = parentCommandEl.querySelector('.command__content__values');
             const defaultContainerEl = parentCommandEl.querySelector('.command__content__defaults');
-            const showsInfo = !properties.classList.contains('hidden');
 
             node.textContent = node.textContent === 'Info' ? 'Defaults' : 'Info';
 
             properties.classList.toggle('hidden');
             values.classList.toggle('hidden');
             defaultContainerEl.classList.toggle('hidden');
-            console.log(parentCommandEl, properties, values, showsInfo);
         });
     })
+}
 
+// **** Help Navigation ****
+if (document.getElementById('help-content')) {
+    let anchor = document.URL.split('#')[1];
+    let helpLinks = document.querySelector('.help-box__chapters').querySelectorAll('a');
+    let activeHelpPoint;
+    let activeHelpContent;
+
+    if (!anchor || !document.getElementById(anchor)) {
+        activeHelpPoint = helpLinks[0];
+        activeHelpContent = document.getElementById(activeHelpPoint.href.split('#').pop());
+    } else {
+        activeHelpPoint = document.querySelector(`a[href='#${anchor}']`);
+        activeHelpContent = document.getElementById(anchor);
+    }
+
+    activeHelpPoint.classList.toggle('active');
+    activeHelpContent.classList.toggle('hidden');
+
+    helpLinks.forEach(node => {
+        node.addEventListener('click', () => {
+            if (activeHelpPoint === node) {
+                return;
+            }
+
+            activeHelpPoint.classList.toggle('active');
+            activeHelpContent.classList.toggle('hidden');
+            activeHelpPoint = node;
+            activeHelpPoint.classList.toggle('active');
+            activeHelpContent = document.getElementById(activeHelpPoint.href.split('#').pop());
+            activeHelpContent.classList.toggle('hidden');
+
+        });
+    })
 }

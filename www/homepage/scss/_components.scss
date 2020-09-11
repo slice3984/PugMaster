@@ -73,6 +73,7 @@
     height: 2.25rem;
     width: 2.25rem;
     margin-right: 0.5rem;
+    flex-shrink: 0;
 }
 
 .box {
@@ -103,7 +104,7 @@
     }
 
     &--wide {
-        width: 50%;
+        width: 85%;
     }
 
     &--centered {
@@ -258,6 +259,125 @@
     }
 }
 
+.help-box {
+    display: flex;
+
+    & h3 {
+        margin-bottom: 1rem;
+    }
+
+    & p {
+        line-height: 1.5;
+    }
+
+    &__chapters {
+        margin-right: 2rem;
+        width: 32rem;
+    }
+
+    &__category {
+        display: flex;
+
+        &:not(:last-child) {
+            margin-bottom: 2rem;
+        }
+    }
+
+    &__topic {
+        display: flex;
+        font-weight: 800;
+        font-size: 1.6rem;
+        margin-bottom: 0.5rem;
+    }
+
+    &__links {
+        margin-left: 0.75rem;
+
+        & ul {
+            list-style: none;
+            font-size: 1.5rem;
+
+            & li {
+                padding-bottom: 0.75rem;
+
+                & a {
+                    text-decoration: none;
+                    font-size: 1.4rem;
+                    word-wrap: break-word;
+
+                    &:hover {
+                        font-weight: 800;
+                    }
+                }
+            }
+        }
+    }
+
+    &__content {
+        width: 100%;
+
+        & .table {
+            margin-bottom: 2rem;
+        }
+
+        & a {
+            text-decoration: none;
+            font-weight: 800;
+        }
+    }
+}
+
+.code-block {
+    padding: 0.5rem 1rem;
+    display: inline-block;
+    border-radius: 0.5rem;
+    margin: 0.5rem 0;
+    color: $white;
+    background-color: $black;
+}
+
+.table {
+    width: 100%;
+
+    & tbody:before {
+        content: "-";
+        display: block;
+        line-height: 0.5em;
+        color: transparent;
+    }
+
+    & thead {
+        text-align: left;
+    }
+}
+
+.type {
+    display: inline-block;
+    color: $white;
+    font-weight: 800;
+    width: 9rem;
+    text-align: center;
+    border-radius: 0.25rem;
+    padding: 0.25rem 1rem;
+
+    &--string {
+        background-color: $red;
+        color: $white;
+    }
+
+    &--number {
+        background-color: $blue;
+    }
+
+    &--bool {
+        background-color: $green;
+    }
+
+    &--mention {
+        background-color: $red-2;
+    }
+}
+
 .hidden {
     display: none;
 }
@@ -268,4 +388,16 @@
 
 .active-command-nav {
     border-radius: 1rem;
+}
+
+.margin-top-small {
+    margin-top: 1rem;
+}
+
+.margin-top-medium {
+    margin-top: 2rem;
+}
+
+.red {
+    color: $red;
 }
