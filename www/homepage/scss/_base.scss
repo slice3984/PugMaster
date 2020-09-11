@@ -10,3 +10,15 @@ html {
     font-size: 62.5%;
     font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
+
+@mixin device($type) {
+    @if $type == phone {
+        @media screen and (max-width: 700px) {
+            @content;
+        }
+    } @else if $type == tablet {
+        @media screen and (min-width: 700px) and (max-width: 1200px) {
+            @content;
+        }
+    }
+}

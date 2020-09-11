@@ -8,6 +8,14 @@
                 text-decoration: none;
                 user-select: none;
             }
+
+            @include device(tablet) {
+                display: none;
+            }
+        }
+
+        @include device(phone) {
+            display: none;
         }
     }
 
@@ -51,6 +59,18 @@
                     margin: auto 0;
                 }
             }
+
+            @include device(phone) {
+                justify-content: space-around;
+            }
+
+            @include device(tablet) {
+                justify-content: space-around;
+            }
+        }
+
+        @include device(phone) {
+            width: 100%;
         }
     }
 }
@@ -74,6 +94,10 @@
     width: 2.25rem;
     margin-right: 0.5rem;
     flex-shrink: 0;
+
+    @include device(phone) {
+        display: none;
+    }
 }
 
 .box {
@@ -89,10 +113,18 @@
         padding: 1rem;
         margin-bottom: 1rem;
         border-radius: 1rem 1rem 0 0;
+
+        @include device(phone) {
+            padding: 0.5rem;
+        }
     }
 
     &__content {
         padding: 1rem;
+
+        @include device(phone) {
+            padding: 0;
+        }
     }
 
     &--left {
@@ -109,6 +141,14 @@
 
     &--centered {
         margin: 2rem auto;
+    }
+
+    @include device(phone) {
+        width: 100%;
+    }
+
+    @include device(tablet) {
+        width: 90%;
     }
 }
 
@@ -149,6 +189,12 @@
     &__link {
         text-decoration: none;
     }
+
+    @include device(phone) {
+        flex-flow: column;
+        margin: 1rem 0;
+        text-align: center;
+    }
 }
 
 .commands-box {
@@ -170,6 +216,10 @@
         margin-top: 2rem;
         display: flex;
         align-items: flex-start;
+
+        @include device(phone) {
+            flex-flow: column;
+        }
     }
 
     &__categories {
@@ -201,6 +251,17 @@
             &:not(:first-child) {
                 padding: 0.5rem 0;
             }
+
+            @include device(phone) {
+                display: inline-block;
+                width: 49%;
+                text-align: center;
+            }
+        }
+
+        @include device(phone) {
+            flex-flow: row;
+            margin-bottom: 1rem;
         }
     }
 }
@@ -242,6 +303,11 @@
         &__defaults {
             justify-self: flex-start;
         }
+
+        @include device(phone) {
+            padding: 1rem 0;
+            justify-content: space-between;
+        }
     }
 
     &__default {
@@ -273,6 +339,11 @@
     &__chapters {
         margin-right: 2rem;
         width: 32rem;
+
+        @include device(phone) {
+            margin: 0;
+            width: 100%;
+        }
     }
 
     &__category {
@@ -280,6 +351,10 @@
 
         &:not(:last-child) {
             margin-bottom: 2rem;
+        }
+
+        @include device(phone) {
+            margin-bottom: 1rem;
         }
     }
 
@@ -325,6 +400,14 @@
             font-weight: 800;
         }
     }
+
+    @include device(phone) {
+        flex-flow: column;
+    }
+
+    @include device(tablet) {
+        width: 100%;
+    }
 }
 
 .code-block {
@@ -348,6 +431,28 @@
 
     & thead {
         text-align: left;
+    }
+
+    & thead,
+    & tbody {
+        @include device(phone) {
+            font-size: 1.1rem;
+            & tr th:nth-child(3),
+            & tr td:nth-child(3) {
+                display: none;
+            }
+        }
+
+        @include device(tablet) {
+            font-size: 1.5rem;
+            & tr th:nth-child(3),
+            & tr td:nth-child(3) {
+                display: none;
+            }
+        }
+    }
+
+    @include device(phone) {
     }
 }
 

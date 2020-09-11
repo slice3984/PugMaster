@@ -5,12 +5,25 @@
     &__content {
         display: flex;
         justify-content: space-between;
+
+        @include device(phone) {
+            justify-content: space-between;
+            padding: 1rem 0;
+        }
+
+        @include device(tablet) {
+            justify-content: center;
+        }
     }
 }
 
 .main {
     padding: 1rem;
     font-size: 1.25rem;
+
+    @include device(phone) {
+        padding: 0;
+    }
 }
 
 .commands-box {
