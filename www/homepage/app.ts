@@ -1,3 +1,5 @@
+import BookmarkPage from './bookmarkPage';
+
 // Load theme if required
 const bodyEl = document.body;
 const storedTheme = localStorage.getItem('light-theme');
@@ -140,4 +142,25 @@ if (document.getElementById('help-content')) {
 
         });
     })
+}
+
+// **** Stats guild search ****
+if (document.getElementById('stats-content')) {
+    (async () => {
+        let guildParam = new URL(window.location.href).searchParams.get('server');
+
+        const ratelimitBoxEl = document.getElementById('ratelimit-box');
+        const rateLimitCloseEl = document.getElementById('ratelimit-box-close');
+        rateLimitCloseEl.addEventListener('click', () => ratelimitBoxEl.classList.toggle('hidden'));
+
+        const favoritesBoxEl = document.getElementById('server-favorites') as HTMLDivElement;
+        const autocompleteDivEl = document.getElementById('autocomplete-box') as HTMLDivElement;
+        const inputEl = document.getElementById('server-search') as HTMLInputElement;
+
+        if (guildParam) {
+            document.getElementById('stats-content').innerHTML = `WIP: Stats for guild ${guildParam}`;
+        } else {
+            new BookmarkPage(favoritesBoxEl, autocompleteDivEl, inputEl);
+        }
+    })();
 }

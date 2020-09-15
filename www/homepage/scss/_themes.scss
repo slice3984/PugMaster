@@ -142,6 +142,75 @@ body {
     & .help-active {
         text-shadow: 0 0 0.9px $white, 0 0 0.9px $white, 0 0 0.9px $white;
     }
+
+    & .stats-box {
+        &__search-input {
+            & input {
+                background-color: $dark-primary;
+                border-color: $black;
+                color: $white-2;
+            }
+        }
+    }
+
+    & .autocomplete {
+        background-color: $dark-primary;
+        border: 2px $blue solid;
+
+        &__item {
+            &,
+            &:active,
+            &:visited {
+                color: $white;
+            }
+
+            &:not(:last-child) {
+                border-bottom: 1px solid rgba($gray, 0.1);
+            }
+
+            &:hover {
+                background-color: $dark-primary-2;
+            }
+
+            &__bookmark-icon {
+                &--nonfav {
+                    fill: $dark;
+
+                    &:hover {
+                        fill: $white-2;
+                    }
+                }
+
+                &--fav {
+                    fill: $white-2;
+
+                    &:hover {
+                        fill: $dark;
+                    }
+                }
+            }
+        }
+    }
+
+    & .autocomplete__item__placeholder,
+    & .favorite__placeholder {
+        background-color: $dark;
+        border-color: $dark-primary;
+    }
+
+    & .favorite {
+        background-color: $dark-primary-2;
+
+        &,
+        &:active,
+        &:visited {
+            color: $white;
+        }
+
+        &:hover {
+            background-color: $dark-primary;
+        }
+    }
 }
 
 // light theme
@@ -286,6 +355,74 @@ body {
             & .icon {
                 fill: $yellow;
             }
+        }
+    }
+
+    & .stats-box {
+        &__search-input {
+            & input {
+                background-color: $dark;
+                border-color: $black;
+                color: $white-2;
+            }
+        }
+    }
+
+    & .autocomplete {
+        background-color: $dark;
+        border: 2px $black solid;
+
+        &__item {
+            &,
+            &:active,
+            &:visited {
+                color: $white;
+            }
+
+            &:not(:last-child) {
+                border-bottom: 1px solid rgba($gray, 0.1);
+            }
+
+            &:hover {
+                background-color: $dark-2;
+            }
+
+            &__bookmark-icon {
+                &--nonfav {
+                    fill: $dark-2;
+
+                    &:hover {
+                        fill: $white-2;
+                    }
+                }
+
+                &--fav {
+                    fill: $white-2;
+
+                    &:hover {
+                        fill: $dark;
+                    }
+                }
+            }
+        }
+    }
+
+    & .autocomplete__item__placeholder,
+    & .favorite__placeholder {
+        background-color: $dark-primary;
+    }
+
+    & .favorite {
+        background-color: $dark;
+
+        &,
+        &:active,
+        &:visited {
+            color: $white;
+        }
+
+        &:hover {
+            background-color: $dark-2;
         }
     }
 }
