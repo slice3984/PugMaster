@@ -153,40 +153,31 @@ body {
         }
     }
 
-    & .autocomplete {
-        background-color: $dark-primary;
-        border: 2px $blue solid;
+    .search-result {
+        &,
+        &:active,
+        &:visited {
+            color: $white;
+        }
 
-        &__item {
-            &,
-            &:active,
-            &:visited {
-                color: $white;
-            }
+        &:not(:last-child) {
+            border-bottom: 1px solid rgba($gray, 0.1);
+        }
 
-            &:not(:last-child) {
-                border-bottom: 1px solid rgba($gray, 0.1);
-            }
+        &__bookmark-icon {
+            &--nonfav {
+                fill: $dark;
 
-            &:hover {
-                background-color: $dark-primary-2;
-            }
-
-            &__bookmark-icon {
-                &--nonfav {
-                    fill: $dark;
-
-                    &:hover {
-                        fill: $white-2;
-                    }
-                }
-
-                &--fav {
+                &:hover {
                     fill: $white-2;
+                }
+            }
 
-                    &:hover {
-                        fill: $dark;
-                    }
+            &--fav {
+                fill: $white-2;
+
+                &:hover {
+                    fill: $dark;
                 }
             }
         }
@@ -368,46 +359,41 @@ body {
         }
     }
 
-    & .autocomplete {
-        background-color: $dark;
-        border: 2px $black solid;
+    .search-result {
+        &,
+        &:active,
+        &:visited {
+            color: $white;
+        }
 
-        &__item {
-            &,
-            &:active,
-            &:visited {
-                color: $white;
-            }
+        &:not(:last-child) {
+            border-bottom: 1px solid rgba($gray, 0.1);
+        }
 
-            &:not(:last-child) {
-                border-bottom: 1px solid rgba($gray, 0.1);
-            }
+        &:hover {
+            background-color: $dark-2;
+        }
 
-            &:hover {
-                background-color: $dark-2;
-            }
+        &__bookmark-icon {
+            &--nonfav {
+                fill: $dark-2;
 
-            &__bookmark-icon {
-                &--nonfav {
-                    fill: $dark-2;
-
-                    &:hover {
-                        fill: $white-2;
-                    }
-                }
-
-                &--fav {
+                &:hover {
                     fill: $white-2;
+                }
+            }
 
-                    &:hover {
-                        fill: $dark;
-                    }
+            &--fav {
+                fill: $white-2;
+
+                &:hover {
+                    fill: $dark;
                 }
             }
         }
     }
 
-    & .autocomplete__item__placeholder,
+    & .search-result__item__placeholder,
     & .favorite__placeholder {
         background-color: $dark-primary;
     }

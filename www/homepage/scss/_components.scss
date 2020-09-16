@@ -494,17 +494,34 @@
 .stats-box {
     height: 100%;
 
-    &__server-search {
+    &__bookmark-page {
         position: absolute;
-        top: 10%;
-        left: 50%;
-        transform: translate(-50%, -50%);
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        display: flex;
+        flex-flow: column;
+        justify-content: space-evenly;
+        align-items: center;
+    }
 
-        &__no-results {
+    &__search-results {
+        &__heading {
+            font-size: 2rem;
             text-align: center;
-            color: $red;
-            font-size: 1.5rem;
             margin-bottom: 1rem;
+        }
+
+        &__content {
+            display: flex;
+            margin-bottom: 1rem;
+        }
+
+        &__left-info {
+            display: block;
+            text-align: center;
+            font-size: 1.5rem;
         }
     }
 
@@ -516,6 +533,15 @@
         &__heading {
             font-size: 2rem;
             margin-bottom: 0.5rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        &__content {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100rem;
         }
     }
 
@@ -535,72 +561,67 @@
         padding: 1rem 1rem;
     }
 
-    .autocomplete {
-        position: absolute;
+    .search-result {
+        position: relative;
         display: flex;
-        flex-flow: column;
-        top: 4rem;
-        left: 0;
-        right: 0;
-        border-top: none;
+        justify-content: space-between;
+        align-content: center;
+        background-color: $green-dark;
+        margin-right: 1rem;
+        width: 100%;
+        padding: 0.5rem 1.25rem;
+        cursor: pointer;
 
-        &__item {
+        &:hover {
+            background-color: $green-2;
+        }
+
+        &,
+        &:active,
+        &:visited {
+            text-decoration: none;
+        }
+
+        &__content {
             display: flex;
-            justify-content: space-between;
-            align-content: center;
-            width: 100%;
-            padding: 0.5rem 1rem;
-            cursor: pointer;
+            align-items: center;
+        }
 
-            &,
-            &:active,
-            &:visited {
-                text-decoration: none;
-            }
+        &__image {
+            margin-right: 1rem;
 
-            &__content {
-                display: flex;
-                align-items: center;
-            }
-
-            &__image {
-                margin-right: 1rem;
-
-                & img {
-                    border-radius: 50%;
-                    height: 5rem;
-                    width: 5rem;
-                }
-            }
-
-            &__bookmark-icon {
-                height: 4rem;
-                width: 4rem;
-                z-index: 10;
-            }
-
-            &__info {
-                display: inline-block;
-                & span {
-                    display: block;
-                }
-            }
-
-            &__name {
-                font-size: 2rem;
-                word-break: break-all;
+            & img {
+                border-radius: 50%;
+                height: 5rem;
+                width: 5rem;
             }
         }
 
-        &__items-left {
-            margin-top: 0.5rem;
-            text-align: center;
+        &__bookmark-icon {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            height: 2rem;
+            width: 2rem;
+            z-index: 10;
+        }
+
+        &__info {
+            & span {
+                display: block;
+            }
+        }
+
+        &__name {
+            font-size: 2rem;
+            word-break: break-all;
         }
     }
 
-    .autocomplete__item__placeholder,
+    .search-result__placeholder,
     .favorite__placeholder {
         position: relative;
+        background-color: $dark;
         height: 5rem;
         width: 5rem;
         border-radius: 50%;
@@ -623,7 +644,7 @@
         width: 30rem;
         cursor: pointer;
         border-radius: 0.5rem;
-        margin-bottom: 1rem;
+        margin: 0 1rem 1rem 0;
 
         &,
         &:active,
@@ -675,22 +696,12 @@
     }
 
     &__search-input {
-        // Keeping the div as position relative reference
-        & > div {
-            position: relative;
-            display: flex;
-            align-content: center;
-            justify-content: center;
-        }
-
         & div input {
-            position: relative;
             font-size: 1.75rem;
             width: 100%;
             padding: 0.5rem 1rem;
             outline: none;
             border: 2px solid $blue;
-            border-bottom: none;
 
             &:focus {
                 outline: none;

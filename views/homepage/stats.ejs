@@ -18,24 +18,34 @@
         </div>
         <div class="stats-box" id="stats-content">
             <div class="stats-box-search">
-                <div class="stats-box__server-search">
-                    <div class="stats-box__search-header">
-                        <h3>Find the server you want to retrieve stats for</h3>
-                        <p>Use the server id or name</p>
-                    </div>
-                    <div class="stats-box__search-input">
-                        <div>
-                            <input type="text" name="server-search" id="server-search" placeholder="id or name..">
-                            <div class="autocomplete" id="autocomplete-box">
+                <div class="stats-box__bookmark-page">
+                    <div class="stats-box__server-search">
+                        <div class="stats-box__search-header">
+                            <h3>Find the server you want to retrieve stats for</h3>
+                            <p>Use the server id or name</p>
+                        </div>
+                        <div class="stats-box__search-input">
+                            <div>
+                                <input type="text" name="server-search" id="server-search" placeholder="id or name..">
+                                <div class="autocomplete" id="autocomplete-box">
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="stats-box__favorites">
-                    <span class="stats-box__favorites__heading">Favorites</span>
-                    <div class="stats-box__favorites__content" id="server-favorites">
+                    <div class="stats-box__search-results">
+                        <div class="stats-box__search-results__heading">Search results</div>
+                        <div class="stats-box__search-results__content" id="search-results"></div>
+                        <span class="stats-box__search-results__left-info" id="search-info">Start to search to see
+                            results
+                            here</span>
+                    </div>
+                    <div class="stats-box__favorites">
+                        <span class="stats-box__favorites__heading">Favorites</span>
+                        <div class="stats-box__favorites__content" id="server-favorites">
+                        </div>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>

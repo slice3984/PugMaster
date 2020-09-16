@@ -154,13 +154,14 @@ if (document.getElementById('stats-content')) {
         rateLimitCloseEl.addEventListener('click', () => ratelimitBoxEl.classList.toggle('hidden'));
 
         const favoritesBoxEl = document.getElementById('server-favorites') as HTMLDivElement;
-        const autocompleteDivEl = document.getElementById('autocomplete-box') as HTMLDivElement;
+        const searchResultsDiv = document.getElementById('search-results') as HTMLDivElement;
+        const searchInfoDiv = document.getElementById('search-info') as HTMLSpanElement;
         const inputEl = document.getElementById('server-search') as HTMLInputElement;
 
         if (guildParam) {
             document.getElementById('stats-content').innerHTML = `WIP: Stats for guild ${guildParam}`;
         } else {
-            new BookmarkPage(favoritesBoxEl, autocompleteDivEl, inputEl);
+            new BookmarkPage(favoritesBoxEl, searchResultsDiv, searchInfoDiv, inputEl);
         }
     })();
 }
