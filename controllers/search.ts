@@ -21,7 +21,7 @@ export default ((req: express.Request, res: express.Response) => {
         });
     }
 
-    const matches = connectedGuilds.filter(guild => (guild.id.includes(query) || guild.name.includes(query.toLowerCase())));
+    const matches = connectedGuilds.filter(guild => (guild.id.includes(query) || guild.name.toLowerCase().includes(query.toLowerCase())));
 
     const results = {
         status: 'success',

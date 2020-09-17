@@ -1,4 +1,5 @@
 import BookmarkPage from './bookmarkPage';
+import StatsPage from './statsPage';
 
 // Load theme if required
 const bodyEl = document.body;
@@ -147,7 +148,9 @@ if (document.getElementById('help-content')) {
 // **** Stats guild search ****
 if (document.getElementById('stats-content')) {
     (async () => {
-        let guildParam = new URL(window.location.href).searchParams.get('server');
+        const urlObj = new URL(window.location.href);
+        const guildParam = urlObj.searchParams.get('server');
+        const pageParam = urlObj.searchParams.get('page');
 
         const ratelimitBoxEl = document.getElementById('ratelimit-box');
         const rateLimitCloseEl = document.getElementById('ratelimit-box-close');
@@ -159,8 +162,10 @@ if (document.getElementById('stats-content')) {
         const inputEl = document.getElementById('server-search') as HTMLInputElement;
 
         if (guildParam) {
-            document.getElementById('stats-content').innerHTML = `WIP: Stats for guild ${guildParam}`;
+            document.getElementById('stats-page').classList.toggle('hidden');
+            new StatsPage(pageParam);
         } else {
+            document.getElementById('bookmark-page').classList.toggle('hidden');
             new BookmarkPage(favoritesBoxEl, searchResultsDiv, searchInfoDiv, inputEl);
         }
     })();

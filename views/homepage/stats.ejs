@@ -17,7 +17,7 @@
             </div>
         </div>
         <div class="stats-box" id="stats-content">
-            <div class="stats-box-search">
+            <div class="stats-box-search hidden" id="bookmark-page">
                 <div class="stats-box__bookmark-page">
                     <div class="stats-box__server-search">
                         <div class="stats-box__search-header">
@@ -45,7 +45,52 @@
                         </div>
                     </div>
                 </div>
+            </div>
+            <div class="stats hidden" id="stats-page">
+                <div class="stats__header">
+                    <ul class="stats__nav" id="stats-page-nav">
+                        <li>
+                            <div id="back">
+                                <svg xmlns:xlink="http://www.w3.org/1999/xlink" class="stats__icon">
+                                    <use xlink:href="./www/homepage/img/sprite.svg#icon-back"></use>
+                                </svg>
+                            </div>
+                        </li>
+                        <li>
+                            <div id="overview">
+                                <svg xmlns:xlink="http://www.w3.org/1999/xlink" class="stats__icon">
+                                    <use xlink:href="./www/homepage/img/sprite.svg#icon-overview"></use>
+                                </svg>
+                                <span>overview</span>
+                                <div class="stats__nav-border"></div>
+                            </div>
+                        </li>
+                        <li>
+                            <div id="pickups">
+                                <svg xmlns:xlink="http://www.w3.org/1999/xlink" class="stats__icon">
+                                    <use xlink:href="./www/homepage/img/sprite.svg#icon-pickups"></use>
+                                </svg>
+                                <span>pickup history</span>
+                                <div class="stats__nav-border"></div>
+                            </div>
+                        </li>
+                        <li>
+                            <div id="players">
+                                <svg xmlns:xlink="http://www.w3.org/1999/xlink" class="stats__icon">
+                                    <use xlink:href="./www/homepage/img/sprite.svg#icon-players"></use>
+                                </svg>
+                                <span>players</span>
+                                <div class="stats__nav-border"></div>
 
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="stats__content">
+                    <div class="stats__overview hidden" id="overview-content">A</div>
+                    <div class="stats__pickups hidden" id="pickups-content">B</div>
+                    <div class="stats__players hidden" id="players-content">C</div>
+                </div>
             </div>
         </div>
     </div>

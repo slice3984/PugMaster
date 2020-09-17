@@ -202,6 +202,28 @@ body {
             background-color: $dark-primary;
         }
     }
+
+    & .stats {
+        &__nav {
+            color: $white;
+            background-color: $dark-primary-2;
+            & li div {
+                &:hover .stats__nav-border {
+                    display: block;
+                    border-color: $white-2;
+                }
+            }
+        }
+
+        &__icon {
+            fill: $white-2;
+        }
+    }
+
+    & .active-stats {
+        font-weight: 600;
+        border-color: $white-2;
+    }
 }
 
 // light theme
@@ -409,6 +431,15 @@ body {
 
         &:hover {
             background-color: $dark-2;
+        }
+    }
+
+    & .stats {
+        &__nav {
+            color: $white;
+
+            & li div {
+            }
         }
     }
 }

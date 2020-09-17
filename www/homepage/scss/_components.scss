@@ -744,12 +744,74 @@
     }
 }
 
+.stats {
+    display: flex;
+    align-items: center;
+    flex-flow: column;
+
+    &__header {
+        transform: skewX(-25deg);
+    }
+
+    &__nav {
+        display: flex;
+        list-style: none;
+        padding: 0 2rem;
+        margin-bottom: 2.5rem;
+
+        & li {
+            transform: skewX(25deg);
+
+            & > div {
+                position: relative;
+                display: flex;
+                justify-content: center;
+                font-size: 1.5rem;
+                padding: 0.5rem 1rem;
+                text-transform: uppercase;
+                user-select: none;
+                cursor: pointer;
+
+                & span {
+                    display: block;
+                    margin-left: 1rem;
+                }
+            }
+
+            &:not(:last-child) {
+                margin-right: 1rem;
+            }
+        }
+
+        &-border {
+            display: none;
+            border-bottom: 1px solid;
+            position: absolute;
+            bottom: 0;
+            left: calc(25% + 4rem);
+            right: 25%;
+        }
+    }
+
+    &__icon {
+        width: 2rem;
+        height: 2rem;
+    }
+}
+
 .hidden {
     display: none;
 }
 
 .active {
     font-weight: 600;
+}
+
+.active-stats {
+    font-weight: 600;
+    & div {
+        display: block;
+    }
 }
 
 .active-command-nav {
