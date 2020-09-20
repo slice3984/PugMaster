@@ -108,3 +108,24 @@ export interface PendingPickup {
     ];
     playersLeft: [{ id: bigint, nick: string }] // Only required for manual picking
 }
+
+export interface GuildInfo {
+    status: 'success' | 'fail';
+    gotData: boolean;
+    guildIcon?: string | null;
+    guildName?: string;
+    guildId?: string;
+    memberCount?: number;
+    pickupPlayerCount?: number; // Players who are stored and played at least one pickup
+    pickupCount?: number;
+    lastGame?: { name: string; date: Date };
+    pickupsChartData?: {
+        name: string;
+        amount: number;
+    }[];
+    topPlayersChartData?: {
+        nick: string;
+        amount: number;
+    }[];
+    activityTimesChartData?: Date[];
+}

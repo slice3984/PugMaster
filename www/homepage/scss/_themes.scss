@@ -224,6 +224,32 @@ body {
         font-weight: 600;
         border-color: $white-2;
     }
+
+    & .overview {
+        &__btn {
+            background-color: $dark;
+
+            &:hover {
+                background-color: darken($dark, 4);
+            }
+
+            &--active {
+                background-color: darken($dark, 4);
+            }
+        }
+    }
+
+    & .guild-info {
+        color: $white-1;
+
+        &__data {
+            & div {
+                &:not(:last-child) {
+                    border-bottom: 1px solid rgba($dark-primary-2, 0.5);
+                }
+            }
+        }
+    }
 }
 
 // light theme
@@ -374,9 +400,9 @@ body {
     & .stats-box {
         &__search-input {
             & input {
-                background-color: $dark;
-                border-color: $black;
-                color: $white-2;
+                background-color: $white;
+                border-color: $white-2;
+                color: $dark;
             }
         }
     }
@@ -421,25 +447,77 @@ body {
     }
 
     & .favorite {
-        background-color: $dark;
+        background-color: $white;
 
         &,
         &:active,
         &:visited {
-            color: $white;
+            color: $dark;
         }
 
         &:hover {
-            background-color: $dark-2;
+            background-color: $white-2;
+        }
+
+        &__close {
+            color: $white;
+        }
+
+        &__placeholder {
+            color: $white;
         }
     }
 
     & .stats {
         &__nav {
-            color: $white;
+            color: $dark;
+            background-color: $white;
 
             & li div {
+                &:hover .stats__nav-border {
+                    display: block;
+                    border-color: $hotpink;
+                }
             }
+
+            &-border {
+                color: $hotpink;
+            }
+        }
+
+        &__icon {
+            fill: $dark;
+        }
+    }
+
+    & .overview {
+        &__btn {
+            color: $white-2;
+            background-color: $dark;
+
+            &:hover {
+                background-color: darken($dark, 4);
+            }
+
+            &--active {
+                background-color: darken($dark, 4);
+            }
+        }
+    }
+
+    & .guild-info {
+        color: $dark-2;
+
+        &__data {
+            & div {
+                &:not(:last-child) {
+                    border-bottom: 1px solid rgba($dark, 0.2);
+                }
+            }
+        }
+
+        &__placeholder {
+            color: $white;
         }
     }
 }

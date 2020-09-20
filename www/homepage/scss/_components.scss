@@ -746,6 +746,7 @@
 
 .stats {
     display: flex;
+    height: 100%;
     align-items: center;
     flex-flow: column;
 
@@ -796,6 +797,158 @@
     &__icon {
         width: 2rem;
         height: 2rem;
+    }
+
+    &__content {
+        width: 100%;
+        height: 100%;
+    }
+
+    &__overview {
+        width: 100%;
+        height: 100%;
+        display: flex;
+    }
+}
+
+.overview {
+    height: 100%;
+
+    &__btn {
+        padding: 0.5rem 1rem;
+        margin-right: 1rem;
+        cursor: pointer;
+    }
+
+    &__not-found {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    &__charts {
+        flex-grow: 1;
+        flex: 1;
+        align-content: flex-start;
+        display: flex;
+        height: 100%;
+        flex-wrap: wrap;
+
+        &--top {
+            display: flex;
+            width: 100%;
+            height: 50%;
+        }
+    }
+
+    &__chart {
+        position: relative;
+        margin-right: 1rem;
+        align-self: flex-start;
+
+        &--pickups {
+            max-width: 25%;
+            margin-right: 5rem;
+        }
+
+        &--top {
+            max-width: 70%;
+        }
+
+        &--pickups,
+        &--top {
+            position: relative;
+            flex-grow: 1;
+            height: 100%;
+
+            & canvas {
+                width: 100% !important;
+                height: 100%;
+            }
+        }
+
+        &--activity {
+            width: 100%;
+            height: 40%;
+            margin-top: 2.5rem;
+            align-self: flex-start;
+        }
+
+        &__selection {
+            display: flex;
+            justify-content: flex-end;
+        }
+    }
+}
+
+.guild-info {
+    margin: 0 5rem 0 0;
+    display: flex;
+    flex-flow: column;
+    width: 25rem;
+
+    &__heading {
+        display: flex;
+        flex-flow: column;
+        align-items: center;
+        word-break: break-all;
+    }
+
+    &__img {
+        margin: 1rem;
+    }
+
+    & img {
+        height: 10rem;
+        width: 10rem;
+        border-radius: 50%;
+    }
+
+    &__placeholder {
+        position: relative;
+        background-color: $dark;
+        height: 10rem;
+        width: 10rem;
+        border-radius: 50%;
+
+        &::after {
+            content: "?";
+            font-size: 7rem;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+    }
+
+    &__content {
+        height: 70%;
+    }
+
+    &__data {
+        display: flex;
+        margin: 0 1rem;
+        flex-flow: column;
+        align-items: center;
+
+        & div {
+            display: flex;
+            width: 100%;
+            flex-flow: column;
+            align-items: center;
+            padding: 2.5rem 0;
+        }
+
+        & span {
+            font-weight: 800;
+        }
+    }
+
+    &__property {
+        font-size: 1.75rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
     }
 }
 

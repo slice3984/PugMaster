@@ -87,7 +87,53 @@
                     </ul>
                 </div>
                 <div class="stats__content">
-                    <div class="stats__overview hidden" id="overview-content">A</div>
+                    <div class="stats__overview hidden" id="overview-content">
+                        <div class="guild-info">
+                            <div class="guild-info__heading">
+                                <h2 class="guild-info__name" id="guild-name"></h2>
+                                <div class="guild-info__img" id="guild-image"></div>
+                            </div>
+                            <div class="guild-info__content">
+                                <div class="guild-info__data" id="guild-data">
+                                    <div>
+                                        <p class="guild-info__property">ID</p>
+                                    </div>
+                                    <div>
+                                        <p class="guild-info__property">Members</p>
+                                    </div>
+                                    <div>
+                                        <p class="guild-info__property">Pickup players</p>
+                                    </div>
+                                    <div>
+                                        <p class="guild-info__property">Pickups played</p>
+                                    </div>
+                                    <div>
+                                        <p class="guild-info__property">Lastgame</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="overview__charts">
+                            <div class="overview__charts--top">
+                                <div class="overview__chart overview__chart--pickups" id="chart-container-pickups">
+                                    <canvas id="chart-pickups"></canvas>
+                                </div>
+                                <div class="overview__chart overview__chart--top" id="chart-container-top">
+                                    <canvas id="chart-top"></canvas>
+                                </div>
+                            </div>
+                            <div class="overview__chart overview__chart--activity" id="chart-container-activity">
+                                <div class="overview__chart__selection">
+                                    <div class="overview__btn overview__btn--active" id="activity-month">By Month</div>
+                                    <div class="overview__btn" id="activity-weekdays">By Weekdays</div>
+                                    <div class="overview__btn" id="activity-time">By Time</div>
+                                </div>
+                                <canvas id="chart-activity"></canvas>
+
+                            </div>
+                        </div>
+                    </div>
                     <div class="stats__pickups hidden" id="pickups-content">B</div>
                     <div class="stats__players hidden" id="players-content">C</div>
                 </div>

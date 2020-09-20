@@ -288,4 +288,27 @@ export default class StatsModel {
 
         return results;
     }
+
+    static async getPlayerCount(guildId: bigint): Promise<number> {
+        const data = await db.execute(`
+        SELECT COUNT(DISTINCT(p.id)) AS players FROM players p
+        JOIN pickup_players pp ON p.id = pp.player_id
+        WHERE p.guild_id = ?;
+        `, [guildId]);
+
+        return data[0][0].players;
+    }
+
+    static async getLastPickupDates(guildId: bigint, daysLimit: number): Promise<Date[]> {
+        const data = await db.execute(`
+        SELECT p.started_at as date FROM pickups p
+        WHERE p.guild_id = ? AND ((NOW() - INTERVAL ${daysLimit} DAY) < p.started_at)
+        `, [guildId]);
+
+        if (!data[0].length) {
+            return [];
+        }
+
+        return data[0].map(row => row.date);
+    }
 }

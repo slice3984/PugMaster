@@ -1,4 +1,4 @@
-import { debounce, postApi } from './util';
+import OverviewPage from './statsPages/overviewPage';
 
 export default class StatsPage {
     private currentPage: HTMLDivElement;
@@ -73,7 +73,7 @@ export default class StatsPage {
     private loadContent(pageId: string) {
         switch (pageId) {
             case 'overview':
-
+                new OverviewPage(new URL(document.location.href).searchParams.get('server'));
                 break;
             case 'pickups':
 
