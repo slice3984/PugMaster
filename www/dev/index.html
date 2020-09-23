@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./www/dev/style.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script async defer src="./www/dev/app.js"></script>
+    <script async defer src="http://localhost:35729/livereload.js"></script>
+    <title>Dev app</title>
+</head>
+
+<body>
+    <div class="content">
+        <div class="content__top">
+            <div class="content__top__content">
+                <div class="pickup-box" id="pickup-box"></div>
+                <div class="fake-player-events hidden" id="fake-player-events">
+                    <div class="fake-player-events__heading" id="event-player">Trigger event for -</div>
+                    <div class="fake-player-events__content">
+                        <div class="btn full-width" id="offline">Offline</div>
+                        <div class="btn full-width" id="member-remove">Member remove</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="content__bottom">
+            <div class="content__console">
+                <div class="content__heading">Console</div>
+                <div class="console" id="console"></div>
+            </div>
+            <div class="content__info">
+                <div class="content__guild">
+                    <div class="content__heading">Guilds</div>
+                    <div class="guilds" id="guilds">
+                    </div>
+                </div>
+                <div class="content__fake-players">
+                    <div class="content__heading">
+                        <span>Fake players</span>
+                        <div class="fake-players__controls">
+                            <div class="btn" id="create-user">+</div>
+                            <div class="btn" id="remove-user">-</div>
+                        </div>
+                    </div>
+                    <div class="fake-players" id="fake-players"></div>
+                </div>
+                <div class="content__pickups">
+                    <div class="content__heading">
+                        <span>Pickups</span>
+                        <div class="btn btn--margin" id="reload-pickups">Reload</div>
+                    </div>
+                    <div class="pickups" id="pickups"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

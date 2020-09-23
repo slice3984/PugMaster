@@ -3,11 +3,13 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const LiveReloadPlugin = require('webpack-livereload-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+
 
 const wwwDir = './www/';
 const viewsDir = './views/';
 
-module.exports = {
+const config = {
     mode: process.env.ENV || 'development',
     devtool: 'inline-source-map',
     entry: {
@@ -74,4 +76,15 @@ module.exports = {
             test: /\.js(\?.*)?$/i,
         })],
     },
+};
+
+// Build the dev app in dev mode as well
+if (process.env.NODE_ENV === 'development') {
+    config.entry.dev = [wwwDir + 'dev/app.ts', wwwDir + 'dev/main.scss']
+} else {
+    config.plugins.push(new CleanWebpackPlugin({
+        cleanOnceBeforeBuildPatterns: ['www/dev']
+    }));
 }
+
+module.exports = config;

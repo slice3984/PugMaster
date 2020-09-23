@@ -1,0 +1,162 @@
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 62.5%;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    color: #d6e0f0;
+    background-color: #30475e;
+    font-size: 1rem;
+    height: 100%;
+}
+
+.content {
+    display: flex;
+    height: 100vh;
+    flex-flow: column;
+    justify-content: space-between;
+
+    &__top {
+        &__content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -60%);
+        }
+    }
+
+    &__bottom {
+        display: flex;
+        height: 20%;
+        justify-content: space-between;
+    }
+
+    &__guild,
+    &__fake-players,
+    &__pickups {
+        width: 100%;
+    }
+
+    &__info {
+        display: flex;
+        width: 100%;
+    }
+
+    &__heading {
+        display: flex;
+        justify-content: space-between;
+        text-transform: uppercase;
+    }
+
+    &__console {
+        width: 100%;
+    }
+}
+
+.console {
+    width: 100%;
+    height: calc(100% - 1.5rem);
+    overflow-y: scroll;
+    &__line {
+        display: flex;
+        justify-content: space-between;
+    }
+}
+
+.guilds {
+    height: calc(100% - 1.5rem);
+    overflow-y: scroll;
+
+    &__guild {
+        padding: 0 0.5rem;
+        background-color: #184d47;
+
+        &:hover {
+            background-color: darken(#184d47, 3);
+        }
+
+        &:not(:last-child) {
+            margin-bottom: 0.5rem;
+        }
+    }
+}
+
+.fake-players {
+    height: calc(100% - 2rem);
+    overflow-y: scroll;
+
+    &__controls {
+        display: flex;
+        margin-right: 1.5rem;
+    }
+}
+
+.fake-player {
+    &:hover {
+        background-color: darken(#184d47, 3);
+    }
+}
+
+.btn {
+    border: 1px solid #ccc;
+    padding: 0.2rem 0.5rem;
+    font-weight: 800;
+    cursor: pointer;
+
+    &:not(:last-child) {
+        margin-right: 0.5rem;
+    }
+
+    &--margin {
+        margin-right: 1rem;
+    }
+}
+
+.pickups {
+    height: calc(100% - 2rem);
+    overflow-y: scroll;
+}
+
+.pickup {
+    display: flex;
+    align-items: center;
+
+    &__name {
+        margin-right: 1rem;
+        width: 10rem;
+    }
+
+    &__btn {
+        cursor: pointer;
+        padding: 0.2rem 0.5rem;
+        border: 1px solid #ccc;
+
+        &:not(:last-child) {
+            margin-right: 0.5rem;
+        }
+    }
+}
+
+.fake-player-events {
+    &__heading {
+        margin: 1rem 0;
+        font-weight: 800;
+    }
+}
+
+.active {
+    background-color: darken(#184d47, 3);
+}
+
+.full-width {
+    width: 100%;
+}
+
+.hidden {
+    display: none;
+}

@@ -1,12 +1,16 @@
 import path from 'path';
+import http from 'http';
 import express from 'express';
 import rateLimit from 'express-rate-limit';
+import DevPage from './devpage';
 import Bot from './core/bot';
 import ConfigTool from './core/configTool';
 import routes from './routes/website/index';
 import apiRoutes from './routes/api/index';
-
 const app = express();
+const server = http.createServer(app);
+
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.set('views', path.join(__dirname, 'views'));
@@ -20,6 +24,7 @@ export default (bot: Bot) => {
         app.disable('view cache');
         app.use('/www/homepage', express.static(path.join(__dirname, 'dist', 'www', 'homepage')));
         app.use('/www/webinterface', express.static(path.join(__dirname, 'dist', 'www', 'webinterface')));
+        new DevPage(server, app, bot);
     } else {
         app.use('/www/homepage', express.static(path.join(__dirname, 'www', 'homepage')));
         app.use('/www/webinterface', express.static(path.join(__dirname, 'www', 'webinterface')));
@@ -52,6 +57,6 @@ export default (bot: Bot) => {
     // API
     app.use('/api/', apiRoutes);
 
-    app.listen(port);
+    server.listen(port);
     console.log(`Started webserver on port ${port}`)
 }
