@@ -78,7 +78,6 @@ export default class DevPage {
             socket.on('offline-event', async receivedData => {
                 const data = JSON.parse(receivedData);
                 const oldPresence = {} as Discord.Presence;
-                console.log(data);
                 const newPresence = {
                     status: 'offline',
                     guild: this.botInstance.getClient().guilds.cache.get(data.guild),

@@ -1,4 +1,5 @@
 import OverviewPage from './statsPages/overviewPage';
+import PickupsPage from './statsPages/pickupsPage';
 
 export default class StatsPage {
     private currentPage: HTMLDivElement;
@@ -76,7 +77,7 @@ export default class StatsPage {
                 new OverviewPage(new URL(document.location.href).searchParams.get('server'));
                 break;
             case 'pickups':
-
+                new PickupsPage(new URL(document.location.href).searchParams.get('server'));
                 break;
             case 'players':
 

@@ -129,3 +129,17 @@ export interface GuildInfo {
     }[];
     activityTimesChartData?: Date[];
 }
+
+export interface PickupInfoAPI {
+    foundPickup: boolean;
+    id: number;
+    isRated: boolean;
+    winnerTeam: string | null;
+    teams: {
+        name: string;
+        players: {
+            elo: number;
+            nick: string;
+        }[]
+    }
+}

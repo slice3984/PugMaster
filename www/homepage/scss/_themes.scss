@@ -1,5 +1,31 @@
 // Default dark theme
 body {
+    ::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+    }
+    ::-webkit-scrollbar-button {
+        width: 0;
+        height: 0;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: $white-2;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: $white;
+    }
+    ::-webkit-scrollbar-thumb:active {
+        background: $white;
+    }
+    ::-webkit-scrollbar-track {
+        background: $dark;
+        border-radius: 50px;
+    }
+
+    ::-webkit-scrollbar-corner {
+        background: transparent;
+    }
+
     color: $white;
     background-color: $dark-2;
 
@@ -250,10 +276,97 @@ body {
             }
         }
     }
+
+    & .pickups {
+        &__nav {
+            &-page {
+                background-color: $dark-primary;
+
+                &:hover {
+                    background-color: $dark-primary-2;
+                }
+            }
+        }
+
+        &__icon {
+            fill: $white-2;
+
+            &:hover {
+                fill: $white;
+            }
+        }
+
+        &__btn {
+            background-color: $dark;
+
+            &:hover {
+                background-color: $green-dark;
+            }
+        }
+    }
+
+    & .pickup-item {
+        &__header {
+            background-color: $dark-primary;
+        }
+
+        &__name,
+        &__players {
+            background-color: $dark-2;
+        }
+
+        &__content {
+            border: 1px solid $dark-primary;
+            border-top: 1px solid $dark-2;
+            background-color: $dark-primary-2;
+        }
+
+        &__share {
+            background-color: $dark-primary;
+
+            &-link {
+                background-color: $dark;
+            }
+        }
+    }
+
+    & .active-sort {
+        background-color: $green-dark;
+    }
+
+    & .active-page {
+        background-color: $dark-primary-2;
+    }
 }
 
 // light theme
 .light-theme {
+    ::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+    }
+    ::-webkit-scrollbar-button {
+        width: 0;
+        height: 0;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: $dark;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: $dark-2;
+    }
+    ::-webkit-scrollbar-thumb:active {
+        background: $dark-2;
+    }
+    ::-webkit-scrollbar-track {
+        background: $white-2;
+        border-radius: 50px;
+    }
+
+    ::-webkit-scrollbar-corner {
+        background: transparent;
+    }
+
     color: $dark;
     background-color: $white-1;
 
@@ -519,5 +632,69 @@ body {
         &__placeholder {
             color: $white;
         }
+    }
+
+    & .pickups {
+        &__nav {
+            &-page {
+                background-color: $dark;
+                color: $white-2;
+
+                &:hover {
+                    background-color: $dark-2;
+                }
+            }
+        }
+
+        &__icon {
+            fill: $dark;
+
+            &:hover {
+                fill: $dark-2;
+            }
+        }
+
+        &__btn {
+            background-color: $dark-2;
+            color: $white-2;
+
+            &:hover {
+                background-color: $green-dark;
+            }
+        }
+    }
+
+    & .pickup-item {
+        &__header {
+            background-color: $white-2;
+            color: $dark;
+        }
+
+        &__name,
+        &__players {
+            background-color: $white-1;
+        }
+
+        &__content {
+            border: 1px solid $white;
+            border-top: 1px solid $white-1;
+            background-color: darken($white-2, 4);
+        }
+
+        &__share {
+            background-color: $white-2;
+
+            &-link {
+                background-color: $white-1;
+            }
+        }
+    }
+
+    & .active-sort {
+        background-color: $green-dark;
+    }
+
+    & .active-page {
+        background-color: $dark-2;
     }
 }

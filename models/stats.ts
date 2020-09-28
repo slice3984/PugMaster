@@ -1,7 +1,6 @@
 import db from '../core/db';
-import { PickupInfo } from '../core/types';
-import PickupModel from './pickup';
-import PlayerModel from './player';
+import { PickupInfo, PickupInfoAPI } from '../core/types';
+
 
 export default class StatsModel {
     private constructor() { }
@@ -310,5 +309,125 @@ export default class StatsModel {
         }
 
         return data[0].map(row => row.date);
+    }
+
+    static async getPickupCount(guildId: bigint): Promise<Number> {
+        const data = await db.execute(`
+        SELECT COUNT(id) as pickups from pickups
+        WHERE guild_id = ?
+        `, [guildId]);
+
+        return data[0][0].pickups;
+    }
+
+    static async getPickups(guildId: bigint, orderField: string, desc: boolean, start: number, limit: number): Promise<{
+        id: number;
+        name: string;
+        players: number;
+        date: Date;
+    }[]> {
+        let results = [];
+
+        const data = await db.execute(`
+        SELECT p.id, pc.name, pc.player_count, p.started_at as date FROM pickups p
+        JOIN pickup_configs pc ON p.pickup_config_id = pc.id
+        WHERE p.guild_id = ?
+        ORDER BY ${orderField} ${desc ? 'DESC' : 'ASC'}, p.started_at DESC
+        LIMIT ${start}, ${limit}
+        `, [guildId]);
+
+        data[0].forEach(row => {
+            results.push({
+                id: row.id,
+                name: row.name,
+                players: row.player_count,
+                date: row.date
+            });
+        });
+
+        return results;
+    }
+
+    static async getPickupInfo(guildId: bigint, pickupId: number): Promise<PickupInfoAPI | { foundPickup: boolean }> {
+        const data = await db.execute(`
+        SELECT p.id, p.is_rated, pp.team, ps.elo, ps.current_nick, rr.winner_team FROM pickups p
+        JOIN pickup_players pp ON p.id = pp.pickup_id
+        JOIN players ps ON pp.player_id = ps.id
+        LEFT JOIN rated_results rr ON rr.pickup_id = p.id
+        WHERE p.guild_id = ? and p.id = ?
+        `, [guildId, pickupId]);
+
+        let puId: number;
+        let isRated: boolean;
+        let winnerTeam: string | null;
+
+        const teams = new Map();
+
+        if (!data[0].length) {
+            return {
+                foundPickup: false
+            }
+        }
+
+        data[0].forEach((row, index) => {
+            if (!index) {
+                puId = row.id;
+                isRated = Boolean(row.is_rated);
+                winnerTeam = row.winner_team;
+            }
+
+            if (!row.team) {
+                const team = teams.get('A');
+
+                if (!team) {
+                    teams.set('A', {
+                        name: 'A',
+                        players: [{ elo: row.elo, nick: row.current_nick }]
+                    });
+                } else {
+                    team.players.push({
+                        elo: row.elo,
+                        nick: row.current_nick
+                    });
+                }
+            } else {
+                const team = teams.get(row.team);
+
+                if (!team) {
+                    teams.set(row.team, {
+                        name: row.team, players: [{ elo: row.elo, nick: row.current_nick }]
+                    });
+                } else {
+                    team.players.push({
+                        elo: row.elo,
+                        nick: row.current_nick
+                    })
+                }
+            }
+        });
+
+        const pickupInfo = {
+            foundPickup: true,
+            id: puId,
+            isRated,
+            winnerTeam,
+            teams: Array.from(teams.values())
+        } as unknown as PickupInfoAPI;
+
+        return pickupInfo;
+    }
+
+    static async getPickupRowNum(guildId: bigint, pickupId: number): Promise<Number> {
+        const data = await db.execute(`
+        SELECT * FROM (SELECT id, guild_id, ROW_NUMBER()
+        OVER (ORDER BY started_at DESC) AS row_num FROM pickups) p
+        WHERE p.guild_id = ? AND p.id = ?;
+        `, [guildId, pickupId]);
+
+        if (!data[0].length) {
+            return null;
+        }
+
+        return data[0][0].row_num;
     }
 }

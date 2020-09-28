@@ -46,7 +46,7 @@ export default (bot: Bot) => {
     // Rate limit the API
     app.use('/api/', rateLimit({
         windowMs: 15 * 60 * 1000,
-        max: 100,
+        max: 250,
         keyGenerator: (req) => {
             return req.ip;
         },
