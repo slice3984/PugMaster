@@ -100,6 +100,13 @@ export default class PickupsPage {
         this.initEventListeners();
     }
 
+    triggerUrlUpdate() {
+        window.history.pushState('', '', `stats?page=pickups&server=${this.guildId}` +
+            `&pageNum=${this.currentPage}` +
+            `&by=${this.currentSort}` +
+            `&desc=${this.sortOrders.get(this.currentSort) ? '1' : '0'}`);
+    }
+
     private initEventListeners() {
         this.nextBtnEl.addEventListener('click', () => {
             this.renderPage(this.currentPage + 1);
@@ -209,9 +216,7 @@ export default class PickupsPage {
             this.displayPickup = null;
         }
 
-        this.modifyUrl('pageNum', page.toString(), `Pickup history - Page ${page}`);
-        this.modifyUrl('by', this.currentSort);
-        this.modifyUrl('desc', this.sortOrders.get(this.currentSort) ? '1' : '0');
+        this.triggerUrlUpdate();
 
         this.renderNav();
     }
@@ -395,11 +400,11 @@ export default class PickupsPage {
 
         // No content, request pickup info from the API and render it
         if (!contentEl.innerHTML.length) {
-            const generatePlayerEl = (name: string, elo: number | null) => {
+            const generatePlayerEl = (id: string, name: string, elo: number | null) => {
                 const playerContainerEl = document.createElement('a');
                 playerContainerEl.className = 'pickup-item__player';
 
-                playerContainerEl.href = '#';
+                playerContainerEl.href = `./stats?page=players&server=${this.guildId}&player=${id}`;
 
                 const nameEl = document.createElement('div');
                 nameEl.className = 'pickup-item__player-name';
@@ -428,7 +433,7 @@ export default class PickupsPage {
 
                 contentEl.append(headingTeam);
 
-                team.players.forEach(player => playerListEl.append(generatePlayerEl(player.nick, player.elo)));
+                team.players.forEach(player => playerListEl.append(generatePlayerEl(player.id, player.nick, player.elo)));
 
                 contentEl.append(playerListEl);
             });
@@ -474,6 +479,7 @@ interface PickupInfoAPI {
     teams: {
         name: string;
         players: {
+            id: string;
             elo: number;
             nick: string;
         }[]

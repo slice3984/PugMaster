@@ -119,6 +119,10 @@ export default class OverviewPage {
         })();
     }
 
+    triggerUrlUpdate() {
+        window.history.pushState('', '', `stats?page=overview&server=${this.guildId}`);
+    }
+
     private async getData() {
         const receivedData: GuildInfo = await postApi('/guildinfo', { id: this.guildId });
 

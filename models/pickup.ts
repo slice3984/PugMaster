@@ -6,7 +6,7 @@ export default class PickupModel {
     private constructor() { }
 
     static async areValidPickups(guildId: bigint, ...pickups): Promise<{ name: string; id: number }[]> {
-        const results = await db.execute(`
+        const results: any = await db.execute(`
         SELECT name, id FROM pickup_configs
         WHERE guild_id = ? AND name IN (${Array(pickups.length).fill('?').join(',')})
         `, [guildId, ...pickups])
@@ -107,7 +107,7 @@ export default class PickupModel {
 
     static async getAllPickups(guildId: bigint):
         Promise<{ id: number, name: string, added: number, max: number }[]> {
-        const results = await db.execute(`
+        const results: any = await db.execute(`
         SELECT pc.id, pc.name, COUNT(sp.player_id) as added, pc.player_count FROM state_pickup_players sp
         RIGHT JOIN pickup_configs pc ON sp.pickup_config_id = pc.id
         WHERE pc.guild_id = ?
@@ -147,13 +147,13 @@ export default class PickupModel {
 
     static async isPlayerAdded(guildId: bigint, playerId: bigint, ...pickupConfigIds): Promise<number[]> {
         if (pickupConfigIds.length === 0) {
-            const result = await db.execute(`
+            const result: any = await db.execute(`
             SELECT pickup_config_id FROM state_pickup_players
             WHERE guild_id = ? AND player_id = ?
             `, [guildId, playerId]);
             return result[0].map(row => row.pickup_config_id);
         }
-        const result = await db.execute(`
+        const result: any = await db.execute(`
         SELECT pickup_config_id FROM state_pickup_players
         WHERE guild_id = ? AND player_id = ?
         AND pickup_config_id IN (${Array(pickupConfigIds.length).fill('?').join(',')})
@@ -359,7 +359,7 @@ export default class PickupModel {
 
     static async playedBefore(guildId: bigint, playerId: BigInt):
         Promise<boolean> {
-        const playedBefore = await db.execute(`
+        const playedBefore: any = await db.execute(`
         SELECT 1 as played FROM pickup_players pp
         JOIN players ps ON pp.player_id = ps.id
         WHERE ps.guild_id = ? AND ps.user_id = ?

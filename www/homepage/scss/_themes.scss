@@ -330,12 +330,73 @@ body {
         }
     }
 
+    & .player-search {
+        &__input {
+            border: 2px solid $blue;
+            background-color: $dark-primary;
+
+            & input {
+                color: $white-2;
+                background-color: $dark-primary;
+            }
+        }
+
+        &__item {
+            background-color: $dark-primary-2;
+
+            &-right {
+                background-color: $black;
+            }
+        }
+
+        &__icon {
+            fill: $white-2;
+
+            &:hover {
+                fill: $white;
+            }
+        }
+    }
+
+    & .player {
+        &__group {
+            &:not(:last-child) {
+                border-bottom: 1px solid rgba($white-2, 0.1);
+            }
+        }
+    }
+
+    & .player-pickup-item {
+        color: $white-2;
+        background-color: $dark-primary-2;
+
+        &:hover {
+            background-color: darken($dark-primary-2, 2);
+        }
+
+        &__box {
+            background-color: $black;
+        }
+
+        &__icon {
+            fill: $white-2;
+        }
+    }
+
     & .active-sort {
         background-color: $green-dark;
     }
 
     & .active-page {
         background-color: $dark-primary-2;
+    }
+
+    & .bg-darkened {
+        background-color: rgba($dark-2, 0.9);
+    }
+
+    & .player-selected {
+        background-color: darken($dark-primary-2, 2);
     }
 }
 
@@ -690,11 +751,74 @@ body {
         }
     }
 
+    & .player-search {
+        &__input {
+            border: 1px solid $dark;
+            background-color: $white-2;
+
+            & input {
+                color: $dark;
+                background-color: $white-2;
+            }
+        }
+
+        &__item {
+            background-color: $white-1;
+            color: $dark;
+
+            &-right {
+                color: $white;
+                background-color: $black;
+            }
+        }
+
+        &__icon {
+            fill: $dark;
+
+            &:hover {
+                fill: $black;
+            }
+        }
+    }
+
+    & .player {
+        &__group {
+            &:not(:last-child) {
+                border-bottom: 1px solid rgba($dark, 0.1);
+            }
+        }
+    }
+
+    & .player-pickup-item {
+        color: $dark;
+        background-color: $white-2;
+
+        &:hover {
+            background-color: darken($white-2, 2);
+        }
+
+        &__box {
+            background-color: $white-1;
+        }
+
+        &__icon {
+            fill: $dark;
+        }
+    }
+
     & .active-sort {
         background-color: $green-dark;
     }
 
     & .active-page {
         background-color: $dark-2;
+    }
+
+    & .bg-darkened {
+        background-color: rgba($white-1, 0.9);
+    }
+
+    & .player-selected {
+        background-color: $white-2;
     }
 }

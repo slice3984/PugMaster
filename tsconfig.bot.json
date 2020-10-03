@@ -7,7 +7,7 @@
         "noImplicitAny": false,
         "moduleResolution": "node",
         "sourceMap": false,
-        "outDir": "dist"
+        "outDir": "dist",
     },
     "files": [
         "app.ts"
@@ -15,5 +15,8 @@
     "include": [
         "./commands/**/*",
         "./core/**/*"
+    ],
+    "exclude": [
+        ""
     ]
 }

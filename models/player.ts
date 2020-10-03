@@ -16,7 +16,7 @@ export default class PlayerModel {
 
     static async storeOrUpdatePlayer(guildId: bigint, playerId: bigint, nick: string) {
         // Get the current nick, no results => create user
-        const nickAndId = await db.execute(`
+        const nickAndId: any = await db.execute(`
         SELECT current_nick, id FROM players WHERE user_id = ? AND guild_id = ?
         `, [playerId, guildId]);
 
@@ -62,7 +62,7 @@ export default class PlayerModel {
     }
 
     static async arePlayersTrusted(guildId: bigint, ...playersIds): Promise<number[]> {
-        const trustedPlayers = await db.execute(`
+        const trustedPlayers: any = await db.execute(`
         SELECT user_id FROM players
         WHERE guild_id = ? AND trusted = 1 
         AND user_id IN (${Array(playersIds.length).fill('?').join(',')})
@@ -99,7 +99,7 @@ export default class PlayerModel {
     }
 
     static async getExpires(guildId: bigint, ...playerIds): Promise<Date> {
-        const expiresIn = await db.execute(`
+        const expiresIn: any = await db.execute(`
         SELECT pickup_expire FROM state_guild_player
         WHERE guild_id = ? AND pickup_expire IS NOT NULL
         AND player_id IN (${Array(playerIds.length).fill('?').join(',')})
@@ -214,7 +214,7 @@ export default class PlayerModel {
             SELECT p.current_nick AS player, p2.current_nick AS issuer, b.ends_at, b.reason, p.id, b.id AS banid FROM bans b
             JOIN players p ON b.player_id = p.id
             JOIN players p2 ON b.issuer_player_id = p2.id
-            WHERE (b.ends_at > current_date() OR b.permanent = true) AND b.is_active = true 
+            WHERE (b.ends_at > current_timestamp() OR b.permanent = true) AND b.is_active = true 
             AND p.user_id = ? AND b.guild_id = ? ORDER BY b.ends_at IS NULL DESC, b.ends_at DESC LIMIT 1
             `, [playerId, guildId]);
         } else {
@@ -222,7 +222,7 @@ export default class PlayerModel {
             SELECT p.current_nick AS player, p2.current_nick AS issuer, b.ends_at, b.reason, p.id, b.id AS banid FROM bans b
             JOIN players p ON b.player_id = p.id
             JOIN players p2 ON b.issuer_player_id = p2.id
-            WHERE (b.ends_at > current_date() OR b.permanent = true) AND b.is_active = true 
+            WHERE (b.ends_at > current_timestamp() OR b.permanent = true) AND b.is_active = true 
             AND b.id = ? AND b.guild_id = ? ORDER BY b.ends_at IS NULL DESC, b.ends_at DESC LIMIT 1
             `, [playerId, guildId]);
         }
@@ -263,7 +263,7 @@ export default class PlayerModel {
     static async getActiveWarns(guildId: bigint, playerId: bigint): Promise<{ current_nick: string, reason: string }[]> {
         const guildSettings = Bot.getInstance().getGuild(guildId);
 
-        const activeWarns = await db.execute(`
+        const activeWarns: any = await db.execute(`
         SELECT p.current_nick, w.reason FROM warns w
         JOIN players p ON w.player_id = p.id
         WHERE w.guild_id = ? AND p.user_id = ?
@@ -416,7 +416,7 @@ export default class PlayerModel {
                 });
             });
         } else {
-            const playersWithOldNick = await db.execute(`
+            const playersWithOldNick: any = await db.execute(`
             SELECT pn.nick, p.current_nick, p.id, p.user_id FROM player_nicks pn
             JOIN players p ON pn.player_id = p.id
             WHERE p.guild_id = ? AND pn.nick = ?

@@ -1,7 +1,9 @@
 import OverviewPage from './statsPages/overviewPage';
 import PickupsPage from './statsPages/pickupsPage';
+import PlayerPage from './statsPages/playerPage';
 
 export default class StatsPage {
+    private loadedPagesInstances = new Map();
     private currentPage: HTMLDivElement;
     private alreadyLoaded: Map<string, boolean> = new Map();
     private navPointRefs: Map<string, HTMLDivElement> = new Map();
@@ -65,6 +67,8 @@ export default class StatsPage {
         this.currentPage = document.getElementById(`${newPageId}-content`) as HTMLDivElement;
         this.currentPage.classList.toggle('hidden');
 
+        this.loadedPagesInstances.get(newPageId).triggerUrlUpdate();
+
         // Modify url
         const urlParams = new URL(document.location.href).searchParams;
         urlParams.set('page', newPageId);
@@ -74,13 +78,13 @@ export default class StatsPage {
     private loadContent(pageId: string) {
         switch (pageId) {
             case 'overview':
-                new OverviewPage(new URL(document.location.href).searchParams.get('server'));
+                this.loadedPagesInstances.set('overview', new OverviewPage(new URL(document.location.href).searchParams.get('server')));
                 break;
             case 'pickups':
-                new PickupsPage(new URL(document.location.href).searchParams.get('server'));
+                this.loadedPagesInstances.set('pickups', new PickupsPage(new URL(document.location.href).searchParams.get('server')));
                 break;
             case 'players':
-
+                this.loadedPagesInstances.set('players', new PlayerPage(new URL(document.location.href).searchParams.get('server')));
                 break;
         }
 

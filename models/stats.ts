@@ -1,6 +1,5 @@
 import db from '../core/db';
-import { PickupInfo, PickupInfoAPI } from '../core/types';
-
+import { PickupInfo, PickupInfoAPI, PlayerSearchResult } from '../core/types';
 
 export default class StatsModel {
     private constructor() { }
@@ -35,7 +34,7 @@ export default class StatsModel {
                 for (const [index, team] of (teams as BigInt[][]).entries()) {
                     const teamName = String.fromCharCode(65 + index);
 
-                    const playerIds = await conn.execute(`
+                    const playerIds: any = await conn.execute(`
                     SELECT id, user_id FROM players
                     WHERE guild_id = ?
                     AND user_id IN (${Array(team.length).fill('?').join(',')})
@@ -50,7 +49,7 @@ export default class StatsModel {
                 INSERT INTO pickup_players VALUES ${players.join(', ')}
                 `);
             } else {
-                const playerIds = await conn.execute(`
+                const playerIds: any = await conn.execute(`
                 SELECT id, user_id FROM players
                 WHERE guild_id = ?
                 AND user_id IN (${Array(teams.length).fill('?').join(',')})
@@ -299,7 +298,7 @@ export default class StatsModel {
     }
 
     static async getLastPickupDates(guildId: bigint, daysLimit: number): Promise<Date[]> {
-        const data = await db.execute(`
+        const data: any = await db.execute(`
         SELECT p.started_at as date FROM pickups p
         WHERE p.guild_id = ? AND ((NOW() - INTERVAL ${daysLimit} DAY) < p.started_at)
         `, [guildId]);
@@ -328,7 +327,7 @@ export default class StatsModel {
     }[]> {
         let results = [];
 
-        const data = await db.execute(`
+        const data: any = await db.execute(`
         SELECT p.id, pc.name, pc.player_count, p.started_at as date FROM pickups p
         JOIN pickup_configs pc ON p.pickup_config_id = pc.id
         WHERE p.guild_id = ?
@@ -349,8 +348,8 @@ export default class StatsModel {
     }
 
     static async getPickupInfo(guildId: bigint, pickupId: number): Promise<PickupInfoAPI | { foundPickup: boolean }> {
-        const data = await db.execute(`
-        SELECT p.id, p.is_rated, pp.team, ps.elo, ps.current_nick, rr.winner_team FROM pickups p
+        const data: any = await db.execute(`
+        SELECT p.id, p.is_rated, pp.team, ps.elo, ps.current_nick, ps.user_id, rr.winner_team FROM pickups p
         JOIN pickup_players pp ON p.id = pp.pickup_id
         JOIN players ps ON pp.player_id = ps.id
         LEFT JOIN rated_results rr ON rr.pickup_id = p.id
@@ -382,10 +381,11 @@ export default class StatsModel {
                 if (!team) {
                     teams.set('A', {
                         name: 'A',
-                        players: [{ elo: row.elo, nick: row.current_nick }]
+                        players: [{ id: row.user_id.toString(), elo: row.elo, nick: row.current_nick }]
                     });
                 } else {
                     team.players.push({
+                        id: row.user_id.toString(),
                         elo: row.elo,
                         nick: row.current_nick
                     });
@@ -395,10 +395,11 @@ export default class StatsModel {
 
                 if (!team) {
                     teams.set(row.team, {
-                        name: row.team, players: [{ elo: row.elo, nick: row.current_nick }]
+                        name: row.team, players: [{ id: row.user_id.toString(), elo: row.elo, nick: row.current_nick }]
                     });
                 } else {
                     team.players.push({
+                        id: row.user_id.toString(),
                         elo: row.elo,
                         nick: row.current_nick
                     })
@@ -418,7 +419,7 @@ export default class StatsModel {
     }
 
     static async getPickupRowNum(guildId: bigint, pickupId: number): Promise<Number> {
-        const data = await db.execute(`
+        const data: any = await db.execute(`
         SELECT * FROM (SELECT id, guild_id, ROW_NUMBER()
         OVER (ORDER BY started_at DESC) AS row_num FROM pickups) p
         WHERE p.guild_id = ? AND p.id = ?;
@@ -429,5 +430,140 @@ export default class StatsModel {
         }
 
         return data[0][0].row_num;
+    }
+
+    static async searchPlayer(guildId: bigint, searchStr: string, limit: number): Promise<PlayerSearchResult[]> {
+        // Didn't find a better not overcomplicated query, returns 3x the same user in the worst case
+        // always keep the first result of a user and discard the rest
+        const data: any = await db.execute(`
+        SELECT * FROM (SELECT p.guild_id, p.user_id, p.elo, p.id as id, p.current_nick as current, pn.nick as old, pn.updated_at FROM players p
+            LEFT JOIN player_nicks pn ON p.id = pn.player_id WHERE p.guild_id = ?) as t
+        WHERE t.user_id = ? 
+        OR t.current LIKE ?
+        OR t.old LIKE ?
+        ORDER BY (
+            IF ( t.user_id = ?, 3, 0 ) +
+            IF ( t.current LIKE ?, 2, 0 ) +
+            IF ( t.old LIKE ?, 1, 0 )
+        ) DESC, (t.updated_at), (t.id)
+        LIMIT ${3 * limit};
+        `, [guildId, searchStr, `%${searchStr}%`, `%${searchStr}%`, searchStr, `%${searchStr}%`, `%${searchStr}%`]);
+
+        if (!data[0].length) {
+            return [];
+        }
+
+        const results = [];
+
+        // Get rid of duplicates
+        let currentId = '';
+        data[0].forEach(row => {
+            if (row.user_id == currentId) {
+                return;
+            }
+
+            results.push({
+                id: row.user_id,
+                currentNick: row.current,
+                knownAs: row.old,
+                elo: row.elo
+            });
+
+            currentId = row.user_id;
+        });
+
+        const ret: PlayerSearchResult[] = data[0].filter((row, index) => index === data[0].findIndex(row2 => row2.user_id === row.user_id))
+            .slice(0, limit)
+            .map(row => {
+                return {
+                    id: row.user_id,
+                    currentNick: row.current,
+                    knownAs: row.old,
+                    elo: row.elo
+                }
+            });
+
+        return ret;
+    }
+
+    static async getLastPlayerPickups(guildId: bigint, playerId: bigint, limit: number): Promise<{ id: number; name: string; start: Date; isRated: boolean; players: number }[]> {
+        const data: any = await db.execute(`
+        SELECT p.id, p.started_at, p.is_rated, pc.name, pc.player_count FROM pickups p
+        JOIN pickup_players pp ON pp.pickup_id = p.id
+        JOIN pickup_configs pc ON p.pickup_config_id = pc.id
+        JOIN players ps ON pp.player_id = ps.id
+        WHERE p.guild_id = ? AND ps.user_id = ?
+        ORDER BY p.started_at DESC
+        LIMIT ${limit}
+        `, [guildId, playerId]);
+
+        if (!data[0].length) {
+            return [];
+        }
+
+        return data[0].map(row => {
+            return {
+                id: row.id,
+                name: row.name,
+                start: row.started_at,
+                isRated: Boolean(row.is_rated),
+                players: row.player_count
+            };
+        });
+    }
+
+    static async getPlayerNickHistory(guildId: bigint, playerId: bigint): Promise<string[]> {
+        const data: any = await db.execute(`
+        SELECT p.elo, p.current_nick, pn.nick, pn.updated_at FROM players p
+        LEFT JOIN player_nicks pn ON pn.player_id = p.id
+        WHERE p.guild_id = ? AND p.user_id = ?
+        ORDER BY pn.updated_at;
+        `, [guildId, playerId]);
+
+        if (!data[0].length) {
+            return [];
+        }
+
+        return Array.from(new Set(data[0].map(row => row.nick || row.current_nick)));
+    }
+
+    static async getPlayedPickupsForPlayer(guildId: bigint, playerId: bigint): Promise<{ name: string; amount: number; lastgame: Date }[]> {
+        const data: any = await db.execute(`
+        SELECT COUNT(ps.pickup_config_id) as amount, MAX(pc.name) as name, MAX(ps.started_at) as date FROM players p
+        JOIN pickup_players pp ON pp.player_id = p.id
+        JOIN pickups ps ON ps.id = pp.pickup_id
+        JOIN pickup_configs pc ON ps.pickup_config_id = pc.id
+        WHERE p.guild_id = ? AND p.user_id = ?
+        GROUP BY ps.pickup_config_id
+        `, [guildId, playerId]);
+
+        if (!data[0].length) {
+            return [];
+        }
+
+        return data[0].map(row => {
+            return {
+                name: row.name,
+                amount: row.amount,
+                lastgame: row.date
+            };
+        });
+    }
+
+    static async getPlayerInfo(guildId: bigint, playerId: bigint): Promise<{ id: string; name: string; elo: number | null } | null> {
+        const data: any = await db.execute(`
+        SELECT user_id, current_nick, elo FROM players
+        WHERE guild_id = ? AND user_id = ?
+        `, [guildId, playerId]);
+
+        if (!data[0].length) {
+            return;
+        }
+
+        return {
+            id: data[0][0].user_id,
+            name: data[0][0].current_nick,
+            elo: data[0][0].elo
+        };
     }
 }

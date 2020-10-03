@@ -138,8 +138,16 @@ export interface PickupInfoAPI {
     teams: {
         name: string;
         players: {
+            id: string;
             elo: number;
             nick: string;
         }[]
     }
+}
+
+export interface PlayerSearchResult {
+    id: string;
+    currentNick: string;
+    knownAs: string | null;
+    elo: number | null;
 }

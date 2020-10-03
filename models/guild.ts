@@ -3,6 +3,17 @@ import { ChannelType, PendingPickup } from '../core/types';
 import GuildSettings from '../core/guildSettings';
 import Bot from '../core/bot';
 import db from '../core/db';
+import { FieldPacket, RowDataPacket } from 'mysql2';
+
+interface BannedPlayer {
+    player: string;
+    issuer: string;
+    ends_at: Date;
+    is_warn_ban: number;
+    reason: string | null;
+    id: number;
+    banid: number;
+}
 
 export default class GuildModel {
     private constructor() { }
@@ -33,20 +44,21 @@ export default class GuildModel {
     }
 
     static async getGuildSettings(guild: Discord.Guild): Promise<GuildSettings> {
-        let data = await db.execute(`
+        let data: any = await db.execute(`
         SELECT * FROM guilds WHERE guild_id = ?
         `, [guild.id]);
+
         data = data[0][0];
 
         let guildChannels = await db.execute(`
         SELECT * FROM guild_channels
         WHERE guild_id = ?
-        `, [guild.id]);
+        `, [guild.id]) as RowDataPacket[][];
 
         let commandSettingsResults = await db.execute(`
             SELECT command_name, value FROM guild_command_settings
             WHERE guild_id = ?
-        `, [guild.id]);
+        `, [guild.id]) as RowDataPacket[][];
 
         const commandSettings = new Map();
 
@@ -259,13 +271,13 @@ export default class GuildModel {
 
     static async getAllAddedPlayers(guildId?: BigInt) {
         if (!guildId) {
-            const players = await db.query(`
+            const players: any = await db.query(`
             SELECT guild_id, player_id FROM state_pickup_players
             `);
 
             return players[0];
         } else {
-            const players = await db.execute(`
+            const players: any = await db.execute(`
             SELECT player_id FROM state_pickup_players
             WHERE guild_id = ?
             `, [guildId]);
@@ -314,7 +326,7 @@ export default class GuildModel {
     static async getDisabledCommands(guildId: bigint) {
         const disabled = await db.execute(`
         SELECT command_name FROM guild_disabled_commands WHERE guild_id = ?
-        `, [guildId]);
+        `, [guildId]) as RowDataPacket[][];
 
         return disabled[0].map(row => row.command_name);
     }
@@ -326,7 +338,7 @@ export default class GuildModel {
         `, [guildId, ...commands]);
     }
 
-    static async getBans(guildId: bigint, mode: 'perms_only' | 'all' | 'timed', limit: number = 10) {
+    static async getBans(guildId: bigint, mode: 'perms_only' | 'all' | 'timed', limit: number = 10): Promise<BannedPlayer[]> {
         let bans;
 
         switch (mode) {
@@ -344,13 +356,13 @@ export default class GuildModel {
                 SELECT p.current_nick AS player, p2.current_nick AS issuer, b.ends_at, b.is_warn_ban, b.reason, p.id, b.id AS banid FROM bans b
                 JOIN players p ON b.player_id = p.id
                 JOIN players p2 ON b.issuer_player_id = p2.id
-                WHERE b.ends_at > current_date() AND b.is_active = true 
+                WHERE b.ends_at > current_timestamp() AND b.is_active = true 
                 AND b.guild_id = ? ORDER BY b.ends_at DESC LIMIT ${limit}
                 `, [guildId]);
                 break;
         }
 
-        return bans[0];
+        return bans[0] as BannedPlayer[];
     }
 
     static async getWarns(guildId: bigint, limit: number)
@@ -358,7 +370,7 @@ export default class GuildModel {
         const guildSettings = Bot.getInstance().getGuild(guildId);
 
         // https://mariadb.com/kb/en/why-is-order-by-in-a-from-subquery-ignored/
-        const warns = await db.execute(`
+        const warns: any = await db.execute(`
         SELECT COUNT(w_temp.id) AS warns,
         w_temp.player,
         MAX(w_temp.issuer) AS issuer,
@@ -380,7 +392,7 @@ export default class GuildModel {
     }
 
     static async getPlayersWithNotify(guildId: bigint, ...playerIds): Promise<BigInt[]> {
-        const playersWithNotify = await db.execute(`
+        const playersWithNotify: any = await db.execute(`
         SELECT user_id FROM players
         WHERE notifications = true
         AND guild_id = ?
@@ -398,7 +410,7 @@ export default class GuildModel {
     }
 
     static async getPendingPickup(guildId: bigint, pickupConfigId: number): Promise<PendingPickup> {
-        const data = await db.execute(`
+        const data: any = await db.execute(`
         SELECT sp.guild_id, p.current_nick, p.user_id, pc.id, pc.name, pc.player_count, sp.in_stage_since, sp.stage_iteration, sp.stage, st.team
         FROM state_pickup sp
         JOIN state_pickup_players spp ON spp.pickup_config_id = sp.pickup_config_id
@@ -476,7 +488,7 @@ export default class GuildModel {
     }
 
     static async getPendingPickups(...guildIds: bigint[]): Promise<Map<BigInt, PendingPickup[]>> {
-        const data = await db.execute(`
+        const data: any = await db.execute(`
         SELECT sp.guild_id, p.current_nick, p.user_id, pc.id, pc.name, pc.player_count, sp.in_stage_since, sp.stage_iteration, sp.stage, st.team
         FROM state_pickup sp
         JOIN state_pickup_players spp ON spp.pickup_config_id = sp.pickup_config_id
@@ -491,6 +503,8 @@ export default class GuildModel {
         if (!data[0].length) {
             return null;
         }
+
+        console.log(data[0])
 
         const guilds = new Map();
         data[0].forEach(row => {

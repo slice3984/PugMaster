@@ -1,4 +1,11 @@
+import { RowDataPacket } from 'mysql2';
 import db from '../core/db';
+
+interface ServerType {
+    name: string;
+    ip: string;
+    password: null | string;
+}
 
 export default class ServerModel {
     private constructor() { }
@@ -26,13 +33,13 @@ export default class ServerModel {
         }
     }
 
-    static async getServers(guildId: bigint) {
+    static async getServers(guildId: bigint): Promise<ServerType[]> {
         const servers = await db.execute(`
         SELECT name, ip, password FROM pickup_servers
         WHERE guild_id = ? ORDER BY name
         `, [guildId]);
 
-        return servers[0];
+        return servers[0] as ServerType[];
     }
 
     static async getServer(guildId: bigint, identifier: string | number) {
@@ -64,7 +71,7 @@ export default class ServerModel {
         const ids = await db.execute(`
         SELECT id FROM pickup_servers WHERE guild_id = ?
         AND name IN (${Array(server.length).fill('?').join(',')})
-        `, [guildId, ...server]);
+        `, [guildId, ...server]) as RowDataPacket[];
 
         return ids[0].map(row => row.id);
     }

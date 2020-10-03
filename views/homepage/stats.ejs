@@ -178,7 +178,70 @@
                             </div>
                         </div>
                     </div>
-                    <div class="stats__players hidden" id="players-content">C</div>
+                    <div class="stats__players hidden" id="players-content">
+                        <div class="bg-darkened hidden" id="search-bg"></div>
+                        <div class="player-search" id="player-search-main">
+                            <div class="player-search__content" id="search-content">
+                                <div id="search">
+                                    <div class="player-search__heading">
+                                        <h2>Search for the player you want to retrieve stats for</h2>
+                                        <p>Use the nick or the full user id</p>
+                                    </div>
+                                    <div class="player-search__input">
+                                        <input type="text" id="player-search" placeholder="Nick or full id..">
+                                        <div class="player-search__results" id="player-search-results">
+                                        </div>
+                                        <div class="player-search__info hidden" id="results-left">One or more results
+                                            left</div>
+                                        <div class="player-search__info hidden" id="no-results">No player found</div>
+                                    </div>
+                                </div>
+                                <div class="hidden" id="search-icon">
+                                    <svg xmlns:xlink="http://www.w3.org/1999/xlink" class="player-search__icon">
+                                        <use xlink:href="./www/homepage/img/sprite.svg#icon-search"></use>
+                                    </svg>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="player" id="player">
+                            <div class="player__top">
+                                <div class="player__chart" id="chart-container-player-pickups">
+                                    <canvas id="chart-player-pickups"></canvas>
+                                </div>
+                            </div>
+                            <div class="player__bottom">
+                                <div class="player__bottom-left">
+                                    <div class="player__info">
+                                        <h2 class="player__heading">Stats for <span id="player-name"></span></h2>
+                                        <div class="player__group">
+                                            <span>Elo</span>
+                                            <span id="player-elo"></span>
+                                        </div>
+                                        <div class="player__group">
+                                            <span>Played pickups</span>
+                                            <span id="player-pickup-amount"></span>
+                                        </div>
+                                        <div class="player__group">
+                                            <span>Played as</span>
+                                            <ul id="player-names"></ul>
+                                        </div>
+                                    </div>
+                                    <div class="player__lastgames-times">
+                                        <h2 class="player__heading">Last game times</h2>
+                                        <table>
+                                            <tbody id="last-game-times"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="player__pickups">
+                                    <h2 class="player__heading">Last 10 played pickups</h2>
+                                    <div class="player__pickups-content" id="last-pickups"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

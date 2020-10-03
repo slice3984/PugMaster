@@ -20,7 +20,7 @@ export default class MappoolModel {
     }
 
     static async getDuplicates(guildId: bigint, ...maps) {
-        const duplicates = await db.execute(`
+        const duplicates: any = await db.execute(`
         SELECT map FROM maps WHERE guild_id = ?
         AND map IN (${Array(maps.length).fill('?').join(',')}) 
         `, [guildId, ...maps]);
@@ -42,7 +42,7 @@ export default class MappoolModel {
     };
 
     static async getMapIds(guildId: bigint, ...maps) {
-        const result = await db.execute(`
+        const result: any = await db.execute(`
         SELECT id FROM maps WHERE guild_id = ?
         AND map IN (${Array(maps.length).fill('?').join(',')})
         `, [guildId, ...maps]);
@@ -51,7 +51,7 @@ export default class MappoolModel {
     }
 
     static async getMaps(guildId: bigint, name) {
-        const maps = await db.execute(`
+        const maps: any = await db.execute(`
         SELECT map FROM map_pool_names a
         JOIN map_pool_maps b ON a.id = b.pool_id
         JOIN maps c ON c.id = b.map_id
@@ -64,7 +64,7 @@ export default class MappoolModel {
     static async areMapsUsedInPools(guildId: bigint, ...maps) {
         const mapIds = await MappoolModel.getMapIds(guildId, ...maps);
 
-        const mapsInUse = await db.execute(`
+        const mapsInUse: any = await db.execute(`
         SELECT DISTINCT(c.map) AS map FROM map_pool_names a
         JOIN map_pool_maps b ON b.pool_id = a.id
         JOIN maps c ON b.map_id = c.id
@@ -181,7 +181,7 @@ export default class MappoolModel {
         const poolIds = await (await db.execute(`
         SELECT id FROM map_pool_names WHERE guild_id = ?
         AND name IN (${Array(pools.length).fill('?').join(',')})
-        `, [guildId, ...pools]))[0].map(row => row.id);
+        `, [guildId, ...pools]) as any)[0].map(row => row.id);
 
         maps = [...new Set(maps)];
 

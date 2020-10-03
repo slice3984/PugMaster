@@ -1,18 +1,24 @@
+import { RowDataPacket } from 'mysql2';
 import db from '../core/db';
 import PlayerModel from './player';
+
+interface FakeUser {
+    id: string;
+    name: string;
+}
 
 // Utility model for development
 export default class DevModel {
     private constructor() { }
 
-    static async getFakeUsers(guildId: BigInt): Promise<{ id: string; name: string }[]> {
+    static async getFakeUsers(guildId: BigInt): Promise<FakeUser[]> {
         // Fake users got a id < 100000000000001000
         const results = await db.execute(`
         SELECT p.user_id, p.current_nick FROM players p
         WHERE p.user_id < 100000000000001000 AND p.guild_id = ?
-        `, [guildId]);
+        `, [guildId]) as RowDataPacket[][];
 
-        const users = [];
+        const users: FakeUser[] = [];
 
         results[0].forEach(row => {
             users.push({

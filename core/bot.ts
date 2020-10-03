@@ -295,7 +295,8 @@ export default class Bot {
         const toRemoveFromDb = storedCommands
             .filter(command => !commandFiles.includes(command.name))
             .map(command => command.name);
-        await BotModel.removeCommands(...toRemoveFromDb)
+
+        await BotModel.removeCommands(...toRemoveFromDb);
 
         console.log(`Loaded ${commands} commands`)
     }

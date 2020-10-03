@@ -794,6 +794,16 @@
         }
     }
 
+    &__players {
+        height: 100%;
+        position: relative;
+
+        & #player {
+            width: 60%;
+            margin: auto;
+        }
+    }
+
     &__icon {
         width: 2rem;
         height: 2rem;
@@ -1165,6 +1175,230 @@
     }
 }
 
+.player-search {
+    &__content {
+        position: absolute;
+        top: 30%;
+        right: 50%;
+        transform: translate(50%, -30%);
+        width: 40%;
+        backface-visibility: hidden;
+        z-index: 2;
+        overflow: hidden;
+    }
+
+    &__heading {
+        margin-bottom: 1rem;
+    }
+
+    &__input {
+        & input {
+            font-size: 1.75rem;
+            width: 100%;
+            padding: 0.5rem 1rem;
+            outline: none;
+            border: 1px solid transparent;
+            border-bottom: 1px solid $black;
+
+            &:focus {
+                outline: none;
+            }
+        }
+    }
+
+    &__item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1px;
+        cursor: pointer;
+        color: $white-2;
+        padding: 0.75rem 0;
+
+        &-left {
+            margin-left: 1rem;
+        }
+
+        &-right {
+            margin-right: 1rem;
+        }
+
+        &-right {
+            display: flex;
+            align-content: center;
+
+            :first-child {
+                font-size: 2rem;
+                margin: 3px 2px;
+            }
+
+            :last-child {
+                background-color: $orange;
+                font-size: 2rem;
+                padding: 0 3px;
+                margin: 3px 2px;
+            }
+        }
+    }
+
+    &__info {
+        text-align: center;
+        font-size: 1.5rem;
+        margin: 0.5rem 0rem;
+    }
+
+    &__icon {
+        height: 4rem;
+        width: 4rem;
+        cursor: pointer;
+    }
+}
+
+.player {
+    height: 100%;
+
+    &__heading {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+
+    &__info {
+        width: 100%;
+        margin-bottom: 1rem;
+        font-size: 1.5rem;
+    }
+
+    &__top {
+        height: 30%;
+        margin-bottom: 5rem;
+    }
+
+    & ul {
+        list-style: none;
+        text-align: right;
+    }
+
+    &__group {
+        display: flex;
+        justify-content: space-between;
+
+        & span {
+            display: block;
+        }
+
+        & + span {
+            margin-right: 5rem;
+        }
+
+        &:not(:last-child) {
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+    }
+
+    &__bottom {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+
+        &-left {
+            display: flex;
+            flex-flow: column;
+            justify-content: space-evenly;
+            width: 50%;
+            margin-right: 2rem;
+        }
+    }
+
+    &__lastgames-times {
+        font-size: 1.5rem;
+        width: 100%;
+
+        & table {
+            table-layout: fixed;
+            border-collapse: collapse;
+            width: 100%;
+
+            & td {
+                padding-bottom: 0.5rem;
+                white-space: nowrap;
+                width: 50%;
+            }
+
+            & td:nth-child(even) {
+                text-align: right;
+            }
+        }
+    }
+
+    &__pickups {
+        width: 50%;
+    }
+
+    &__chart {
+        width: 100%;
+        height: 100%;
+    }
+}
+
+.shrink-animation {
+    animation: shrink 500ms cubic-bezier(0, 0.76, 0.65, 0.97) forwards;
+}
+
+.expand {
+    animation: expand 500ms linear forwards;
+}
+
+@keyframes shrink {
+    to {
+        width: 4rem;
+        height: 4rem;
+        top: 0;
+        right: 4rem;
+    }
+}
+
+@keyframes expand {
+    to {
+        top: 50%;
+        left: 50%;
+        width: 40%;
+    }
+}
+
+.player-pickup-item {
+    display: flex;
+    padding: 0.2rem 0.5rem;
+    justify-content: space-between;
+    text-decoration: none;
+    align-items: center;
+    font-size: 1.5rem;
+    cursor: pointer;
+
+    &:not(:last-child) {
+        margin-bottom: 0.5rem;
+    }
+
+    &__info {
+        display: flex;
+    }
+
+    &__box {
+        box-sizing: content-box;
+        padding: 0.5rem 0.5rem;
+        text-align: center;
+
+        &:not(:last-child) {
+            margin-right: 1rem;
+        }
+    }
+
+    &__icon {
+        width: 2rem;
+        height: 2rem;
+    }
+}
+
 .hidden {
     display: none;
 }
@@ -1202,6 +1436,14 @@
 
 .green {
     color: $green;
+}
+
+.bg-darkened {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
 }
 
 .no-history {

@@ -1,14 +1,19 @@
 import db from '../core/db';
 
+interface CommandInfo {
+    name: string;
+    disabled: number;
+}
+
 export default class BotModel {
     private constructor() { }
 
-    static async getStoredCommands() {
+    static async getStoredCommands(): Promise<CommandInfo[]> {
         const storedCommands = await db.query(`
         SELECT * FROM commands
         `);
 
-        return storedCommands[0];
+        return storedCommands[0] as CommandInfo[];
     }
 
     static async storeCommands(...names) {
