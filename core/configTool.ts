@@ -38,7 +38,8 @@ export default class ConfigTool {
         "MAX_WARN_BANTIME_MULTIPLIER": "5" 
     },
     "webserver": {
-        "port": "1337"
+        "port": "1337",
+        "domain": "example.com"
     }
 }`, 'utf8');
     }

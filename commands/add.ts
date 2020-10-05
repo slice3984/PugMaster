@@ -138,7 +138,7 @@ const command: Command = {
 
                 if (activePickup) {
                     // Already added to the pickup
-                    if (activePickup.players.map(player => player.id).includes(BigInt(message.author.id))) {
+                    if (activePickup.players.map(player => player.id).includes(message.author.id)) {
                         return false;
                     }
 

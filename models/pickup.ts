@@ -33,7 +33,7 @@ export default class PickupModel {
     }
 
     static async getActivePickup(guildId: bigint, nameOrConfigId: number | string):
-        Promise<{ name: string, players: { id: bigint | null, nick: string }[]; maxPlayers: number; configId: number }> {
+        Promise<{ name: string, players: { id: string | null, nick: string }[]; maxPlayers: number; configId: number }> {
         let result;
 
         if (typeof nameOrConfigId === 'number') {
@@ -60,7 +60,7 @@ export default class PickupModel {
 
         for (const row of result[0]) {
             players.push({
-                id: BigInt(row.player_id),
+                id: row.player_id.toString(),
                 nick: row.current_nick
             });
         }
@@ -74,7 +74,7 @@ export default class PickupModel {
     }
 
     static async getActivePickups(guildId: bigint, includingDefaults = false): Promise<Map<string,
-        { name: string, players: { id: bigint | null, nick: string | null }[]; maxPlayers: number; configId: number }>> {
+        { name: string, players: { id: string | null, nick: string | null }[]; maxPlayers: number; configId: number }>> {
         let result;
 
         if (!includingDefaults) {
@@ -96,10 +96,10 @@ export default class PickupModel {
 
         for (const row of result[0]) {
             if (!pickups.has(row.name)) {
-                pickups.set(row.name, { name: row.name, players: [{ id: row.player_id ? BigInt(row.player_id) : null, nick: row.current_nick }], maxPlayers: row.player_count, configId: row.id });
+                pickups.set(row.name, { name: row.name, players: [{ id: row.player_id ? row.player_id.toString() : null, nick: row.current_nick }], maxPlayers: row.player_count, configId: row.id });
                 continue;
             }
-            pickups.get(row.name).players.push({ id: row.player_id ? BigInt(row.player_id) : null, nick: row.current_nick });
+            pickups.get(row.name).players.push({ id: row.player_id ? row.player_id.toString() : null, nick: row.current_nick });
         }
 
         return pickups;
@@ -129,11 +129,20 @@ export default class PickupModel {
     }
 
     static async getAddedPlayers() {
-        const players = await db.query(`
+        const players: any = await db.query(`
         SELECT player_id, guild_id FROM state_pickup_players
         `);
 
-        return players[0];
+        if (!players[0].length) {
+            return [];
+        }
+
+        return players[0].map(player => {
+            return {
+                player_id: player.player_id.toString(),
+                guild_id: player.guild_id.toString()
+            }
+        })
     }
 
     static async getStoredPickupCount(guildId: bigint) {
@@ -259,10 +268,10 @@ export default class PickupModel {
             mapPoolId: settings.mappool_id ? settings.mappool_id : null,
             afkCheck: Boolean(settings.afk_check),
             pickMode: settings.pick_mode,
-            whitelistRole: settings.whitelist_role ? BigInt(settings.whitelist_role) : null,
-            blacklistRole: settings.blacklist_role ? BigInt(settings.blacklist_role) : null,
-            promotionRole: settings.promotion_role ? BigInt(settings.promotion_role) : null,
-            captainRole: settings.captain_role ? BigInt(settings.captain_role) : null,
+            whitelistRole: settings.whitelist_role ? settings.whitelist_role.toString() : null,
+            blacklistRole: settings.blacklist_role ? settings.blacklist_role.toString() : null,
+            promotionRole: settings.promotion_role ? settings.promotion_role.toString() : null,
+            captainRole: settings.captain_role ? settings.captain_role.toString() : null,
             serverId: settings.server_id ? settings.server_id : null
         }
     }
@@ -295,10 +304,10 @@ export default class PickupModel {
             mapPoolId: settings.mappool_id ? settings.mappool_id : null,
             afkCheck: Boolean(settings.afk_check),
             pickMode: settings.pick_mode,
-            whitelistRole: settings.whitelist_role ? BigInt(settings.whitelist_role) : null,
-            blacklistRole: settings.blacklist_role ? BigInt(settings.blacklist_role) : null,
-            promotionRole: settings.promotion_role ? BigInt(settings.promotion_role) : null,
-            captainRole: settings.captain_role ? BigInt(settings.captain_role) : null,
+            whitelistRole: settings.whitelist_role ? settings.whitelist_role.toString() : null,
+            blacklistRole: settings.blacklist_role ? settings.blacklist_role.toString() : null,
+            promotionRole: settings.promotion_role ? settings.promotion_role.toString() : null,
+            captainRole: settings.captain_role ? settings.captain_role.toString() : null,
             serverId: settings.server_id ? settings.server_id : null
         }));
 

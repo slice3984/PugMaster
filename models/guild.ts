@@ -4,6 +4,7 @@ import GuildSettings from '../core/guildSettings';
 import Bot from '../core/bot';
 import db from '../core/db';
 import { FieldPacket, RowDataPacket } from 'mysql2';
+import { timeEnd } from 'console';
 
 interface BannedPlayer {
     player: string;
@@ -203,7 +204,18 @@ export default class GuildModel {
             AND pickup_expire IS NOT NULL
             `, guildIds);
         }
-        return expires[0];
+
+        if (!expires[0].length) {
+            return [];
+        }
+
+        return expires[0].map(expire => {
+            return {
+                ...expire,
+                guild_id: expire.guild_id.toString(),
+                player_id: expire.player_id.toString()
+            }
+        });
     }
 
     static async getAllAddTimes(...guildIds) {
@@ -222,7 +234,17 @@ export default class GuildModel {
             `, [...guildIds])
         }
 
-        return addTimes[0];
+        if (!addTimes[0].length) {
+            return [];
+        }
+
+        return addTimes[0].map(time => {
+            return {
+                ...time,
+                guild_id: time.guild_id.toString(),
+                player_id: time.player_id.toString()
+            }
+        });
     }
 
     static async removeAddTimes(guildId: bigint, ...playerIds) {
@@ -266,7 +288,17 @@ export default class GuildModel {
             `, guildIds);
         }
 
-        return aos[0];
+        if (!aos[0].length) {
+            return [];
+        }
+
+        return aos[0].map(ao => {
+            return {
+                ...ao,
+                guild_id: ao.guild_id.toString(),
+                player_id: ao.player_id.toString()
+            }
+        });
     }
 
     static async getAllAddedPlayers(guildId?: BigInt) {
@@ -275,14 +307,28 @@ export default class GuildModel {
             SELECT guild_id, player_id FROM state_pickup_players
             `);
 
-            return players[0];
+            if (!players[0].length) {
+                return [];
+            }
+
+            return players[0].map(player => {
+                return {
+                    guild_id: player.guild_id.toString(),
+                    player_id: player.player_id.toString()
+                }
+            });
+
         } else {
             const players: any = await db.execute(`
             SELECT player_id FROM state_pickup_players
             WHERE guild_id = ?
             `, [guildId]);
 
-            return players[0].map(row => row.player_id);
+            if (!players[0].length) {
+                return []
+            }
+
+            return players[0].map(row => row.player_id.toString());
         }
     }
 
@@ -391,7 +437,7 @@ export default class GuildModel {
         return warns[0].reverse();
     }
 
-    static async getPlayersWithNotify(guildId: bigint, ...playerIds): Promise<BigInt[]> {
+    static async getPlayersWithNotify(guildId: bigint, ...playerIds): Promise<string[]> {
         const playersWithNotify: any = await db.execute(`
         SELECT user_id FROM players
         WHERE notifications = true
@@ -399,7 +445,7 @@ export default class GuildModel {
         AND user_id IN (${Array(playerIds.length).fill('?').join(',')})
         `, [guildId, ...playerIds]);
 
-        return playersWithNotify[0].map(player => BigInt(player.user_id));
+        return playersWithNotify[0].map(player => player.user_id.toString());
     }
 
     static async updateLastPromote(guildId: bigint) {
@@ -437,7 +483,7 @@ export default class GuildModel {
                     });
                 }
                 teams[0].players.push({
-                    id: BigInt(row.user_id),
+                    id: row.user_id.toString(),
                     nick: row.current_nick
                 });
             } else {
@@ -447,7 +493,7 @@ export default class GuildModel {
                         teams.push({
                             name: row.team,
                             players: [{
-                                id: BigInt(row.user_id),
+                                id: row.user_id.toString(),
                                 nick: row.current_nick
                             }]
                         });
@@ -455,7 +501,7 @@ export default class GuildModel {
                         amountPlayersAdded++;
                     } else {
                         teams[index].players.push({
-                            id: BigInt(row.user_id),
+                            id: row.user_id.toString(),
                             nick: row.current_nick
                         });
 
@@ -463,7 +509,7 @@ export default class GuildModel {
                     }
                 } else {
                     playersLeft.push({
-                        id: BigInt(row.user_id),
+                        id: row.user_id.toString(),
                         nick: row.current_nick
                     });
 
@@ -487,7 +533,7 @@ export default class GuildModel {
         }
     }
 
-    static async getPendingPickups(...guildIds: bigint[]): Promise<Map<BigInt, PendingPickup[]>> {
+    static async getPendingPickups(...guildIds: bigint[]): Promise<Map<string, PendingPickup[]>> {
         const data: any = await db.execute(`
         SELECT sp.guild_id, p.current_nick, p.user_id, pc.id, pc.name, pc.player_count, sp.in_stage_since, sp.stage_iteration, sp.stage, st.team
         FROM state_pickup sp
@@ -508,8 +554,10 @@ export default class GuildModel {
 
         const guilds = new Map();
         data[0].forEach(row => {
-            if (!guilds.has(BigInt(row.guild_id))) {
-                guilds.set(BigInt(row.guild_id), [{
+            const guildId = row.guild_id.toString();
+
+            if (!guilds.has(guildId)) {
+                guilds.set(guildId, [{
                     pickupConfigId: row.id,
                     name: row.name,
                     maxPlayers: row.player_count,
@@ -550,7 +598,7 @@ export default class GuildModel {
                     });
                 }
                 pickup.teams[0].players.push({
-                    id: BigInt(row.user_id),
+                    id: row.user_id.toString(),
                     nick: row.current_nick
                 });
 
@@ -562,7 +610,7 @@ export default class GuildModel {
                         pickup.teams.push({
                             name: row.team,
                             players: [{
-                                id: BigInt(row.user_id),
+                                id: row.user_id.toString(),
                                 nick: row.current_nick
                             }]
                         });
@@ -570,7 +618,7 @@ export default class GuildModel {
                         pickup.amountPlayersAdded++;
                     } else {
                         pickup.teams[index].players.push({
-                            id: BigInt(row.user_id),
+                            id: row.user_id.toString(),
                             nick: row.current_nick
                         });
 
@@ -578,7 +626,7 @@ export default class GuildModel {
                     }
                 } else {
                     pickup.playersLeft.push({
-                        id: BigInt(row.user_id),
+                        id: row.user_id.toString(),
                         nick: row.current_nick
                     });
 

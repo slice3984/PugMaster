@@ -24,7 +24,7 @@ const command: Command = {
     exec: async (bot, message, params, defaults) => {
         const limit = defaults[0];
         let pickup;
-        let players: { id: bigint, amount: number }[];
+        let players: { id: string, amount: number }[];
 
         if (!params.length) {
             players = await StatsModel.getLastActive(BigInt(message.guild.id), 50, limit);
@@ -55,7 +55,7 @@ const command: Command = {
         for (const player of players) {
 
             // Skip added players
-            if (addedPlayers.includes(player.id.toString())) {
+            if (addedPlayers.includes(player.id)) {
                 continue;
             }
 

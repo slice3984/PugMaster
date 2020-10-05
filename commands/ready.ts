@@ -21,11 +21,11 @@ const command: Command = {
 
         let pendingPickupsMap = await GuildModel.getPendingPickups(BigInt(message.guild.id));
 
-        if (!pendingPickupsMap.has(BigInt(message.guild.id))) {
+        if (!pendingPickupsMap.has(message.guild.id)) {
             return message.reply('there is no pending pickup to ready up for');
         }
 
-        const pendingPickups = pendingPickupsMap.get(BigInt(message.guild.id))
+        const pendingPickups = pendingPickupsMap.get(message.guild.id)
             .filter(pendingPickup => pendingPickup.stage === 'afk_check');
 
         if (!pendingPickups.length) {
@@ -34,7 +34,7 @@ const command: Command = {
 
         const playerAddedTo = pendingPickups.filter(pendingPickup => {
             const players = pendingPickup.teams[0].players.map(player => player.id);
-            return players.includes(BigInt(message.author.id));
+            return players.includes(message.author.id);
         });
 
         if (!playerAddedTo.length) {

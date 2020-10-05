@@ -249,7 +249,7 @@ export default class StatsModel {
     }
 
     static async getLastActive(guildId: bigint, limit: number, period: number, pickup?: string):
-        Promise<{ id: bigint, amount: number }[]> {
+        Promise<{ id: string, amount: number }[]> {
         let results = [];
         let data;
 
@@ -279,7 +279,7 @@ export default class StatsModel {
 
         data[0].forEach(row => {
             results.push({
-                id: BigInt(row.user_id),
+                id: row.user_id.toString(),
                 amount: row.amount
             });
         })
@@ -310,7 +310,7 @@ export default class StatsModel {
         return data[0].map(row => row.date);
     }
 
-    static async getPickupCount(guildId: bigint): Promise<Number> {
+    static async getPickupCount(guildId: bigint): Promise<number> {
         const data = await db.execute(`
         SELECT COUNT(id) as pickups from pickups
         WHERE guild_id = ?
@@ -561,7 +561,7 @@ export default class StatsModel {
         }
 
         return {
-            id: data[0][0].user_id,
+            id: data[0][0].user_id.toString(),
             name: data[0][0].current_nick,
             elo: data[0][0].elo
         };

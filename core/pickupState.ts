@@ -4,7 +4,6 @@ import PickupModel from '../models/pickup';
 import GuildModel from '../models/guild';
 import PlayerModel from '../models/player';
 import Util from '../core/util';
-import { PickupSettings } from './types';
 import PickupStage from './PickupStage';
 
 export default class PickupState {
@@ -74,11 +73,11 @@ export default class PickupState {
     }
 
     // pickupConfigId => Required to make sure the started pickup gets ignored if it was in pending state
-    static async handlePendingAfkPickups(guildId: bigint, pickupConfigId: number | null, playerIds: bigint[] | null, ...pickupIds) {
+    static async handlePendingAfkPickups(guildId: string, pickupConfigId: number | null, playerIds: string[] | null, ...pickupIds) {
         let pickupsToCancel = [];
 
         if (pickupIds.length === 1) {
-            let pending = await GuildModel.getPendingPickup(guildId, pickupIds[0]);
+            let pending = await GuildModel.getPendingPickup(BigInt(guildId), pickupIds[0]);
             if (!pending || pending.stage === 'picking_manual' || pending.pickupConfigId === pickupConfigId) {
                 return;
             }
@@ -89,7 +88,7 @@ export default class PickupState {
                 playerIds: pending.teams[0].players.map(player => player.id)
             })
         } else if (pickupIds.length > 1) {
-            let pendingMap = await GuildModel.getPendingPickups(guildId);
+            let pendingMap = await GuildModel.getPendingPickups(BigInt(guildId));
 
             if (!pendingMap) {
                 return;
@@ -113,7 +112,7 @@ export default class PickupState {
 
 
         if (playerIds && !pickupIds.length) {
-            const pendingMap = await GuildModel.getPendingPickups(guildId);
+            const pendingMap = await GuildModel.getPendingPickups(BigInt(guildId));
             if (!pendingMap) {
                 return;
             }
@@ -129,7 +128,7 @@ export default class PickupState {
                     }
 
                     const players = pickup.teams[0].players.map(player => player.id);
-                    return players.some(id => playerIds.map(id => BigInt(id)).includes(id));
+                    return players.some(id => playerIds.includes(id));
                 });
 
             if (!pending.length) {
@@ -151,10 +150,10 @@ export default class PickupState {
 
         pickupsToCancel = pickupsToCancel.filter((pickup, index) => pickupsToCancel.indexOf(pickupsToCancel.find(pu => pu.id === pickup.id)) === index);
 
-        await GuildModel.removeAfks(guildId, ...addedPlayerIds);
+        await GuildModel.removeAfks(BigInt(guildId), ...addedPlayerIds);
 
         // Remove timeouts / Reset state
-        await PickupModel.setPendings(guildId, 'fill', ...pickupsToCancel.map(pickup => pickup.id));
+        await PickupModel.setPendings(BigInt(guildId), 'fill', ...pickupsToCancel.map(pickup => pickup.id));
 
         const pendingPickups = Bot.getInstance().getGuild(guildId).pendingPickups;
 
@@ -179,33 +178,36 @@ export default class PickupState {
 
     }
 
-    static async removePlayer(guildId: bigint, playerId: bigint, showStatus = true, ...pickupIds: number[]) {
+    static async removePlayer(guildId: string, playerId: string, showStatus = true, ...pickupIds: number[]) {
+        const bigIntGuildId = BigInt(guildId);
+        const bigIntPlayerId = BigInt(playerId);
+
         // TODO: Check if the pickup is pending and abort
         let isAddedToAnyPickup;
         if (pickupIds.length === 0) {
-            isAddedToAnyPickup = await PickupModel.isPlayerAdded(guildId, playerId);
+            isAddedToAnyPickup = await PickupModel.isPlayerAdded(bigIntGuildId, bigIntPlayerId);
             if (isAddedToAnyPickup.length === 0) {
                 return;
             }
 
-            await PlayerModel.removeExpires(guildId, playerId);
+            await PlayerModel.removeExpires(bigIntGuildId, playerId);
             await PickupState.handlePendingAfkPickups(guildId, null, [playerId]);
-            await PickupModel.removePlayer(guildId, playerId);
+            await PickupModel.removePlayer(bigIntGuildId, bigIntPlayerId);
         } else {
             await PickupState.handlePendingAfkPickups(guildId, null, null, ...pickupIds);
-            await PickupModel.removePlayer(guildId, playerId, ...pickupIds);
+            await PickupModel.removePlayer(bigIntGuildId, bigIntPlayerId, ...pickupIds);
         }
 
-        const playerAddedTo = await PickupModel.isPlayerAdded(guildId, playerId);
+        const playerAddedTo = await PickupModel.isPlayerAdded(bigIntGuildId, bigIntPlayerId);
 
         if (!playerAddedTo.length) {
-            await PlayerModel.resetPlayerState(guildId, playerId);
+            await PlayerModel.resetPlayerState(bigIntGuildId, bigIntPlayerId);
         }
 
         if (showStatus) {
             const guild = Bot.getInstance().getClient().guilds.cache.get(guildId.toString());
             const pickupChannel = await Util.getPickupChannel(guild);
-            const pickups = Array.from((await PickupModel.getActivePickups(BigInt(guildId))).values())
+            const pickups = Array.from((await PickupModel.getActivePickups(bigIntGuildId)).values())
                 .sort((a, b) => b.players.length - a.players.length);
 
             const genPickupInfo = (pickup, modified) => {
@@ -237,7 +239,6 @@ export default class PickupState {
                 }
 
                 pickups.forEach(pickup => {
-
                     if (ids.includes(pickup.configId)) {
                         msg += `${genPickupInfo(pickup, true)} `;
                     } else {
@@ -245,18 +246,22 @@ export default class PickupState {
                     }
                 });
 
+                if (!msg.length) {
+                    return pickupChannel.send('No active pickups');
+                }
+
                 return pickupChannel.send(msg)
             }
         }
     }
 
     // Used for the bot on auto removes (ao expire / player expire...)
-    static async removePlayers(guildId: bigint, pendingCheck = true, pickupConfigId, ...playerIds) {
+    static async removePlayers(guildId: string, pendingCheck = true, pickupConfigId, ...playerIds) {
         if (pendingCheck) {
             await PickupState.handlePendingAfkPickups(guildId, pickupConfigId, playerIds);
         }
-        await PickupModel.removePlayers(guildId, ...playerIds);
-        await GuildModel.resetPlayerStates(guildId, ...playerIds);
+        await PickupModel.removePlayers(BigInt(guildId), ...playerIds);
+        await GuildModel.resetPlayerStates(BigInt(guildId), ...playerIds);
     }
 
     static async showPickupStatus(guild: Discord.Guild) {

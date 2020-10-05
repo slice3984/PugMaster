@@ -61,14 +61,14 @@ export default class PlayerModel {
         }
     }
 
-    static async arePlayersTrusted(guildId: bigint, ...playersIds): Promise<number[]> {
+    static async arePlayersTrusted(guildId: bigint, ...playersIds): Promise<string[]> {
         const trustedPlayers: any = await db.execute(`
         SELECT user_id FROM players
         WHERE guild_id = ? AND trusted = 1 
         AND user_id IN (${Array(playersIds.length).fill('?').join(',')})
         `, [guildId, ...playersIds]);
 
-        return trustedPlayers[0].map(row => row.user_id);
+        return trustedPlayers[0].map(row => row.user_id.toString());
     }
 
     static async trustPlayers(guildId: bigint, ...playersIds) {
@@ -112,18 +112,23 @@ export default class PlayerModel {
     }
 
     static async getAos(guildId: bigint, ...playerIds) {
-        const aos = await db.execute(`
+        const aos: any = await db.execute(`
         SELECT ao_expire, player_id FROM state_guild_player
         WHERE guild_id = ?
         AND player_id IN (${Array(playerIds.length).fill('?').join(',')})
         AND ao_expire IS NOT NULL
         `, [guildId, ...playerIds]);
 
-        if (!aos[0][0]) {
+        if (!aos[0].length) {
             return null;
         }
 
-        return aos[0];
+        return aos[0].map(ao => {
+            return {
+                ...ao,
+                player_id: ao.player_id.toString()
+            }
+        });
     }
 
     static async setAo(guildId: bigint, playerId: bigint, timeInMs: number) {
@@ -412,7 +417,7 @@ export default class PlayerModel {
                 players.push({
                     currentNick: player.current_nick,
                     id: player.id,
-                    userId: BigInt(player.user_id)
+                    userId: player.user_id.toString()
                 });
             });
         } else {
@@ -431,7 +436,7 @@ export default class PlayerModel {
                         oldNick: player.nick,
                         currentNick: player.current_nick,
                         id: player.id,
-                        userId: BigInt(player.user_id)
+                        userId: player.user_id.toString()
                     });
                 })
             }

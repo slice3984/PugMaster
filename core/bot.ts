@@ -25,7 +25,15 @@ export default class Bot {
 
     private async initBot() {
         // Creating new bot instance
-        this.client = new Discord.Client();
+        this.client = new Discord.Client({
+            presence: {
+                activity: {
+                    name: ConfigTool.getConfig().webserver.domain,
+                    type: 'PLAYING'
+                }
+            }
+        });
+
         this.client.login(ConfigTool.getConfig().bot.token);
         console.log('Bot successfully logged in');
 
@@ -78,7 +86,7 @@ export default class Bot {
 
             for (const [guild, players] of playersToRemoveExpire.entries()) {
                 try {
-                    await PickupState.removePlayers(BigInt(guild), true, null, ...players);
+                    await PickupState.removePlayers(guild, true, null, ...players);
                     const guildObj = this.client.guilds.cache.get(guild);
                     const pickupChannel = await getPickupChannel(guildObj);
                     const playerObjs = players.map(player => guildObj.members.cache.get(player));
@@ -116,7 +124,7 @@ export default class Bot {
 
             for (const [guild, players] of playersToRemoveGlobalExpire.entries()) {
                 try {
-                    await PickupState.removePlayers(BigInt(guild), true, null, ...players);
+                    await PickupState.removePlayers(guild, true, null, ...players);
                     const guildObj = this.client.guilds.cache.get(guild);
                     const pickupChannel = await getPickupChannel(guildObj);
                     const playerObjs = players.map(player => guildObj.members.cache.get(player));
@@ -188,7 +196,7 @@ export default class Bot {
                     const toRemoveIds = toRemoveObjs.map(player => player.id);
 
                     if (toRemoveIds.length) {
-                        await PickupState.removePlayers(BigInt(guild), true, null, ...players);
+                        await PickupState.removePlayers(guild, true, null, ...players);
                     }
 
                     pickupChannel.send(`${toPing.join(', ')} ${toNick.map(player => player.displayName).join(', ')} your allow offline ran out`);

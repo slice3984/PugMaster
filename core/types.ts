@@ -21,6 +21,7 @@ export interface Config {
     };
     webserver: {
         port: string;
+        domain: string;
     }
 };
 
@@ -69,10 +70,10 @@ export interface PickupSettings {
     mapPoolId: number | null;
     afkCheck: boolean;
     pickMode: 'no_teams' | 'manual' | 'elo';
-    whitelistRole: bigint | null;
-    blacklistRole: bigint | null;
-    promotionRole: bigint | null;
-    captainRole: bigint | null;
+    whitelistRole: string | null;
+    blacklistRole: string | null;
+    promotionRole: string | null;
+    captainRole: string | null;
     serverId: number | null;
 }
 
@@ -85,7 +86,7 @@ export interface PickupInfo {
 
 export interface PlayerNicks {
     oldNick: boolean;
-    players: { oldNick?: string; currentNick: string; id: number; userId: BigInt }[]
+    players: { oldNick?: string; currentNick: string; id: number; userId: string }[]
 }
 
 export interface PendingPickup {
@@ -101,12 +102,12 @@ export interface PendingPickup {
             name: string,
             players: [
                 {
-                    id: bigint, nick: string
+                    id: string, nick: string
                 }
             ]
         }
     ];
-    playersLeft: [{ id: bigint, nick: string }] // Only required for manual picking
+    playersLeft: [{ id: string, nick: string }] // Only required for manual picking
 }
 
 export interface GuildInfo {

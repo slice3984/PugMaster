@@ -18,7 +18,7 @@ module.exports = async (bot: Bot, oldPresence: Discord.Presence, newPresence: Di
             }
             const pickupChannel = await Util.getPickupChannel(newPresence.guild);
             pickupChannel.send(`${newPresence.member.displayName} went offline and got removed from all pickups`);
-            await PickupState.removePlayer(BigInt(newPresence.guild.id), BigInt(newPresence.member.id));
+            await PickupState.removePlayer(newPresence.guild.id, newPresence.member.id);
         }
     }
 }

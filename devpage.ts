@@ -149,7 +149,7 @@ export default class DevPage {
     }
 
     private async removeFromPickup(guildId: string, userId: string, configId: number) {
-        await PickupState.removePlayer(BigInt(guildId), BigInt(userId), true, configId);
+        await PickupState.removePlayer(guildId, userId, true, configId);
     }
 
     private async clearPickup(guildId: string, configId: number) {
@@ -161,6 +161,6 @@ interface GuildData {
     id: string,
     name: string,
     fakeUsers: { id: string; name: string }[];
-    activePickups: { name: string, players: { id: bigint | null, nick: string | null }[]; maxPlayers: number; configId: number }[];
+    activePickups: { name: string, players: { id: string | null, nick: string | null }[]; maxPlayers: number; configId: number }[];
     allPickups: { id: number, name: string, added: number, max: number }[];
 }

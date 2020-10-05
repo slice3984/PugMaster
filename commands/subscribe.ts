@@ -26,7 +26,7 @@ const command: Command = {
             return message.reply('given valid pickups got no promotion role');
         }
 
-        const userRoleIds = message.member.roles.cache.map(role => BigInt(role.id));
+        const userRoleIds = message.member.roles.cache.map(role => role.id);
 
         pickupsToSubscribe = pickupsToSubscribe.filter(pickup => !userRoleIds.includes(pickup.promotionRole));
 

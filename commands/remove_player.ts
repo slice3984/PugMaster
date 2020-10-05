@@ -29,7 +29,7 @@ const command: Command = {
         }
 
         message.channel.send(`${player.displayName} got removed from all pickups`);
-        await PickupState.removePlayer(BigInt(message.guild.id), BigInt(player.id));
+        await PickupState.removePlayer(message.guild.id, player.id);
     }
 }
 

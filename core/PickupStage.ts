@@ -48,7 +48,7 @@ export default class PickupStage {
         }
 
         // Remove players
-        await PickupState.removePlayers(BigInt(guild.id), true, pickupConfigId, ...addedPlayers);
+        await PickupState.removePlayers(guild.id, true, pickupConfigId, ...addedPlayers);
 
         // Get & parse start message and display that
         const pickupSettings = await PickupModel.getPickupSettings(BigInt(guild.id), +aboutToStart.configId);
@@ -70,7 +70,7 @@ export default class PickupStage {
 
             if (dmMessage.length) {
                 for (const playerId of playersToDm) {
-                    const member = guild.members.cache.get(playerId.toString());
+                    const member = guild.members.cache.get(playerId);
                     if (member) {
                         await member.send(dmMessage);
                     }
@@ -134,7 +134,7 @@ export default class PickupStage {
             pickupChannel.send(`pickup **${pendingPickup.name}** aborted and AFK players removed`);
 
             await PickupModel.setPending(BigInt(guild.id), pickupConfigId, 'fill');
-            await PickupState.removePlayers(BigInt(guild.id), false, null, ...afkPlayers.map(player => player.id));
+            await PickupState.removePlayers(guild.id, false, null, ...afkPlayers.map(player => player.id));
             await PickupState.showPickupStatus(guild);
 
             return;
