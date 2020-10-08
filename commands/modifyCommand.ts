@@ -58,7 +58,6 @@ const command: Command = {
                     let info;
 
                     if (guildSettings.commandSettings.has(command.cmd)) {
-                        console.log(guildSettings.commandSettings)
                         const settings = guildSettings.commandSettings.get(command.cmd);
                         info = settings.map((value, index) => {
                             // Get the default type
@@ -87,8 +86,6 @@ const command: Command = {
             if (command.defaults) {
                 const defaultvalue = command.defaults.find(def => def.name === operation);
                 const type = defaultvalue.type;
-
-                console.log(defaultvalue)
 
                 if (!defaultvalue) {
                     return message.reply(`unknown setting, did you mean ${command.defaults.map(def => def.name).join(', ')}?`);

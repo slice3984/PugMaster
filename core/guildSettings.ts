@@ -156,6 +156,10 @@ export default class GuildSettings {
         this._lastPromote = new Date();
     }
 
+    public disableServer() {
+        this._defaultServer = null;
+    }
+
     public get channels(): Map<bigint, ChannelType> {
         return this._channels;
     }

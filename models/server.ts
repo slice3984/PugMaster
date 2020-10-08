@@ -10,13 +10,18 @@ interface ServerType {
 export default class ServerModel {
     private constructor() { }
 
-    static async isServerStored(guildId: bigint, name: string): Promise<boolean> {
-        const stored = await db.execute(`
-        SELECT COUNT(*) AS cnt FROM pickup_servers
-        WHERE guild_id = ? AND name = ?
-        `, [guildId, name]);
+    static async isServerStored(guildId: bigint, ...names): Promise<{ id: number; name: string }[]> {
+        const stored: any = await db.execute(`
+        SELECT id, name FROM pickup_servers
+        WHERE guild_id = ? AND name IN (${Array(names.length).fill('?').join(',')})
+        `, [guildId, ...names]);
 
-        return stored[0][0].cnt;
+        return stored[0].map(row => {
+            return {
+                id: row.id,
+                name: row.name
+            }
+        });
     }
 
     static async addServer(guildId: bigint, name: string, ip: string, password?: string) {
@@ -87,6 +92,12 @@ export default class ServerModel {
         // Update pickups
         await db.execute(`
         UPDATE pickup_configs SET server_id = null
+        WHERE guild_id = ? AND server_id IN (${Array(serverIds.length).fill('?').join(',')})
+        `, [guildId, ...serverIds]);
+
+        // Update guild
+        await db.execute(`
+        UPDATE guilds SET server_id = null
         WHERE guild_id = ? AND server_id IN (${Array(serverIds.length).fill('?').join(',')})
         `, [guildId, ...serverIds]);
     }

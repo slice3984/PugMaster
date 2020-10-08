@@ -15,7 +15,6 @@ const command: Command = {
     perms: true,
     exec: async (bot, message, params) => {
         const pickups = params.map(param => param.toLowerCase());
-        console.log(pickups)
 
         let validPickups = await PickupModel.areValidPickups(BigInt(message.guild.id), ...pickups);
 

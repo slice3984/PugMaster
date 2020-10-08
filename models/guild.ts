@@ -550,8 +550,6 @@ export default class GuildModel {
             return null;
         }
 
-        console.log(data[0])
-
         const guilds = new Map();
         data[0].forEach(row => {
             const guildId = row.guild_id.toString();

@@ -53,7 +53,7 @@ export namespace Validator {
                         }
 
                         if (isPickupActive) {
-                            errors.push({ type: 'players', errorMessage: 'can\'t modify players when the pickup is active' });
+                            errors.push({ type: 'players', errorMessage: 'can\'t modify name when the pickup is active' });
                         }
 
                         if (!/^[a-zA-Z0-9]+$/.test(value)) {
@@ -268,11 +268,11 @@ export namespace Validator {
         export async function isValidServer(guildId: bigint, name: string, isDuplicate = true): Promise<ValidationError | true> {
             const doesExist = await ServerModel.isServerStored(guildId, name);
 
-            if (isDuplicate && !doesExist) {
+            if (isDuplicate && !doesExist.length) {
                 return { type: 'exists', errorMessage: 'server not found' };
             }
 
-            if (!isDuplicate && doesExist) {
+            if (!isDuplicate && doesExist.length) {
                 return { type: 'exists', errorMessage: 'server already stored' };
             }
 
