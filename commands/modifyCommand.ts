@@ -1,4 +1,5 @@
 import { Command } from '../core/types';
+import Util from '../core/util';
 import { Validator } from '../core/validator';
 
 const command: Command = {
@@ -16,7 +17,7 @@ const command: Command = {
     perms: true,
     exec: async (bot, message, params) => {
         let command = params[0].toLowerCase();
-        const operation = params[1];
+        const operation = params[1].toLowerCase();
 
         if (!bot.doesCommandExist(command)) {
             return message.reply(`unknown command ${command}`);
@@ -57,10 +58,22 @@ const command: Command = {
                     let info;
 
                     if (guildSettings.commandSettings.has(command.cmd)) {
+                        console.log(guildSettings.commandSettings)
                         const settings = guildSettings.commandSettings.get(command.cmd);
-                        info = settings.map((value, index) => `${command.defaults[index].name}: ${value}`).join('\n');
+                        info = settings.map((value, index) => {
+                            // Get the default type
+                            const type = bot.getCommand(command.cmd).defaults[index].type;
+                            const val = type === 'time' ? Util.formatTime(+value) : value;
+
+                            return `${command.defaults[index].name}: ${val}`;
+                        }).join('\n');
                     } else {
-                        info = command.defaults.map(def => `${def.name}: ${def.value}\n`);
+                        info = command.defaults.map(def => {
+                            const type = def.type;
+                            const value = type === 'time' ? Util.formatTime(+def.value) : def.value;
+
+                            return `${def.name}: ${value}\n`;
+                        });
                     }
 
                     message.channel.send(`Settings of ${command.cmd}\n${info}`);
@@ -69,10 +82,15 @@ const command: Command = {
                 }
             }
         } else {
-            const value = params[2];
+            let value: string | number = params.slice(2).join(' ');
 
             if (command.defaults) {
-                if (!command.defaults.map(def => def.name).includes(operation)) {
+                const defaultvalue = command.defaults.find(def => def.name === operation);
+                const type = defaultvalue.type;
+
+                console.log(defaultvalue)
+
+                if (!defaultvalue) {
                     return message.reply(`unknown setting, did you mean ${command.defaults.map(def => def.name).join(', ')}?`);
                 }
 
@@ -80,6 +98,10 @@ const command: Command = {
 
                 if (isInvalid.length) {
                     return message.reply(isInvalid[0].errorMessage);
+                }
+
+                if (type === 'time') {
+                    value = Util.timeStringToTime(value) * 60 * 1000;
                 }
 
                 let currentSettings;
@@ -100,7 +122,8 @@ const command: Command = {
                 currentSettings[index] = isNumeric ? +value : value;
 
                 await guildSettings.modifyCommand(command, currentSettings);
-                message.reply(`successfully modified command ${command.cmd}, set ${operation} to ${value}`);
+                message.reply(`successfully modified command ${command.cmd}, set ${operation} to ${type === 'time' ? Util.formatTime(+value) : value}`);
+
             } else {
                 message.reply('this command got no configurable settings');
             }

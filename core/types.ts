@@ -26,7 +26,7 @@ export interface Config {
 };
 
 interface DefaultValue {
-    type: 'string' | 'number';
+    type: 'string' | 'number' | 'time';
     name: string;
     desc: string;
     value: string | number;

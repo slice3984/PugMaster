@@ -11,7 +11,7 @@ const command: Command = {
         { name: '[show]', desc: 'call with show to show how much time is left until your ao expires', required: false }
     ],
     defaults: [
-        { type: 'number', name: 'max-duration', desc: 'Duration of the allow offline/afk', value: 21600000, possibleValues: { from: 3600000, to: 86400000 } }
+        { type: 'time', name: 'max-duration', desc: 'Duration of the allow offline/afk', value: 21600000, possibleValues: { from: 3600000, to: 86400000 } }
     ],
     global: false,
     perms: false,

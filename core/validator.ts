@@ -608,7 +608,7 @@ export namespace Validator {
                                 break;
                             }
 
-                            if (isArray(def.possibleValues)) {
+                            if (Array.isArray(def.possibleValues)) {
                                 if (!(def.possibleValues as number[]).includes(+value)) {
                                     errors.push({ type: key, errorMessage: `${value} is not a valid value for ${key}, value has to be ${def.possibleValues.join(', ')}` });
                                 }
@@ -616,6 +616,25 @@ export namespace Validator {
                                 if (def.possibleValues.from > +value || def.possibleValues.to < +value) {
                                     errors.push({ type: key, errorMessage: `${key} has to be in the range of ${def.possibleValues.from}-${def.possibleValues.to}` });
                                 }
+                            }
+                            break;
+                        case 'time':
+                            // @ts-ignore - properties always available in this case
+                            const maxTime = def.possibleValues.to;
+                            // @ts-ignore
+                            const minTime = def.possibleValues.from;
+
+                            const timeVal = Util.validateTimeString(value, maxTime, minTime);
+
+                            if (timeVal === 'exceeded') {
+                                errors.push({ type: key, errorMessage: `max ${def.name} time is ${Util.formatTime(maxTime)}` });
+                                break;
+                            } else if (timeVal === 'subceeded') {
+                                errors.push({ type: key, errorMessage: `min ${def.name} time is ${Util.formatTime(minTime)}` });
+                                break;
+                            } else if (timeVal === 'invalid') {
+                                errors.push({ type: key, errorMessage: 'invalid time amounts given' });
+                                break;
                             }
                     }
                 });

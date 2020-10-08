@@ -11,7 +11,7 @@ const command: Command = {
     desc: 'Call for a sub for the latest pickup',
     defaults: [
         {
-            type: 'number', name: 'timeout-after', desc: 'How long the command is callable after the latest pickup',
+            type: 'time', name: 'timeout-after', desc: 'How long the command is callable after the latest pickup',
             value: 7200000, possibleValues: { from: 1800000, to: 21600000 }
         }
     ],

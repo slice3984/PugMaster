@@ -13,8 +13,8 @@ const command: Command = {
     ],
     defaults: [
         {
-            type: 'number', name: 'max_expire', desc: 'Max expiration time in minutes',
-            value: 1440, possibleValues: { from: 5, to: 2880 }
+            type: 'time', name: 'max_expire', desc: 'Max expiration time',
+            value: 86400000, possibleValues: { from: 300000, to: 172800000 }
         }
     ],
     global: false,
@@ -47,10 +47,10 @@ const command: Command = {
             return message.reply('you are not added to any pickup');
         }
 
-        const validTime = Util.validateTimeString(params.join(' '), (defaults[0] * 60 * 1000), (60 * 1000));
+        const validTime = Util.validateTimeString(params.join(' '), defaults[0], (60 * 1000));
 
         if (validTime === 'exceeded') {
-            return message.reply(`max expire time is ${Util.formatTime(defaults[0] * 60000)}`);
+            return message.reply(`max expire time is ${Util.formatTime(defaults[0])}`);
         } else if (validTime === 'subceeded') {
             return message.reply(`min expire time is 1 minute`);
         } else if (validTime === 'invalid') {

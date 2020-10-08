@@ -120,8 +120,8 @@
                             <p class="margin-top-small">To modify a command you use the <a
                                     href="./commands#modify_command">modify_command</a>
                                 command, example:</p>
-                            <div class="code-block">!modify_command expire max_expire 120</div>
-                            <p>Overrides the default of 1440 minutes (24 hours) to 120 minutes (2 hours) for the highest
+                            <div class="code-block">!modify_command expire max_expire 2h</div>
+                            <p>Overrides the default of 1 day to 2 hours for the highest
                                 possible expire time.</p>
                             <p class="margin-top-small">Using the same command it is also possible to disable or enable
                                 disabled commands again,
@@ -152,17 +152,17 @@
                                         <td>global_expire<span class="red">*</span></td>
                                         <td>When to remove players after latest add</td>
                                         <td>
-                                            <div class="type type--number">Number</div>
+                                            <div class="type type--time">Time</div>
                                         </td>
-                                        <td>3 hours to 24 hours, given in ms</td>
+                                        <td>3 hours to 24 hours</td>
                                     </tr>
                                     <tr>
                                         <td>trust_time<span class="red">*</span></td>
                                         <td>Time for server join add restriction</td>
                                         <td>
-                                            <div class="type type--number">Number</div>
+                                            <div class="type type--time">Time</div>
                                         </td>
-                                        <td>15 minutes to 14 days, given in ms</td>
+                                        <td>15 minutes to 14 days</td>
                                     </tr>
                                     <tr>
                                         <td>explicit_trust</td>
@@ -192,9 +192,9 @@
                                         <td>promotion_delay</td>
                                         <td>Time interval pickups can be promoted / a sub called</td>
                                         <td>
-                                            <div class="type type--number">Number</div>
+                                            <div class="type type--time">Time</div>
                                         </td>
-                                        <td>5 minutes to 12 hours, given in ms</td>
+                                        <td>5 minutes to 12 hours</td>
                                     </tr>
                                     <tr>
                                         <td>server<span class="red">*</span></td>
@@ -232,15 +232,15 @@
                                         <td>iteration_time</td>
                                         <td>Time interval between afk check / picking iterations</td>
                                         <td>
-                                            <div class="type type--number">Number</div>
+                                            <div class="type type--time">Time</div>
                                         </td>
-                                        <td>10 seconds to 5 minutes, given in ms</td>
+                                        <td>10 seconds to 5 minutes</td>
                                     </tr>
                                     <tr>
                                         <td>afk_time</td>
                                         <td>Time until a player is stored as AFK without chat activity</td>
                                         <td>
-                                            <div class="type type--number">Number</div>
+                                            <div class="type type--time">Time</div>
                                         </td>
                                         <td>5 minutes to 6 hours</td>
                                     </tr>
@@ -273,25 +273,25 @@
                                         <td>warn_streak_expiration</td>
                                         <td>Time until a warn streak expires</td>
                                         <td>
-                                            <div class="type type--number">Number</div>
+                                            <div class="type type--time">Time</div>
                                         </td>
-                                        <td>1 day to 30 days, given as 1m 2h 3m 4w</td>
+                                        <td>1 day to 30 days</td>
                                     </tr>
                                     <tr>
                                         <td>warn_expiration</td>
                                         <td>Time until a warn expires</td>
                                         <td>
-                                            <div class="type type--number">Number</div>
+                                            <div class="type type--time">Time</div>
                                         </td>
-                                        <td>2 hours to 14 days, given as 1m 2h 3m 4w</td>
+                                        <td>2 hours to 14 days</td>
                                     </tr>
                                     <tr>
                                         <td>warn_bantime</td>
                                         <td>Time until a warn ban expires</td>
                                         <td>
-                                            <div class="type type--number">Number</div>
+                                            <div class="type type--time">Time</div>
                                         </td>
-                                        <td>1 hour to 7 days, given as 1m 2h 3m 4w</td>
+                                        <td>1 hour to 7 days</td>
                                     </tr>
                                     <tr>
                                         <td>warn_bantime_multiplier</td>
@@ -311,7 +311,9 @@
                                     </tr>
                                 </tbody>
                             </table>
-                            <p><span class="red">*</span>Can be none to disable / clear</p>
+                            <div class="type type--time">Time</div> - Time string (1s, 1m, 1h, 1d, 1w) (seconds,
+                            minutes, hours, days, weeks)
+                            <p class="margin-top-small"><span class="red">*</span>Can be none to disable / clear</p>
                             <p>Variables which are used for the <a href="./commands#modify_bot">modify_bot</a> command
                             </p>
                         </div>
