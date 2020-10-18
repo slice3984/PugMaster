@@ -1,8 +1,7 @@
 import { Command } from '../core/types';
 import GuildModel from '../models/guild';
 import PlayerModel from '../models/player';
-import { GuildMember } from 'discord.js';
-import PickupStage from '../core/PickupStage';
+import afkCheckStage from '../core/stages/afkCheck';
 
 const command: Command = {
     cmd: 'ready',
@@ -13,15 +12,15 @@ const command: Command = {
     global: false,
     perms: false,
     exec: async (bot, message, params) => {
-        let isPlayerAfk = await (await PlayerModel.getPlayerState(BigInt(message.guild.id), BigInt(message.author.id))).isAfk;
+        const playerState = await PlayerModel.getPlayerState(BigInt(message.guild.id), BigInt(message.author.id));
 
-        if (!isPlayerAfk) {
+        if (!playerState || !playerState.isAfk) {
             return message.reply('you are not set as AFK player');
         }
 
         let pendingPickupsMap = await GuildModel.getPendingPickups(BigInt(message.guild.id));
 
-        if (!pendingPickupsMap.has(message.guild.id)) {
+        if (!pendingPickupsMap || !pendingPickupsMap.has(message.guild.id)) {
             return message.reply('there is no pending pickup to ready up for');
         }
 
@@ -42,15 +41,17 @@ const command: Command = {
         }
         const readiedUpPickups = [];
         for (const pendingPickup of playerAddedTo) {
-            const amountAdded = pendingPickup.amountPlayersAdded;
-            const capacity = pendingPickup.maxPlayers;
+            const addedPlayers = pendingPickup.teams[0].players.map(player => player.id);
 
-            if (amountAdded === capacity) {
-                await PickupStage.afkCheckStage(message.guild, pendingPickup.pickupConfigId);
-                return;
-            } else {
-                readiedUpPickups.push(pendingPickup.name);
+            // Check if there is more than one afk player
+            const afkPlayers = await GuildModel.getAfks(BigInt(message.guild.id), ...addedPlayers);
+
+            // The player calling the ready command is the last player being afk, trigger the check stage
+            if (afkPlayers.length < 2) {
+                return await afkCheckStage(message.guild, pendingPickup.pickupConfigId);
             }
+
+            readiedUpPickups.push(pendingPickup.name);
         }
 
         await GuildModel.removeAfks(BigInt(message.guild.id), message.author.id);

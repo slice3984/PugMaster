@@ -14,6 +14,13 @@ const command: Command = {
     global: false,
     perms: false,
     exec: async (bot, message, params) => {
+        // Don't allow removes when the player is added to a pending pickup in picking stage
+        const isInPickingStage = await PickupModel.isPlayerAddedToPendingPickup(BigInt(message.guild.id), BigInt(message.member.id), 'picking_manual');
+
+        if (isInPickingStage) {
+            return message.reply('you are not allowed to remove from pickups in picking phase');
+        }
+
         if (params.length === 0) {
             // Remove from all pickups
             await PickupState.removePlayer(message.guild.id, message.member.id);

@@ -501,6 +501,8 @@ export const createTables = () => new Promise(async (res, _req) => {
         pickup_config_id INT NOT NULL,
         player_id BIGINT NOT NULL,
         team VARCHAR(2) NULL,
+        is_captain TINYINT NULL DEFAULT 0,
+        captain_turn TINYINT NULL DEFAULT 0,
         INDEX fk_state_teams_pickup_config_id_idx (pickup_config_id ASC) VISIBLE,
         CONSTRAINT fk_state_teams_guild_id
           FOREIGN KEY (guild_id)

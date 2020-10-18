@@ -566,4 +566,28 @@ export default class StatsModel {
             elo: data[0][0].elo
         };
     }
+
+    static async getPickupCountPlayers(guildId: bigint, pickupConfigId: number, ...playerIds):
+    Promise<{ amount: number; id: string; nick: string }[]> {
+        const data: any = await db.execute(`
+        SELECT COUNT(*) as amount, ps.user_id, ps.current_nick FROM pickups p
+        JOIN pickup_players pp ON p.id = pp.pickup_id
+        JOIN players ps ON ps.id = pp.player_id
+        WHERE p.guild_id = ? AND p.pickup_config_id = ?
+        AND ps.user_id IN (${Array(playerIds.length).fill('?').join(',')})
+        GROUP BY pp.player_id
+        ORDER BY amount DESC
+        `, [guildId, pickupConfigId, ...playerIds]);
+
+        if (!data[0].length) {
+            return [];
+        }
+        return data[0].map(row => {
+            return {
+                amount: row.amount,
+                id: row.user_id.toString(),
+                nick: row.current_nick
+            }
+        })
+    }
 }

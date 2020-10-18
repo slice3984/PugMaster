@@ -9,7 +9,7 @@ import ServerModel from '../models/server';
 export default class Util {
     private constructor() { }
 
-    static async getUser(guild: Discord.Guild, identifier: string, global = false) {
+    static async getUser(guild: Discord.Guild, identifier: string, fetch = false) {
         let id: string | RegExpMatchArray = identifier.match(/<@!?(\d+)>/);
         if (!id) {
             if (!/\d+/.test(identifier)) {
@@ -21,7 +21,7 @@ export default class Util {
             id = id[1];
         }
 
-        if (global) {
+        if (fetch) {
             const bot = Bot.getInstance();
             const user = guild.members.cache.get(id);
 
@@ -232,7 +232,7 @@ export default class Util {
         return sum;
     }
 
-    static async parseStartMessage(guildId: bigint, message: string, pickupSettings: PickupSettings, ...teams: BigInt[][]) {
+    static async parseStartMessage(guildId: bigint, message: string, pickupSettings: PickupSettings, teams: BigInt[][]) {
         const guildSettings = Bot.getInstance().getGuild(guildId);
 
         // %name, %teams, %map, %ip, %password, #placeholder[only display if it exists]
@@ -264,8 +264,8 @@ export default class Util {
                     break;
                 case '%teams':
                     const formattedTeams = [];
-                    if (teams.length === 1) {
-                        formattedTeams.push('Players', teams[0].map(id => `<@${id.toString()}>`).join(', '));
+                    if (!Array.isArray(teams[0])) {
+                        formattedTeams.push('Players', teams.map(id => `<@${id.toString()}>`).join(', '));
                     } else {
                         teams.forEach((team, index) => {
                             formattedTeams.push(`Team ${String.fromCharCode(65 + index)}`); // Team A, Team B..
@@ -411,5 +411,16 @@ export default class Util {
             }
         }
         return message;
+    }
+
+    static shuffleArray<T>(arr: T[]): T[] {
+        return arr
+            .map(a => ({ sort: Math.random(), value: a }))
+            .sort((a, b) => a.sort - b.sort)
+            .map(a => a.value);
+    }
+
+    static removeObjectArrayDuplicates<T>(arr: T[], propertyToCheck: string): T[] {
+        return [...new Map(arr.map(obj => [obj[propertyToCheck], obj])).values()];
     }
 }

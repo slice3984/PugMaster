@@ -92,6 +92,13 @@ const command: Command = {
             return invalidPickups;
         }
 
+        // Don't allow to add when the player is added to a pickup in manual picking stage
+        const isInPickingStage = await PickupModel.isPlayerAddedToPendingPickup(BigInt(message.guild.id), BigInt(message.member.id), 'picking_manual');
+
+        if (isInPickingStage) {
+            return message.reply('you are not allowed to add to pickups in picking stage');
+        }
+
         if (params.length === 0) {
             if (!await PickupModel.getStoredPickupCount(BigInt(message.guild.id))) {
                 return;

@@ -37,8 +37,6 @@ export namespace Validator {
 
         export async function validate(guild: Discord.Guild, pickup: string | number, ...toValidate: { key: string, value: string }[]): Promise<ValidationError[]> {
             let errors: ValidationError[] = [];
-            let teamCount;
-            let playerCount;
             let pickupSettings: PickupSettings;
             let isPickupActive;
 
@@ -85,12 +83,12 @@ export namespace Validator {
                             break;
                         }
 
-                        if (!teamCount) {
-                            teamCount = await (await PickupModel.getPickupSettings(BigInt(guild.id), pickup)).teamCount;
+                        if (!pickupSettings) {
+                            pickupSettings = await PickupModel.getPickupSettings(BigInt(guild.id), pickup);
                         }
 
-                        if (+value % teamCount !== 0) {
-                            errors.push({ type: 'players', errorMessage: `can't create even teams with the given player count (players: ${value} teams: ${teamCount})` });
+                        if (+value % pickupSettings.teamCount !== 0) {
+                            errors.push({ type: 'players', errorMessage: `can't create even teams with the given player count (players: ${value} teams: ${pickupSettings.teamCount})` });
                             break;
                         }
                         break;
@@ -105,12 +103,12 @@ export namespace Validator {
                             break;
                         }
 
-                        if (!playerCount) {
-                            playerCount = await (await PickupModel.getPickupSettings(BigInt(guild.id), pickup)).playerCount;
+                        if (!pickupSettings) {
+                            pickupSettings = await PickupModel.getPickupSettings(BigInt(guild.id), pickup);
                         }
 
-                        if (playerCount % +value !== 0) {
-                            errors.push({ type: 'teams', errorMessage: `can't create even teams with the given team count (players: ${playerCount} teams: ${value})` });
+                        if (pickupSettings.playerCount % +value !== 0) {
+                            errors.push({ type: 'teams', errorMessage: `can't create even teams with the given team count (players: ${pickupSettings.playerCount} teams: ${value})` });
                             break;
                         }
                         break;
@@ -135,10 +133,20 @@ export namespace Validator {
                         }
                         break;
                     case 'pickmode':
-                        if (!['no_teams', 'manual', 'elo']) {
+                        if (!['no_teams', 'manual', 'elo'].includes(value)) {
                             errors.push({ type: 'pickmode', errorMessage: 'value has to be no_teams, manual or elo' });
                             break;
                         }
+
+                        if (!pickupSettings) {
+                            pickupSettings = await PickupModel.getPickupSettings(BigInt(guild.id), pickup);
+                        }
+
+                        if ((pickupSettings.playerCount / pickupSettings.teamCount) < 2 && ['manual', 'elo'].includes(value)) {
+                            errors.push({ type: 'pickmode', errorMessage: `can't use ${value.toLowerCase()} pick mode for a pickup with one player teams` });
+                            break;
+                        }
+
                         break;
                     case 'whitelist':
                         const whitelistRole = Util.getRole(guild, value);

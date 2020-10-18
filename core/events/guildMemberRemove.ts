@@ -7,9 +7,8 @@ import Util from '../util';
 module.exports = async (bot: Bot, member: Discord.GuildMember) => {
     const isAdded = await PickupModel.isPlayerAdded(BigInt(member.guild.id), BigInt(member.id));
     if (isAdded.length > 0) {
-        await PickupModel.removePlayer(BigInt(member.guild.id), BigInt(member.id));
+        await PickupState.removePlayer(member.guild.id, member.id);
         const pickupChannel = await Util.getPickupChannel(member.guild);
         pickupChannel.send(`${member.displayName} got removed from all pickups since he left the server`);
-        PickupState.showPickupStatus(member.guild);
     }
 }

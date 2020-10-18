@@ -7,8 +7,8 @@
     "build:www": "cross-env NODE_ENV=production webpack --config webpack.www.config.js --mode=production",
     "dev:www": "cross-env NODE_ENV=development webpack --config webpack.www.config.js --watch",
     "build:bot_old": "cross-env NODE_ENV=production webpack --config webpack.bot.config.js --mode=production",
-    "build:bot": "tsc -p ./tsconfig.bot.json",
-    "debug:bot": "cross-env TS_NODE_PROJECT=tsconfig.bot.json DEV=true node --inspect=5858 -r ts-node/register ./app.ts",
+    "build:bot": "tsc -p ./tsconfig.json",
+    "debug:bot": "cross-env TS_NODE_PROJECT=tsconfig.json DEV=true node --inspect=5858 -r ts-node/register ./app.ts",
     "dev:bot": "cross-env DEBUG=true nodemon",
     "dev:all": "npm-run-all --parallel dev:bot dev:www",
     "build:all": "npm-run-all --parallel build:bot build:www"
@@ -38,7 +38,7 @@
   },
   "homepage": "https://github.com/slice3984/pickup-bot#readme",
   "devDependencies": {
-    "@types/chart.js": "^2.9.24",
+    "@types/chart.js": "^2.9.25",
     "@types/ejs": "^3.0.4",
     "@types/express": "^4.17.8",
     "@types/express-rate-limit": "^5.1.0",

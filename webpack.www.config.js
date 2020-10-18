@@ -26,7 +26,7 @@ const config = {
                 use: [{
                     loader: 'ts-loader',
                     options: {
-                        configFile: "tsconfig.www.json",
+                        configFile: "www/tsconfig.json",
                         onlyCompileBundledFiles: true
                     }
                 }],

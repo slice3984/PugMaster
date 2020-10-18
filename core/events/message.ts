@@ -1,6 +1,7 @@
 import Discord from 'discord.js';
 import Bot from '../bot';
 import CommandHandler from '../commandHandler';
+import { GuildMemberExtended } from '../types';
 
 const commandHandler = new CommandHandler(Bot.getInstance());
 
@@ -8,6 +9,9 @@ module.exports = async (bot: Bot, message: Discord.Message) => {
     if (message.channel.type === 'dm' || !message.member || message.member.user.bot) {
         return;
     }
+
+    // Required to store this for the afk check since only the message cache gets cleared
+    (message.member as GuildMemberExtended).lastMessageTimestamp = message.createdTimestamp;
 
     const guildPrefix = bot.getGuild(message.guild.id).prefix;
     let parts;

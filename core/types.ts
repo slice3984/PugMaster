@@ -102,12 +102,12 @@ export interface PendingPickup {
             name: string,
             players: [
                 {
-                    id: string, nick: string
+                    id: string, nick: string, isCaptain: boolean, captainTurn: boolean
                 }
             ]
         }
     ];
-    playersLeft: [{ id: string, nick: string }] // Only required for manual picking
+    playersLeft: [{ id: string, nick: string, isCaptain: boolean, captainTurn: boolean }] // Only required for manual picking
 }
 
 export interface GuildInfo {
@@ -151,4 +151,8 @@ export interface PlayerSearchResult {
     currentNick: string;
     knownAs: string | null;
     elo: number | null;
+}
+
+export interface GuildMemberExtended extends Discord.GuildMember {
+    lastMessageTimestamp: number;
 }

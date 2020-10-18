@@ -3,8 +3,8 @@ import { ChannelType, PendingPickup } from '../core/types';
 import GuildSettings from '../core/guildSettings';
 import Bot from '../core/bot';
 import db from '../core/db';
-import { FieldPacket, RowDataPacket } from 'mysql2';
-import { timeEnd } from 'console';
+import { transaction } from '../core/db';
+import { RowDataPacket } from 'mysql2';
 
 interface BannedPlayer {
     player: string;
@@ -45,72 +45,75 @@ export default class GuildModel {
     }
 
     static async getGuildSettings(guild: Discord.Guild): Promise<GuildSettings> {
-        let data: any = await db.execute(`
-        SELECT * FROM guilds WHERE guild_id = ?
-        `, [guild.id]);
+        const data = await transaction(db, async (db) => {
+            let data: any = await db.execute(`
+            SELECT * FROM guilds WHERE guild_id = ?
+            `, [guild.id]);
 
-        data = data[0][0];
+            data = data[0][0];
 
-        let guildChannels = await db.execute(`
-        SELECT * FROM guild_channels
-        WHERE guild_id = ?
-        `, [guild.id]) as RowDataPacket[][];
-
-        let commandSettingsResults = await db.execute(`
-            SELECT command_name, value FROM guild_command_settings
+            let guildChannels = await db.execute(`
+            SELECT * FROM guild_channels
             WHERE guild_id = ?
-        `, [guild.id]) as RowDataPacket[][];
+            `, [guild.id]) as RowDataPacket[][];
 
-        const commandSettings = new Map();
+            let commandSettingsResults = await db.execute(`
+                SELECT command_name, value FROM guild_command_settings
+                WHERE guild_id = ?
+            `, [guild.id]) as RowDataPacket[][];
 
-        for (const row of commandSettingsResults[0]) {
-            let value = Number.isInteger(+row.value) ? +row.value : row.value;
-            if (!commandSettings.has(row.command_name)) {
-                commandSettings.set(row.command_name, [value]);
-            } else {
-                commandSettings.get(row.command_name).push(value);
+            const commandSettings = new Map();
+
+            for (const row of commandSettingsResults[0]) {
+                let value = Number.isInteger(+row.value) ? +row.value : row.value;
+                if (!commandSettings.has(row.command_name)) {
+                    commandSettings.set(row.command_name, [value]);
+                } else {
+                    commandSettings.get(row.command_name).push(value);
+                }
             }
-        }
 
-        const channels = new Map();
+            const channels = new Map();
 
-        guildChannels[0].forEach(channel => {
-            channels.set(BigInt(channel.channel_id), channel.channel_type);
+            guildChannels[0].forEach(channel => {
+                channels.set(BigInt(channel.channel_id), channel.channel_type);
+            });
+
+            let disabledCommands = await GuildModel.getDisabledCommands(BigInt(guild.id));
+
+            const settings = new GuildSettings(
+                guild,
+                BigInt(guild.id),
+                data.prefix,
+                data.global_blacklist_role,
+                data.global_whitelist_role,
+                data.promotion_delay,
+                data.last_promote,
+                data.global_expire,
+                data.trust_time ? data.trust_time : null,
+                data.explicit_trust ? data.explicit_trust : null,
+                disabledCommands,
+                commandSettings,
+                channels,
+                data.server_id,
+                data.start_message,
+                data.sub_message,
+                data.notify_message,
+                data.iteration_time,
+                data.afk_time,
+                data.afk_check_iterations,
+                data.picking_iterations,
+                data.warn_streaks,
+                data.warns_until_ban,
+                data.warn_streak_expiration,
+                data.warn_expiration_time,
+                data.warn_ban_time,
+                data.warn_ban_time_multiplier
+            )
+
+            return settings;
         });
-
-        let disabledCommands = await GuildModel.getDisabledCommands(BigInt(guild.id));
-
-        const settings = new GuildSettings(
-            guild,
-            BigInt(guild.id),
-            data.prefix,
-            data.global_blacklist_role,
-            data.global_whitelist_role,
-            data.promotion_delay,
-            data.last_promote,
-            data.global_expire,
-            data.trust_time ? data.trust_time : null,
-            data.explicit_trust ? data.explicit_trust : null,
-            disabledCommands,
-            commandSettings,
-            channels,
-            data.server_id,
-            data.start_message,
-            data.sub_message,
-            data.notify_message,
-            data.iteration_time,
-            data.afk_time,
-            data.afk_check_iterations,
-            data.picking_iterations,
-            data.warn_streaks,
-            data.warns_until_ban,
-            data.warn_streak_expiration,
-            data.warn_expiration_time,
-            data.warn_ban_time,
-            data.warn_ban_time_multiplier
-        )
-
-        return settings;
+        return data;
     }
 
     static async getChannelType(guildId: bigint, channelId: bigint) {
@@ -457,7 +460,7 @@ export default class GuildModel {
 
     static async getPendingPickup(guildId: bigint, pickupConfigId: number): Promise<PendingPickup> {
         const data: any = await db.execute(`
-        SELECT sp.guild_id, p.current_nick, p.user_id, pc.id, pc.name, pc.player_count, sp.in_stage_since, sp.stage_iteration, sp.stage, st.team
+        SELECT sp.guild_id, p.current_nick, p.user_id, pc.id, pc.name, pc.player_count, sp.in_stage_since, sp.stage_iteration, sp.stage, st.team, st.is_captain, st.captain_turn
         FROM state_pickup sp
         JOIN state_pickup_players spp ON spp.pickup_config_id = sp.pickup_config_id
         JOIN players p ON p.user_id = spp.player_id AND p.guild_id = spp.guild_id
@@ -484,7 +487,9 @@ export default class GuildModel {
                 }
                 teams[0].players.push({
                     id: row.user_id.toString(),
-                    nick: row.current_nick
+                    nick: row.current_nick,
+                    isCaptain: row.is_captain ? Boolean(row.is_captain) : false,
+                    captainTurn: row.captain_turn ? Boolean(row.captain_turn) : false
                 });
             } else {
                 if (row.team) {
@@ -494,7 +499,9 @@ export default class GuildModel {
                             name: row.team,
                             players: [{
                                 id: row.user_id.toString(),
-                                nick: row.current_nick
+                                nick: row.current_nick,
+                                isCaptain: row.is_captain ? Boolean(row.is_captain) : false,
+                                captainTurn: row.captain_turn ? Boolean(row.captain_turn) : false
                             }]
                         });
 
@@ -502,7 +509,9 @@ export default class GuildModel {
                     } else {
                         teams[index].players.push({
                             id: row.user_id.toString(),
-                            nick: row.current_nick
+                            nick: row.current_nick,
+                            isCaptain: row.is_captain ? Boolean(row.is_captain) : false,
+                            captainTurn: row.captain_turn ? Boolean(row.captain_turn) : false
                         });
 
                         amountPlayersAdded++;
@@ -510,7 +519,9 @@ export default class GuildModel {
                 } else {
                     playersLeft.push({
                         id: row.user_id.toString(),
-                        nick: row.current_nick
+                        nick: row.current_nick,
+                        isCaptain: row.is_captain ? Boolean(row.is_captain) : false,
+                        captainTurn: row.captain_turn ? Boolean(row.captain_turn) : false
                     });
 
                     amountPlayersAdded++;
@@ -535,7 +546,7 @@ export default class GuildModel {
 
     static async getPendingPickups(...guildIds: bigint[]): Promise<Map<string, PendingPickup[]>> {
         const data: any = await db.execute(`
-        SELECT sp.guild_id, p.current_nick, p.user_id, pc.id, pc.name, pc.player_count, sp.in_stage_since, sp.stage_iteration, sp.stage, st.team
+        SELECT sp.guild_id, p.current_nick, p.user_id, pc.id, pc.name, pc.player_count, sp.in_stage_since, sp.stage_iteration, sp.stage, st.team, st.is_captain, st.captain_turn
         FROM state_pickup sp
         JOIN state_pickup_players spp ON spp.pickup_config_id = sp.pickup_config_id
         JOIN players p ON p.user_id = spp.player_id AND p.guild_id = spp.guild_id
@@ -568,7 +579,7 @@ export default class GuildModel {
                 }]);
             }
 
-            const guildRef = guilds.get(BigInt(row.guild_id));
+            const guildRef = guilds.get(guildId);
             let pickupIndex = guildRef.findIndex(pickup => pickup.pickupConfigId === row.id);
 
             if (pickupIndex < 0) {
@@ -597,7 +608,9 @@ export default class GuildModel {
                 }
                 pickup.teams[0].players.push({
                     id: row.user_id.toString(),
-                    nick: row.current_nick
+                    nick: row.current_nick,
+                    isCaptain: row.is_captain ? Boolean(row.is_captain) : false,
+                    captainTurn: row.captain_turn ? Boolean(row.captain_turn) : false
                 });
 
                 pickup.amountPlayersAdded++;
@@ -609,7 +622,9 @@ export default class GuildModel {
                             name: row.team,
                             players: [{
                                 id: row.user_id.toString(),
-                                nick: row.current_nick
+                                nick: row.current_nick,
+                                isCaptain: row.is_captain ? Boolean(row.is_captain) : false,
+                                captainTurn: row.captain_turn ? Boolean(row.captain_turn) : false
                             }]
                         });
 
@@ -617,7 +632,9 @@ export default class GuildModel {
                     } else {
                         pickup.teams[index].players.push({
                             id: row.user_id.toString(),
-                            nick: row.current_nick
+                            nick: row.current_nick,
+                            isCaptain: row.is_captain ? Boolean(row.is_captain) : false,
+                            captainTurn: row.captain_turn ? Boolean(row.captain_turn) : false
                         });
 
                         pickup.amountPlayersAdded++;
@@ -625,7 +642,9 @@ export default class GuildModel {
                 } else {
                     pickup.playersLeft.push({
                         id: row.user_id.toString(),
-                        nick: row.current_nick
+                        nick: row.current_nick,
+                        isCaptain: row.is_captain ? Boolean(row.is_captain) : false,
+                        captainTurn: row.captain_turn ? Boolean(row.captain_turn) : false
                     });
 
                     pickup.amountPlayersAdded++;
@@ -648,5 +667,15 @@ export default class GuildModel {
         UPDATE state_guild_player SET is_afk = null
         WHERE guild_id = ? AND player_id IN (${Array(playerIds.length).fill('?').join(',')})
         `, [guildId, ...playerIds]);
+    }
+
+    static async getAfks(guildId: bigint, ...playerIds): Promise<string[]> {
+        const data: any = await db.execute(`
+        SELECT player_id FROM state_guild_player
+        WHERE guild_id = ? AND is_afk IS NOT NULL
+        AND player_id IN (${Array(playerIds.length).fill('?').join(',')})
+        `, [guildId, ...playerIds]);
+
+        return data[0].map(row => row.player_id.toString());
     }
 }

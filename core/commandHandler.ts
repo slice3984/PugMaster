@@ -62,6 +62,10 @@ export default class CommandHandler {
     }
 
     async execute(message: Discord.Message, cmd: string, args: any[] = []) {
+        const errorHandler = () => {
+            message.reply('something went wrong executing this command');
+        }
+
         if (!this.isCommandAvailable(message, cmd)) {
             return;
         }
@@ -84,14 +88,20 @@ export default class CommandHandler {
         }
 
         if (guild.commandSettings.has(cmd)) {
-            command.exec(this.bot, message, args, guild.commandSettings.get(cmd));
+            try {
+                await command.exec(this.bot, message, args, guild.commandSettings.get(cmd));
+            } catch (_err) { errorHandler() }
         } else {
             const defaults = command.defaults ? command.defaults.map(def => def.value) : null;
 
             if (defaults) {
-                command.exec(this.bot, message, args, defaults);
+                try {
+                    await command.exec(this.bot, message, args, defaults);
+                } catch (_err) { errorHandler() }
             } else {
-                command.exec(this.bot, message, args);
+                try {
+                    await command.exec(this.bot, message, args);
+                } catch (_err) { errorHandler() }
             }
         }
     }

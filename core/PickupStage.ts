@@ -4,29 +4,75 @@ import PickupState from './pickupState';
 import Util from './util';
 import GuildModel from '../models/guild';
 import StatsModel from '../models/stats';
+import afkCheckStage from './stages/afkCheck';
+import { manualPicking } from './stages/manualPicking';
+import { PickupSettings } from './types';
 import Bot from './bot';
 
 export default class PickupStage {
     private constructor() { }
 
-
     static async handle(guild: Discord.Guild, pickupConfigId: number) {
         const pickupSettings = await PickupModel.getPickupSettings(BigInt(guild.id), pickupConfigId);
+        const pickupChannel = await Util.getPickupChannel(guild);
 
         // Afk check
         if (pickupSettings.afkCheck) {
             await PickupModel.setPending(BigInt(guild.id), pickupConfigId, 'afk_check');
-            await PickupStage.afkCheckStage(guild, pickupConfigId, true);
-            return;
+
+            try {
+                return await afkCheckStage(guild, pickupConfigId, true);
+            } catch (_err) {
+                const pickup = await PickupModel.getActivePickup(BigInt(guild.id), pickupConfigId);
+                const players = pickup.players.map(player => player.id);
+
+                await GuildModel.removeAfks(BigInt(guild.id), ...players);
+
+                if (pickupChannel) {
+                    pickupChannel.send(`afk check failed, attempting to progress to the next stage for **pickup ${pickup.name}** without checking`);
+                }
+            }
         }
 
-        // Pick mode
+        this.handleStart(guild, pickupSettings, pickupChannel);
+    }
+
+    static async handleStart(guild: Discord.Guild, pickupSettings: PickupSettings, pickupChannel: Discord.TextChannel) {
         switch (pickupSettings.pickMode) {
             case 'no_teams':
-                PickupStage.startPickup(guild, pickupConfigId);
+                try {
+                    await this.startPickup(guild, pickupSettings.id);
+                } catch (_err) {
+                    await PickupModel.resetPickup(BigInt(guild.id), pickupSettings.id);
+
+                    if (pickupChannel) {
+                        pickupChannel.send(`something went wrong starting the pickup, **pickup ${pickupSettings.name}** cleared`);
+                    }
+                }
                 break;
             case 'manual':
+                try {
+                    await PickupModel.setPending(BigInt(guild.id), pickupSettings.id, 'picking_manual');
+                    await manualPicking(guild, pickupSettings.id, true);
+                } catch (_err) {
+                    // Still attempt to start without teams
+                    try {
+                        Bot.getInstance().getGuild(guild.id).pendingPickups.delete(pickupSettings.id);
 
+                        if (pickupChannel) {
+                            pickupChannel.send(`something went wrong with **pickup ${pickupSettings.name}** in picking phase, attempting to start without teams`);
+                        }
+
+                        await PickupModel.clearTeams(BigInt(guild.id), pickupSettings.id);
+                        await this.startPickup(guild, pickupSettings.id)
+                    } catch (_err) {
+                        await PickupModel.resetPickup(BigInt(guild.id), pickupSettings.id);
+
+                        if (pickupChannel) {
+                            pickupChannel.send(`something went wrong starting **pickup ${pickupSettings.name}** without teams, pickup cleared`);
+                        }
+                    }
+                }
                 break;
             case 'elo':
             // TODO: Generate teams and call startPickup with generated teams
@@ -78,78 +124,14 @@ export default class PickupStage {
             }
         }
 
-        await StatsModel.storePickup(BigInt(guild.id), pickupConfigId, players, captains);
-    }
+        try {
+            await StatsModel.storePickup(BigInt(guild.id), pickupConfigId, players, captains);
+        } catch (_err) {
+            const pickupChannel = await Util.getPickupChannel(guild);
 
-    static async afkCheckStage(guild: Discord.Guild, pickupConfigId: number, firstRun = false) {
-        // Abort if the stage changed
-        if (!await PickupModel.isInStage(BigInt(guild.id), pickupConfigId, 'afk_check')) {
-            return;
-        }
-
-        const bot = Bot.getInstance();
-        const guildSettings = bot.getGuild(guild.id);
-        const pickupChannel = await Util.getPickupChannel(guild);
-        const readyPlayers: GuildMember[] = [];
-        const afkPlayers: GuildMember[] = [];
-
-        const playerIds = await (await PickupModel.getActivePickup(BigInt(guild.id), pickupConfigId))
-            .players.map(player => player.id);
-
-        const timestamp = new Date().getTime();
-
-        for (const id of playerIds) {
-            const user = (await Util.getUser(guild, id.toString()) as Discord.GuildMember);
-
-            if (user) {
-                if (user.lastMessage && ((user.lastMessage.createdTimestamp + guildSettings.afkTime) < timestamp)) {
-                    afkPlayers.push(user);
-                } else {
-                    readyPlayers.push(user);
-                }
+            if (pickupChannel) {
+                pickupChannel.send(`something went wrong storing the **${aboutToStart.name}** pickup, pickup not stored`);
             }
         }
-
-        // No afk players, check if manual or elo pick mode is enabled
-        if (!afkPlayers.length) {
-            const pickupSettings = await PickupModel.getPickupSettings(BigInt(guild.id), pickupConfigId);
-            switch (pickupSettings.pickMode) {
-                case 'no_teams':
-                    return PickupStage.startPickup(guild, pickupConfigId);
-                case 'elo':
-
-                    break;
-                case 'manual':
-
-            }
-        }
-
-        // Set players afk in the db (Required for the ready command)
-        await GuildModel.setAfks(BigInt(guild.id), ...afkPlayers.map(player => player.id));
-
-        // Check if we reached the last iteration
-        const pendingPickup = await GuildModel.getPendingPickup(BigInt(guild.id), pickupConfigId);
-
-        if (!firstRun && guildSettings.afkCheckIterations === pendingPickup.currentIteration) {
-            pickupChannel.send(`pickup **${pendingPickup.name}** aborted and AFK players removed`);
-
-            await PickupModel.setPending(BigInt(guild.id), pickupConfigId, 'fill');
-            await PickupState.removePlayers(guild.id, false, null, ...afkPlayers.map(player => player.id));
-            await PickupState.showPickupStatus(guild);
-
-            return;
-        } else {
-            const timeLeft = Util.formatTime((guildSettings.afkCheckIterations - pendingPickup.currentIteration) * guildSettings.iterationTime);
-            pickupChannel.send(
-                `**${pendingPickup.name}** is about to start\n` +
-                (readyPlayers.length ? `Ready players: ${readyPlayers.map(player => `\`${player.displayName}\``).join(', ')}\n` : '') +
-                `Please ${guildSettings.prefix}ready up: ${afkPlayers.join(', ')}\n` +
-                `**${timeLeft}** left until the pickup gets aborted.`
-            );
-        }
-
-        // Increment iteration & set new timeout for the specific guild
-        await PickupModel.incrementPendingIteration(BigInt(guild.id), pickupConfigId);
-        guildSettings.pendingPickups.set(pickupConfigId, setTimeout(() => PickupStage.afkCheckStage(guild, pickupConfigId), guildSettings.iterationTime));
     }
 }
