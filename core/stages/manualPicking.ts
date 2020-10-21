@@ -4,6 +4,7 @@ import PickupModel from '../../models/pickup';
 import StatsModel from '../../models/stats';
 import Bot from '../bot';
 import GuildSettings from '../guildSettings';
+import Logger from '../logger';
 import PickupStage from '../PickupStage';
 import PickupState from '../pickupState';
 import { PendingPickup } from '../types';
@@ -28,6 +29,8 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
     const pickupChannel = await Util.getPickupChannel(guild);
 
     if (firstRun) {
+        PickupState.removePlayersExclude(guild.id, [pickup.configId], pickup.players.map(p => p.id));
+
         // Choose captains, prioritize players with a captain role if available
         // Randomize order to make it fair
         const shuffledPlayers = Util.shuffleArray(players);
@@ -95,16 +98,17 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
         // Store first teams (each captain belongs to a team)
         await PickupModel.addTeamPlayers(BigInt(guild.id), pickupConfigId, ...captainsObj);
 
-        pickupChannel.send(
-            `Team picking for **${pickupSettings.name}** started\n` +
-            `Players removed from other pickups\n\n` +
-            `**Captains:** ${captains.map(captain => `<@${captain.id}>`).join(', ')}\n` +
-            `**Left players:** ${shuffledPlayers.map(player => `<@${player.id}>`).join(', ')}\n\n` +
-            `<@${captains[0].id}> got the first pick\n` +
-            `Please pick your first player using **${guildSettings.prefix}pick @mention or id**`
-        );
+        if (pickupChannel) {
+            pickupChannel.send(
+                `Team picking for **${pickupSettings.name}** started\n` +
+                `Players removed from other pickups\n\n` +
+                `**Captains:** ${captains.map(captain => `<@${captain.id}>`).join(', ')}\n` +
+                `**Left players:** ${shuffledPlayers.map(player => `<@${player.id}>`).join(', ')}\n\n` +
+                `<@${captains[0].id}> got the first pick\n` +
+                `Please pick your first player using **${guildSettings.prefix}pick @mention or id**`
+            );
+        }
 
-        PickupState.removePlayersExclude(guild.id, [pickup.configId], pickup.players.map(p => p.id));
         guildSettings.pendingPickups.set(pickupConfigId, setTimeout(() => manualPicking(guild, pickupConfigId), guildSettings.iterationTime));
     } else {
         const teams = pendingPickup.teams;
@@ -139,10 +143,12 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
         // Check if the captain timed out
         if (pendingPickup.currentIteration === guildSettings.pickingIterations) {
             // Timed out, remove the captain and abort
-            pickupChannel.send(
-                `**${pickup.name}** aborted, <@${currentCaptain.id}> didn't pick in time\n` +
-                `AFK captain removed`
-            );
+            if (pickupChannel) {
+                pickupChannel.send(
+                    `**${pickup.name}** aborted, <@${currentCaptain.id}> didn't pick in time\n` +
+                    `AFK captain removed`
+                );
+            }
 
             await PickupModel.abortPendingPickingPickup(BigInt(guild.id), pickupConfigId, BigInt(currentCaptain.id));
             await PickupState.showPickupStatus(guild);
@@ -158,19 +164,22 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
             teamStr += `**Team ${team.name}:** ${team.players.map(player => `\`${player.nick}\``).join(', ')}\n`;
         }
 
-        pickupChannel.send(
-            `<@${currentCaptain.id}> **please ${guildSettings.prefix}pick ${toPick > 1 ? 'two' : 'one'} player${toPick > 1 ? 's' : ''} for Team ${currCaptainTeam} @ ${pickup.name}**\n\n` +
-            teamStr +
-            `\n**Left players**: ${leftPlayers.map(player => `\`${player.nick}\``).join(', ')}\n` +
-            `${timeLeftStr} left for the captain to pick until **${pickup.name}** gets aborted.`
-        );
+        if (pickupChannel) {
+            pickupChannel.send(
+                `<@${currentCaptain.id}> **please ${guildSettings.prefix}pick ${toPick > 1 ? 'two' : 'one'} player${toPick > 1 ? 's' : ''} for Team ${currCaptainTeam} @ ${pickup.name}**\n\n` +
+                teamStr +
+                `\n**Left players**: ${leftPlayers.map(player => `\`${player.nick}\``).join(', ')}\n` +
+                `${timeLeftStr} left for the captain to pick until **${pickup.name}** gets aborted.`
+            );
+        }
 
         await PickupModel.incrementPendingIteration(BigInt(guild.id), pickupConfigId);
 
         const timeout = setTimeout(async () => {
             try {
                 await manualPicking(guild, pickupConfigId);
-            } catch (_err) {
+            } catch (err) {
+                Logger.logError('manual picking failed in picking timeout', err, false, guild.id, guild.name);
                 return await startPickup(guild, guildSettings, pendingPickup, pickupChannel, true, null, null);
             }
         }, guildSettings.iterationTime);
@@ -188,7 +197,8 @@ const startPickup = async (guild: Discord.Guild, guildSettings: GuildSettings, p
 
             await PickupModel.clearTeams(BigInt(guild.id), pendingPickup.pickupConfigId);
             await PickupStage.startPickup(guild, pendingPickup.pickupConfigId)
-        } catch (_err) {
+        } catch (err) {
+            Logger.logError('starting failed manual picking pickup failed', err, false, guild.id, guild.name);
             await PickupModel.resetPickup(BigInt(guild.id), pendingPickup.pickupConfigId);
 
             if (pickupChannel) {
@@ -203,7 +213,8 @@ const startPickup = async (guild: Discord.Guild, guildSettings: GuildSettings, p
         try {
             await PickupModel.clearTeams(BigInt(guild.id), pendingPickup.pickupConfigId);
             await PickupStage.startPickup(guild, pendingPickup.pickupConfigId, teams, captains.map(c => BigInt(c.id)));
-        } catch (_err) {
+        } catch (err) {
+            Logger.logError('starting manual picked pickup with teams failed', err, false, guild.id, guild.name);
             await startWithoutTeams();
         }
     } else {
@@ -244,8 +255,8 @@ export const abortPickingStagePickup = async (guildId: string, playerId: string)
             pickupChannel.send(`**${pending.name}** aborted, players missing`);
             await PickupState.showPickupStatus(guild);
         }
-
-    } catch (_err) {
+    } catch (err) {
+        Logger.logError('removing a player in manual picking stage failed', err, false, guild.id, guild.name);
         // If there is no pending pickup, no modifications done anyway
         if (pendingPickup) {
             await PickupModel.resetPickup(BigInt(guild.id), pendingPickup.pickupConfigId);

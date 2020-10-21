@@ -1,4 +1,4 @@
-import db from '../core/db';
+import db, { transaction } from '../core/db';
 import { PickupInfo, PickupInfoAPI, PlayerSearchResult } from '../core/types';
 
 export default class StatsModel {
@@ -6,24 +6,21 @@ export default class StatsModel {
 
     static async storePickup(guildId: bigint, pickupConfigId: number, teams: bigint[] | bigint[][], captains?: bigint[]) {
         captains = captains || [];
+        let gotTeams = false;
 
-        const conn = await db.getConnection();
-        try {
-            let gotTeams = false;
+        // Check if there are multiple teams
+        if (Array.isArray(teams[0])) {
+            gotTeams = true;
+        }
 
-            // Check if there are multiple teams
-            if (Array.isArray(teams[0])) {
-                gotTeams = true;
-            }
-            await conn.query('START TRANSACTION');
-
+        await transaction(db, async (db) => {
             // Insert pickup
-            await conn.execute(`
+            await db.execute(`
             INSERT INTO pickups (guild_id, pickup_config_id, has_teams)
             VALUES (?, ?, ?)
             `, [guildId, pickupConfigId, gotTeams]);
 
-            let idOfPickup = await (await conn.execute(`
+            let idOfPickup = await (await db.execute(`
             SELECT MAX(id) AS id FROM pickups
             WHERE guild_id = ?
             `, [guildId]))[0][0].id;
@@ -34,7 +31,7 @@ export default class StatsModel {
                 for (const [index, team] of (teams as BigInt[][]).entries()) {
                     const teamName = String.fromCharCode(65 + index);
 
-                    const playerIds: any = await conn.execute(`
+                    const playerIds: any = await db.execute(`
                     SELECT id, user_id FROM players
                     WHERE guild_id = ?
                     AND user_id IN (${Array(team.length).fill('?').join(',')})
@@ -45,11 +42,11 @@ export default class StatsModel {
                     });
                 }
 
-                await conn.query(`
+                await db.query(`
                 INSERT INTO pickup_players VALUES ${players.join(', ')}
                 `);
             } else {
-                const playerIds: any = await conn.execute(`
+                const playerIds: any = await db.execute(`
                 SELECT id, user_id FROM players
                 WHERE guild_id = ?
                 AND user_id IN (${Array(teams.length).fill('?').join(',')})
@@ -59,18 +56,11 @@ export default class StatsModel {
                     players.push(`(${idOfPickup}, ${player.id})`);
                 });
 
-                await conn.query(`
+                await db.query(`
                 INSERT INTO pickup_players (pickup_id, player_id) VALUES ${players.join(', ')}
                 `);
             }
-
-            await conn.commit();
-        } catch (_err) {
-            console.log(_err);
-            await conn.query('ROLLBACK');
-        } finally {
-            await conn.release();
-        }
+        });
     }
 
     static async getLastGame(guildId: bigint, identifier?: { isPlayer: boolean; value: number | string }): Promise<PickupInfo | null> {
@@ -568,7 +558,7 @@ export default class StatsModel {
     }
 
     static async getPickupCountPlayers(guildId: bigint, pickupConfigId: number, ...playerIds):
-    Promise<{ amount: number; id: string; nick: string }[]> {
+        Promise<{ amount: number; id: string; nick: string }[]> {
         const data: any = await db.execute(`
         SELECT COUNT(*) as amount, ps.user_id, ps.current_nick FROM pickups p
         JOIN pickup_players pp ON p.id = pp.pickup_id

@@ -8,8 +8,8 @@ import GuildModel from '../models/guild';
 import BotModel from '../models/bot';
 import PickupModel from '../models/pickup';
 import PlayerModel from '../models/player';
-import Util from './util';
 import PickupState from './pickupState';
+import Logger from './logger';
 
 export default class Bot {
     private botIsReady = false;
@@ -92,10 +92,13 @@ export default class Bot {
                     const playerObjs = players.map(player => guildObj.members.cache.get(player));
                     const prefix = this.getGuild(guildObj.id).prefix;
 
-                    pickupChannel.send(`${playerObjs.join(', ')} you got removed from all pickups, ${prefix}expire ran out`);
+                    if (pickupChannel) {
+                        pickupChannel.send(`${playerObjs.join(', ')} you got removed from all pickups, ${prefix}expire ran out`);
+                    }
+
                     guildsToShowStatus.add(guild);
-                } catch (_err) {
-                    console.error('[ERROR] Failed to retrieve required data in expire check');
+                } catch (err) {
+                    Logger.logError('Failed to retrieve required data in expire check', err, true, guild);
                 }
             }
             /************************ Global expires ************************/
@@ -117,8 +120,8 @@ export default class Bot {
                             playersToRemoveGlobalExpire.set(expire.guild_id, [expire.player_id]);
                         }
                     }
-                } catch (_err) {
-                    console.error('[ERROR] Failed to retrieve required data in global expire check (guild data)');
+                } catch (err) {
+                    Logger.logError('Failed to retrieve required data in global expire check (guild data)', err, true, expire.guild_id);
                 }
             });
 
@@ -129,10 +132,13 @@ export default class Bot {
                     const pickupChannel = await getPickupChannel(guildObj);
                     const playerObjs = players.map(player => guildObj.members.cache.get(player));
 
-                    pickupChannel.send(`${playerObjs.join(', ')} you got removed from all pickups, global expire ran out`);
+                    if (pickupChannel) {
+                        pickupChannel.send(`${playerObjs.join(', ')} you got removed from all pickups, global expire ran out`);
+                    }
+
                     guildsToShowStatus.add(guild);
-                } catch (_err) {
-                    console.error('[ERROR] Failed to retrieve required data in global expire check');
+                } catch (err) {
+                    Logger.logError('Failed to retrieve required data in global expire check', err, true, guild);
                 }
             }
             /************************ AOs ************************/
@@ -151,7 +157,6 @@ export default class Bot {
                     }
                 }
             });
-
 
             for (const [guild, players] of playersToRemoveAos.entries()) {
                 try {
@@ -202,12 +207,13 @@ export default class Bot {
                     pickupChannel.send(`${toPing.join(', ')} ${toNick.map(player => player.displayName).join(', ')} your allow offline ran out`);
 
                     if (toRemoveIds.length > 0) {
-                        pickupChannel.send(`${toRemoveObjs.map(player => player.displayName).join(', ')} you got removed from all active pickups as you are offline`);
+                        if (pickupChannel) {
+                            pickupChannel.send(`${toRemoveObjs.map(player => player.displayName).join(', ')} you got removed from all active pickups as you are offline`);
+                        }
                     }
-                } catch (_err) {
-                    console.error('[ERROR] Failed to retrieve required data in ao expire check');
+                } catch (err) {
+                    Logger.logError('Failed to retrieve required data in ao expire check', err, true, guild);
                 }
-
             }
 
             if (guildsToShowStatus.size > 0) {
@@ -222,9 +228,11 @@ export default class Bot {
                         let msg = '';
                         pickups.forEach(pickup => msg += `${genPickupInfo(pickup)} `);
 
-                        pickupChannel.send(msg || 'No active pickups');
-                    } catch (_err) {
-                        console.error('[ERROR] Failed to retrieve required data in main loop pickup status');
+                        if (pickupChannel) {
+                            pickupChannel.send(msg || 'No active pickups');
+                        }
+                    } catch (err) {
+                        Logger.logError('Failed to retrieve required data in main loop pickup status', err, true, guild as string);
                     }
                 }
             }

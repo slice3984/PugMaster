@@ -128,7 +128,6 @@ const command: Command = {
                 msg += `${player.username} got banned for ${Util.formatTime(ms)}${reason ? ' Reason: ' + reason : ''}`;
             }
 
-
             if (defaults[1] === 'true') {
                 // Check if it got executed in the listen channel
                 const isListenChannel = bot.getGuild(message.guild.id).channels.get(BigInt(message.channel.id)) === 'listen';

@@ -18,6 +18,19 @@ const command: Command = {
     exec: async (bot, message, params) => {
         // Trust check
         const guildSettings = bot.getGuild(message.guild.id);
+
+        if (guildSettings.explicitTrust) {
+            const alreadyTrusted = await PlayerModel.arePlayersTrusted(BigInt(message.guild.id), message.member.id);
+
+            if (!alreadyTrusted.length) {
+                const playedBefore = await PickupModel.playedBefore(BigInt(message.guild.id), BigInt(message.author.id));
+
+                if (!playedBefore) {
+                    return message.reply('no previous pickup game found for you, you need to be trusted to add');
+                }
+            }
+        }
+
         if (guildSettings.trustTime) {
             const trustTime = guildSettings.trustTime;
             const joinDate = message.member.joinedAt;
@@ -28,18 +41,6 @@ const command: Command = {
 
                 if (alreadyTrusted.length === 0) {
                     return message.reply(`you joined this server recently, please wait ${Util.formatTime(Math.abs(timeLeft))}`);
-                }
-            }
-        }
-
-        if (guildSettings.explicitTrust) {
-            const alreadyTrusted = await PlayerModel.arePlayersTrusted(BigInt(message.guild.id), message.member.id);
-
-            if (!alreadyTrusted.length) {
-                const playedBefore = await PickupModel.playedBefore(BigInt(message.guild.id), BigInt(message.author.id));
-
-                if (!playedBefore) {
-                    return message.reply('no previous pickup game found for you, you need to be trusted to add');
                 }
             }
         }

@@ -6,6 +6,7 @@ import PlayerModel from '../models/player';
 import Util from '../core/util';
 import { abortPickingStagePickup } from './stages/manualPicking'
 import PickupStage from './PickupStage';
+import Logger from './logger';
 
 export default class PickupState {
     private constructor() { }
@@ -18,10 +19,8 @@ export default class PickupState {
         if (!activePickups.size) {
             // No need to check if the pickup started
             await PickupModel.addPlayer(BigInt(member.guild.id), BigInt(member.id), ...pickupIds);
-            await PickupModel.updatePlayerAddTime(BigInt(member.guild.id), BigInt(member.id));
         } else {
             await PickupModel.addPlayer(BigInt(member.guild.id), BigInt(member.id), ...pickupIds);
-            await PickupModel.updatePlayerAddTime(BigInt(member.guild.id), BigInt(member.id));
 
             // Pickup start check
             // First pickup about to start
@@ -37,9 +36,11 @@ export default class PickupState {
                 if (pickup.maxPlayers === pickup.players.length + 1) {
                     try {
                         await PickupStage.handle(member.guild, +pickup.configId);
-                    } catch (_err) {
+                    } catch (err) {
+                        Logger.logError('handling the pickup failed in PickupState', err, false, member.guild.id, member.guild.name);
+                        await PickupModel.resetPickup(BigInt(member.guild.id), pickup.configId);
+
                         if (pickupChannel) {
-                            await PickupModel.resetPickup(BigInt(member.guild.id), pickup.configId);
                             pickupChannel.send(`something went wrong handling the pickup, **${pickup.name}** cleared`);
                         }
                     }
@@ -69,7 +70,9 @@ export default class PickupState {
 
         const pickups = Array.from((await PickupModel.getActivePickups(BigInt(member.guild.id))).values())
             .sort((a, b) => b.players.length - a.players.length);
+
         let msg = '';
+
         pickups.forEach(pickup => {
             if (pickupIds.includes(pickup.configId)) {
                 msg += `${genPickupInfo(pickup, true)} `;
@@ -78,7 +81,11 @@ export default class PickupState {
             }
         });
 
-        return pickupChannel.send(msg);
+        if (pickupChannel) {
+            pickupChannel.send(msg);
+        }
+
+        return;
     }
 
     // pickupConfigId => Required to make sure the started pickup gets ignored if it was in pending state
@@ -159,11 +166,8 @@ export default class PickupState {
 
         pickupsToCancel = pickupsToCancel.filter((pickup, index) => pickupsToCancel.indexOf(pickupsToCancel.find(pu => pu.id === pickup.id)) === index);
 
-        await GuildModel.removeAfks(BigInt(guildId), ...addedPlayerIds);
-
         // Remove timeouts / Reset state
-        await PickupModel.setPendings(BigInt(guildId), 'fill', ...pickupsToCancel.map(pickup => pickup.id));
-
+        await PickupModel.clearPendingAfkPickupStates(BigInt(guildId), addedPlayerIds, pickupsToCancel.map(pickup => pickup.id))
         const pendingPickups = Bot.getInstance().getGuild(guildId).pendingPickups;
 
         if (pendingPickups.size) {
@@ -265,7 +269,11 @@ export default class PickupState {
                     return pickupChannel.send('No active pickups');
                 }
 
-                return pickupChannel.send(msg)
+                if (pickupChannel) {
+                    pickupChannel.send(msg)
+                }
+
+                return;
             }
         }
     }

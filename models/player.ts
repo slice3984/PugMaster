@@ -1,4 +1,4 @@
-import db from '../core/db';
+import db, { transaction } from '../core/db';
 import Bot from '../core/bot';
 import { PlayerNicks } from '../core/types';
 
@@ -28,35 +28,27 @@ export default class PlayerModel {
         } else {
             // Update the nick if required and store the old one in player_nicks
             if (nickAndId[0][0].current_nick !== nick) {
-                // Update nick
-                await db.execute(`
-                UPDATE players SET current_nick = ? WHERE user_id = ? AND guild_id = ?
-                `, [nick, playerId, guildId]);
-
-                // Insert old nick
-                await db.execute(`
-                INSERT INTO player_nicks (player_id, nick)
-                VALUES (?, ?)
-                `, [nickAndId[0][0].id, nickAndId[0][0].current_nick]);
-
-                // Get the amount of already stored old nicks
-                const amountStored = await db.execute(`
-                SELECT COUNT(*) as cnt FROM player_nicks
-                WHERE player_id = ?
-                `, [nickAndId[0][0].id]);
-
-                if (amountStored[0][0].cnt > 2) {
-                    // Delete the oldest nick
-                    const oldestNickId = await db.execute(`
-                    SELECT id FROM player_nicks 
-                    WHERE player_id = ?
-                    ORDER BY updated_at LIMIT 1
-                    `, [nickAndId[0][0].id]);
-
+                await transaction(db, async (db) => {
+                    // Update nick
                     await db.execute(`
-                    DELETE FROM player_nicks WHERE id = ?
-                    `, [oldestNickId[0][0].id]);
-                }
+                    UPDATE players SET current_nick = ? WHERE user_id = ? AND guild_id = ?
+                    `, [nick, playerId, guildId]);
+
+                    // Insert old nick
+                    await db.execute(`
+                    INSERT INTO player_nicks (player_id, nick)
+                    VALUES (?, ?)
+                    `, [nickAndId[0][0].id, nickAndId[0][0].current_nick]);
+
+                    // Delete older nicks if necessary
+                    await db.execute(`
+                    DELETE pn FROM player_nicks pn
+                    JOIN (SELECT updated_at FROM player_nicks
+                        WHERE player_id = ?
+                        ORDER BY updated_at DESC LIMIT 1 OFFSET 1
+                    ) AS tlimit ON pn.updated_at < tlimit.updated_at
+                    `, [nickAndId[0][0].id])
+                });
             }
         }
     }
@@ -193,7 +185,6 @@ export default class PlayerModel {
                 VALUES (?, ?, ?, ?)
                 `, [guildId, bannedPlayerId[0][0].id, issuerPlayerId[0][0].id, true]);
             }
-
         } else {
             if (reason) {
                 await db.execute(`

@@ -5,6 +5,7 @@ import Bot from '../core/bot';
 import db from '../core/db';
 import { transaction } from '../core/db';
 import { RowDataPacket } from 'mysql2';
+import { PoolConnection } from 'mysql2/promise';
 
 interface BannedPlayer {
     player: string;
@@ -139,14 +140,16 @@ export default class GuildModel {
             }
         }
 
-        await db.execute(`
-        DELETE FROM guild_channels
-        WHERE guild_id = ? AND channel_type = ?
-        `, [guildId, type]);
+        await transaction(db, async (db) => {
+            await db.execute(`
+            DELETE FROM guild_channels
+            WHERE guild_id = ? AND channel_type = ?
+            `, [guildId, type]);
 
-        await db.execute(`
-        INSERT INTO guild_channels VALUES(?, ?, ?)
-        `, [guildId, channelId, type]);
+            await db.execute(`
+            INSERT INTO guild_channels VALUES(?, ?, ?)
+            `, [guildId, channelId, type]);
+        });
 
         guildChannels.set(channelId, type);
     }
@@ -354,16 +357,18 @@ export default class GuildModel {
             });
         });
 
-        // Delete possible already stored settings
-        await db.execute(`
-        DELETE FROM guild_command_settings WHERE guild_id = ?
-        AND command_name IN (${Array(commandNames.length).fill('?').join(',')}) 
-        `, [guildId, ...commandNames]);
+        await transaction(db, async (db) => {
+            // Delete possible already stored settings
+            await db.execute(`
+            DELETE FROM guild_command_settings WHERE guild_id = ?
+            AND command_name IN (${Array(commandNames.length).fill('?').join(',')}) 
+            `, [guildId, ...commandNames]);
 
-        // Insert new settings
-        await db.execute(`
-        INSERT INTO guild_command_settings VALUES ${Array(toInsert.length / 3).fill('(?, ?, ?)').join(',')}
-        `, [...toInsert]);
+            // Insert new settings
+            await db.execute(`
+            INSERT INTO guild_command_settings VALUES ${Array(toInsert.length / 3).fill('(?, ?, ?)').join(',')}
+            `, [...toInsert]);
+        });
     }
 
     static async disableCommand(guildId: bigint, ...commands) {
@@ -662,8 +667,10 @@ export default class GuildModel {
         `, [guildId, ...playerIds]);
     }
 
-    static async removeAfks(guildId: bigint, ...playerIds) {
-        await db.execute(`
+    static async removeAfks(connection: PoolConnection, guildId: bigint, ...playerIds) {
+        const conn = db || connection;
+
+        await conn.execute(`
         UPDATE state_guild_player SET is_afk = null
         WHERE guild_id = ? AND player_id IN (${Array(playerIds.length).fill('?').join(',')})
         `, [guildId, ...playerIds]);

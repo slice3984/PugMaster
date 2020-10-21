@@ -1,4 +1,4 @@
-import Discord, { GuildMember } from 'discord.js';
+import Discord from 'discord.js';
 import PickupModel from "../models/pickup";
 import PickupState from './pickupState';
 import Util from './util';
@@ -8,6 +8,7 @@ import afkCheckStage from './stages/afkCheck';
 import { manualPicking } from './stages/manualPicking';
 import { PickupSettings } from './types';
 import Bot from './bot';
+import Logger from './logger';
 
 export default class PickupStage {
     private constructor() { }
@@ -22,11 +23,13 @@ export default class PickupStage {
 
             try {
                 return await afkCheckStage(guild, pickupConfigId, true);
-            } catch (_err) {
+            } catch (err) {
+                Logger.logError('AFK check failed in PickupStage', err, false, guild.id, guild.name);
+
                 const pickup = await PickupModel.getActivePickup(BigInt(guild.id), pickupConfigId);
                 const players = pickup.players.map(player => player.id);
 
-                await GuildModel.removeAfks(BigInt(guild.id), ...players);
+                await GuildModel.removeAfks(null, BigInt(guild.id), ...players);
 
                 if (pickupChannel) {
                     pickupChannel.send(`afk check failed, attempting to progress to the next stage for **pickup ${pickup.name}** without checking`);
@@ -42,7 +45,8 @@ export default class PickupStage {
             case 'no_teams':
                 try {
                     await this.startPickup(guild, pickupSettings.id);
-                } catch (_err) {
+                } catch (err) {
+                    Logger.logError('pickup start failed in PickupStage', err, false, guild.id, guild.name);
                     await PickupModel.resetPickup(BigInt(guild.id), pickupSettings.id);
 
                     if (pickupChannel) {
@@ -54,7 +58,9 @@ export default class PickupStage {
                 try {
                     await PickupModel.setPending(BigInt(guild.id), pickupSettings.id, 'picking_manual');
                     await manualPicking(guild, pickupSettings.id, true);
-                } catch (_err) {
+                } catch (err) {
+                    Logger.logError('manual picking failed in PickupStage', err, false, guild.id, guild.name);
+
                     // Still attempt to start without teams
                     try {
                         Bot.getInstance().getGuild(guild.id).pendingPickups.delete(pickupSettings.id);
@@ -65,7 +71,8 @@ export default class PickupStage {
 
                         await PickupModel.clearTeams(BigInt(guild.id), pickupSettings.id);
                         await this.startPickup(guild, pickupSettings.id)
-                    } catch (_err) {
+                    } catch (err) {
+                        Logger.logError('start attempt after failed picking failed in PickupStage', err, false, guild.id, guild.name);
                         await PickupModel.resetPickup(BigInt(guild.id), pickupSettings.id);
 
                         if (pickupChannel) {
@@ -104,7 +111,11 @@ export default class PickupStage {
 
         if (startMessage.length) {
             const pickupChannel = await Util.getPickupChannel(guild);
-            await pickupChannel.send(startMessage);
+
+            if (pickupChannel) {
+                await pickupChannel.send(startMessage);
+            }
+
             await PickupState.showPickupStatus(guild);
         }
 
@@ -126,7 +137,8 @@ export default class PickupStage {
 
         try {
             await StatsModel.storePickup(BigInt(guild.id), pickupConfigId, players, captains);
-        } catch (_err) {
+        } catch (err) {
+            Logger.logError('storing a pickup failed', err, false, guild.id, guild.name);
             const pickupChannel = await Util.getPickupChannel(guild);
 
             if (pickupChannel) {

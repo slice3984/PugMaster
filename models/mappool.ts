@@ -1,4 +1,5 @@
-import db from '../core/db';
+import db, { transaction } from '../core/db';
+import { PoolConnection } from 'mysql2/promise';
 
 export default class MappoolModel {
     private constructor() { }
@@ -127,17 +128,21 @@ export default class MappoolModel {
         SELECT id FROM map_pool_names WHERE guild_id = ? AND name = ?
         `, [guildId, poolName]))[0][0].id;
 
-        await db.execute(`
-        DELETE FROM map_pool_maps WHERE pool_id = ?
-        AND map_id IN (${Array(mapIds.length).fill('?').join(',')})
-        `, [poolId, ...mapIds]);
+        await transaction(db, async (db) => {
+            const conn = db as PoolConnection
 
-        const usedInPools = await MappoolModel.areMapsUsedInPools(guildId, ...maps);
-        const toRemove = maps.filter(map => !usedInPools.includes(map));
+            await conn.execute(`
+            DELETE FROM map_pool_maps WHERE pool_id = ?
+            AND map_id IN (${Array(mapIds.length).fill('?').join(',')})
+            `, [poolId, ...mapIds]);
 
-        if (toRemove.length) {
-            await MappoolModel.removeMapsFromGlobalPool(guildId, ...toRemove);
-        }
+            const usedInPools = await MappoolModel.areMapsUsedInPools(guildId, ...maps);
+            const toRemove = maps.filter(map => !usedInPools.includes(map));
+
+            if (toRemove.length) {
+                await MappoolModel.removeMapsFromGlobalPool(conn, guildId, ...toRemove);
+            }
+        });
     }
 
     static async addMapsToGlobalPool(guildId: bigint, ...maps) {
@@ -162,8 +167,10 @@ export default class MappoolModel {
         return mapsToInsert;
     }
 
-    static async removeMapsFromGlobalPool(guildId: bigint, ...maps) {
-        await db.execute(`
+    static async removeMapsFromGlobalPool(connection: PoolConnection, guildId: bigint, ...maps) {
+        const conn = connection || db;
+
+        await conn.execute(`
         DELETE FROM maps WHERE guild_id = ?
         AND map IN (${Array(maps.length).fill('?').join(',')})
         `, [guildId, ...maps]);
@@ -185,19 +192,23 @@ export default class MappoolModel {
 
         maps = [...new Set(maps)];
 
-        await db.execute(`
-        DELETE FROM map_pool_names WHERE guild_id = ? 
-        AND name IN (${Array(pools.length).fill('?').join(',')})
-        `, [guildId, ...pools]);
+        await transaction(db, async (db) => {
+            const conn = db as PoolConnection;
 
-        const mapsInUse = await MappoolModel.areMapsUsedInPools(guildId, ...maps);
-        const unusedMaps = maps.filter(map => !mapsInUse.includes(map));
-        await MappoolModel.removeMapsFromGlobalPool(guildId, ...unusedMaps);
+            await conn.execute(`
+            DELETE FROM map_pool_names WHERE guild_id = ? 
+            AND name IN (${Array(pools.length).fill('?').join(',')})
+            `, [guildId, ...pools]);
 
-        // Update pickups
-        await db.execute(`
-        UPDATE pickup_configs SET mappool_id = null
-        WHERE guild_id = ? AND mappool_id IN (${Array(poolIds.length).fill('?').join(',')})
-        `, [guildId, ...poolIds]);
+            const mapsInUse = await MappoolModel.areMapsUsedInPools(guildId, ...maps);
+            const unusedMaps = maps.filter(map => !mapsInUse.includes(map));
+            await MappoolModel.removeMapsFromGlobalPool(conn, guildId, ...unusedMaps);
+
+            // Update pickups
+            await conn.execute(`
+            UPDATE pickup_configs SET mappool_id = null
+            WHERE guild_id = ? AND mappool_id IN (${Array(poolIds.length).fill('?').join(',')})
+            `, [guildId, ...poolIds]);
+        });
     }
 }

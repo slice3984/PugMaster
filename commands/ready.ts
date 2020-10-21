@@ -54,7 +54,7 @@ const command: Command = {
             readiedUpPickups.push(pendingPickup.name);
         }
 
-        await GuildModel.removeAfks(BigInt(message.guild.id), message.author.id);
+        await GuildModel.removeAfks(null, BigInt(message.guild.id), message.author.id);
         message.channel.send(`${message.author} readied up for ${readiedUpPickups.map(name => `**${name}**`).join(', ')}`);
     }
 }

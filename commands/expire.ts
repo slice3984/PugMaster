@@ -47,6 +47,12 @@ const command: Command = {
             return message.reply('you are not added to any pickup');
         }
 
+        const isInPickingStage = await PickupModel.isPlayerAddedToPendingPickup(BigInt(message.guild.id), BigInt(message.member.id), 'picking_manual');
+
+        if (isInPickingStage) {
+            return message.reply('you are not allowed to use expire when added to a pickup in picking stage');
+        }
+
         const validTime = Util.validateTimeString(params.join(' '), defaults[0], (60 * 1000));
 
         if (validTime === 'exceeded') {

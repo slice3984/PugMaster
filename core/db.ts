@@ -26,10 +26,10 @@ export const transaction = (async (conn: PoolConnection | Pool,
         const c = await conn.getConnection();
 
         try {
-            c.beginTransaction();
+            await c.beginTransaction();
             const res = await queriesFunc(c);
 
-            c.commit();
+            await c.commit();
 
             return res;
         } catch (e) {

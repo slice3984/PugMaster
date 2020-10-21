@@ -1,6 +1,7 @@
 import Discord from 'discord.js';
 import Bot from './bot';
 import PermissionModel from '../models/permission';
+import Logger from './logger';
 
 export default class CommandHandler {
     private bot: Bot;
@@ -62,8 +63,9 @@ export default class CommandHandler {
     }
 
     async execute(message: Discord.Message, cmd: string, args: any[] = []) {
-        const errorHandler = () => {
+        const errorHandler = (err) => {
             message.reply('something went wrong executing this command');
+            Logger.logError(`Error in executing '${cmd}' command, args: ${args.length ? args.join(', ') : '-'}`, err, false, message.guild.id, message.guild.name);
         }
 
         if (!this.isCommandAvailable(message, cmd)) {
@@ -90,18 +92,18 @@ export default class CommandHandler {
         if (guild.commandSettings.has(cmd)) {
             try {
                 await command.exec(this.bot, message, args, guild.commandSettings.get(cmd));
-            } catch (_err) { errorHandler() }
+            } catch (err) { errorHandler(err) }
         } else {
             const defaults = command.defaults ? command.defaults.map(def => def.value) : null;
 
             if (defaults) {
                 try {
                     await command.exec(this.bot, message, args, defaults);
-                } catch (_err) { errorHandler() }
+                } catch (err) { errorHandler(err) }
             } else {
                 try {
                     await command.exec(this.bot, message, args);
-                } catch (_err) { errorHandler() }
+                } catch (err) { errorHandler(err) }
             }
         }
     }

@@ -1,5 +1,5 @@
 import { RowDataPacket } from 'mysql2';
-import db from '../core/db';
+import db, { transaction } from '../core/db';
 
 interface ServerType {
     name: string;
@@ -84,21 +84,23 @@ export default class ServerModel {
     static async removeServers(guildId: bigint, ...servers) {
         const serverIds = await ServerModel.getServerIds(guildId, ...servers);
 
-        await db.execute(`
-        DELETE FROM pickup_servers WHERE guild_id = ?
-        AND id IN (${Array(serverIds.length).fill('?').join(',')})
-        `, [guildId, ...serverIds]);
+        await transaction(db, async (db) => {
+            await db.execute(`
+            DELETE FROM pickup_servers WHERE guild_id = ?
+            AND id IN (${Array(serverIds.length).fill('?').join(',')})
+            `, [guildId, ...serverIds]);
 
-        // Update pickups
-        await db.execute(`
-        UPDATE pickup_configs SET server_id = null
-        WHERE guild_id = ? AND server_id IN (${Array(serverIds.length).fill('?').join(',')})
-        `, [guildId, ...serverIds]);
+            // Update pickups
+            await db.execute(`
+            UPDATE pickup_configs SET server_id = null
+            WHERE guild_id = ? AND server_id IN (${Array(serverIds.length).fill('?').join(',')})
+            `, [guildId, ...serverIds]);
 
-        // Update guild
-        await db.execute(`
-        UPDATE guilds SET server_id = null
-        WHERE guild_id = ? AND server_id IN (${Array(serverIds.length).fill('?').join(',')})
-        `, [guildId, ...serverIds]);
+            // Update guild
+            await db.execute(`
+            UPDATE guilds SET server_id = null
+            WHERE guild_id = ? AND server_id IN (${Array(serverIds.length).fill('?').join(',')})
+            `, [guildId, ...serverIds]);
+        });
     }
 }

@@ -2,6 +2,7 @@ import Discord, { GuildMember } from 'discord.js';
 import GuildModel from '../../models/guild';
 import PickupModel from '../../models/pickup';
 import Bot from '../bot';
+import Logger from '../logger';
 import PickupStage from '../PickupStage';
 import PickupState from '../pickupState';
 import { GuildMemberExtended } from '../types';
@@ -83,7 +84,7 @@ const afkCheckStage = async (guild: Discord.Guild, pickupConfigId: number, first
         }
 
         if (updateDb) {
-            await GuildModel.removeAfks(BigInt(guild.id), ...readyPlayers.map(player => player.id));
+            await GuildModel.removeAfks(null, BigInt(guild.id), ...readyPlayers.map(player => player.id));
         }
     }
 
@@ -125,8 +126,9 @@ const afkCheckStage = async (guild: Discord.Guild, pickupConfigId: number, first
     const timeout = setTimeout(async () => {
         try {
             await afkCheckStage(guild, pickupConfigId);
-        } catch (_err) {
-            await GuildModel.removeAfks(BigInt(guild.id), ...pendingPickup.teams[0].players.map(p => p.id));
+        } catch (err) {
+            Logger.logError('AFK check failed in timeout', err, false, guild.id, guild.name);
+            await GuildModel.removeAfks(null, BigInt(guild.id), ...pendingPickup.teams[0].players.map(p => p.id));
 
             // Don't attempt to start when players got removed
             const pickup = await PickupModel.getActivePickup(BigInt(guild.id), pickupConfigId);

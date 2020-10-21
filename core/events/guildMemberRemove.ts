@@ -9,6 +9,9 @@ module.exports = async (bot: Bot, member: Discord.GuildMember) => {
     if (isAdded.length > 0) {
         await PickupState.removePlayer(member.guild.id, member.id);
         const pickupChannel = await Util.getPickupChannel(member.guild);
-        pickupChannel.send(`${member.displayName} got removed from all pickups since he left the server`);
+
+        if (pickupChannel) {
+            pickupChannel.send(`${member.displayName} got removed from all pickups since he left the server`);
+        }
     }
 }

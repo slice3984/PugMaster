@@ -2,6 +2,7 @@ import { PickupSettings } from '../core/types';
 import db from '../core/db';
 import { transaction } from '../core/db';
 import { PoolConnection } from 'mysql2/promise';
+import GuildModel from './guild';
 
 export default class PickupModel {
     private constructor() { }
@@ -174,26 +175,32 @@ export default class PickupModel {
     }
 
     static async addPlayer(guildId: bigint, playerId: bigint, ...pickupConfigIds) {
-        let valueStrings2 = [];
+        let valueStrings = [];
         let pickups = [];
 
         pickupConfigIds.forEach(id => {
-            valueStrings2.push(`(${guildId}, ${playerId}, ${id})`)
+            valueStrings.push(`(${guildId}, ${playerId}, ${id})`)
             pickups.push(`(${guildId}, ${id})`);
         });
 
-        // Update state pickup
-        await db.query(`
-        INSERT IGNORE INTO state_pickup (guild_id, pickup_config_id)
-        VALUES ${pickups.join(', ')}
-        `);
+        await transaction(db, async (db) => {
+            const conn = db as PoolConnection;
 
-        // Insert pickup player
-        await db.query(`
-        INSERT state_pickup_players
-        VALUES ${valueStrings2.join(', ')}
-        `);
-        return;
+            // Update add time
+            await this.updatePlayerAddTime(conn, guildId, playerId);
+
+            // Update state pickup
+            await conn.query(`
+            INSERT IGNORE INTO state_pickup (guild_id, pickup_config_id)
+            VALUES ${pickups.join(', ')}
+            `);
+
+            // Insert pickup player
+            await conn.query(`
+            INSERT state_pickup_players
+            VALUES ${valueStrings.join(', ')}
+            `);
+        });
     }
 
     static async removePlayers(guildId: bigint, ...playerIds) {
@@ -231,31 +238,33 @@ export default class PickupModel {
     }
 
     static async removePlayersExclude(guildId: bigint, excludedPickups: number[], ...playerIds) {
-        await db.execute(`
-        DELETE FROM state_pickup_players
-        WHERE guild_id = ?
-        AND player_id IN (${Array(playerIds.length).fill('?').join(',')})
-        AND pickup_config_id NOT IN (${Array(excludedPickups.length).fill('?').join(',')})
-        `, [guildId, ...playerIds, ...excludedPickups]);
+        await transaction(db, async (db) => {
+            await db.execute(`
+            DELETE FROM state_pickup_players
+            WHERE guild_id = ?
+            AND player_id IN (${Array(playerIds.length).fill('?').join(',')})
+            AND pickup_config_id NOT IN (${Array(excludedPickups.length).fill('?').join(',')})
+            `, [guildId, ...playerIds, ...excludedPickups]);
 
-        await db.execute(`
-        DELETE FROM state_pickup
-        WHERE pickup_config_id NOT IN (SELECT DISTINCT pickup_config_id FROM state_pickup_players WHERE guild_id = ?)
-        AND guild_id = ?
-        `, [guildId, guildId]);
+            await db.execute(`
+            DELETE FROM state_pickup
+            WHERE pickup_config_id NOT IN (SELECT DISTINCT pickup_config_id FROM state_pickup_players WHERE guild_id = ?)
+            AND guild_id = ?
+            `, [guildId, guildId]);
+        });
     }
 
     static async removePlayer(connection: PoolConnection | null = null, guildId: bigint, playerId: bigint, ...pickupConfigIds) {
         const conn = connection || db;
 
-        try {
+        await transaction(conn, async (db) => {
             if (pickupConfigIds.length === 0) {
-                await conn.execute(`
+                await db.execute(`
                 DELETE FROM state_pickup_players
                 WHERE guild_id = ? AND player_id = ?
                 `, [guildId, playerId]);
             } else {
-                await conn.execute(`
+                await db.execute(`
                 DELETE FROM state_pickup_players
                 WHERE guild_id = ? AND player_id = ?
                 AND pickup_config_id IN (${Array(pickupConfigIds.length).fill('?').join(',')})
@@ -263,18 +272,18 @@ export default class PickupModel {
             }
 
             // Maybe need to find a better solution for this
-            await conn.execute(`
+            await db.execute(`
             DELETE FROM state_pickup
             WHERE pickup_config_id NOT IN (SELECT DISTINCT pickup_config_id FROM state_pickup_players WHERE guild_id = ?)
             AND guild_id = ?
             `, [guildId, guildId]);
-        } catch (e) {
-            throw e;
-        }
+        });
     }
 
-    static async updatePlayerAddTime(guildId: bigint, playerId: bigint) {
-        await db.execute(`
+    static async updatePlayerAddTime(connection: PoolConnection, guildId: bigint, playerId: bigint) {
+        const conn = connection || db;
+
+        await conn.execute(`
         INSERT INTO state_guild_player (guild_id, player_id, last_add)
         VALUES (?, ?, CURRENT_TIMESTAMP)
         ON DUPLICATE KEY UPDATE last_add = CURRENT_TIMESTAMP
@@ -385,8 +394,10 @@ export default class PickupModel {
         `, [stage, guildId, pickupConfigId]);
     }
 
-    static async setPendings(guildId: bigint, stage: 'afk_check' | 'picking_manual' | 'fill', ...pickupConfigIds) {
-        await db.execute(`
+    static async setPendings(connection: PoolConnection, guildId: bigint, stage: 'afk_check' | 'picking_manual' | 'fill', ...pickupConfigIds) {
+        const conn = connection || db;
+
+        await conn.execute(`
         UPDATE state_pickup SET stage = ?, in_stage_since = CURRENT_TIMESTAMP, stage_iteration = 0
         WHERE guild_id = ? AND pickup_config_id IN (${Array(pickupConfigIds.length).fill('?').join(',')})
         `, [stage, guildId, ...pickupConfigIds]);
@@ -512,10 +523,15 @@ export default class PickupModel {
     }
 
     static async abortAfkCheck(guildId: bigint, pickupConfigId: number) {
-        await transaction(db, async (conn) => {
-            const c = conn as PoolConnection;
+        await PickupModel.setPending(guildId, pickupConfigId, 'fill', null);
+    }
 
-            await PickupModel.setPending(guildId, pickupConfigId, 'fill', c);
-        })
+    static async clearPendingAfkPickupStates(guildId: bigint, addedPlayerIds: bigint[], pickupConfigIds: number[]) {
+        await transaction(db, async (db) => {
+            const conn = db as PoolConnection;
+
+            await GuildModel.removeAfks(conn, guildId, addedPlayerIds);
+            await this.setPendings(conn, guildId, 'fill', ...pickupConfigIds);
+        });
     }
 }
