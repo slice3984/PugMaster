@@ -35,7 +35,10 @@ export default class ConfigTool {
         "MAX_WARN_STREAK_EXPIRATION_TIME": "2592000000",
         "MAX_WARN_EXPIRATION_TIME": "1209600000",
         "MAX_WARN_BANTIME": "604800000",
-        "MAX_WARN_BANTIME_MULTIPLIER": "5" 
+        "MAX_WARN_BANTIME_MULTIPLIER": "5",
+        "FLOOD_PROTECTION_DELAY": "2000",
+        "FLOOD_PROTECTION_MAX_COMMANDS": "4",
+        "FLOOD_TIMEOUT_TIME": "10000"
     },
     "webserver": {
         "port": "1337",

@@ -243,6 +243,9 @@ export default class Bot {
         setInterval(async () => {
             // Clear unused state guild players
             await GuildModel.clearUnusedPlayerStates();
+
+            // Clear guild flood times
+            this.guilds.forEach(guild => guild.lastCommandExecutions.clear());
         }, 6 * 60 * 60 * 1000);
     }
 

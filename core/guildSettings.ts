@@ -8,6 +8,7 @@ import ServerModel from '../models/server';
 // Only storing frequently accessed data and sync with db
 export default class GuildSettings {
     pendingPickups = new Map();
+    lastCommandExecutions: Map<Discord.GuildMember, { count: number; timestamp: number }> = new Map();
 
     constructor(
         private guild: Discord.Guild,

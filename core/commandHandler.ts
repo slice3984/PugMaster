@@ -2,12 +2,17 @@ import Discord from 'discord.js';
 import Bot from './bot';
 import PermissionModel from '../models/permission';
 import Logger from './logger';
+import { Config } from './types';
+import ConfigTool from './configTool';
+import Util from './util';
 
 export default class CommandHandler {
     private bot: Bot;
+    private config: Config;
 
     constructor(bot: Bot) {
         this.bot = bot;
+        this.config = ConfigTool.getConfig();
     }
 
     private async gotPermission(member: Discord.GuildMember, cmd) {
@@ -62,6 +67,55 @@ export default class CommandHandler {
         return false;
     }
 
+    private handleFloodProtection(message: Discord.Message): boolean {
+        const floodDelay = +this.config.settings.FLOOD_PROTECTION_DELAY;
+        const floodMaxCommands = +this.config.settings.FLOOD_PROTECTION_MAX_COMMANDS;
+        const floodTimeout = +this.config.settings.FLOOD_TIMEOUT_TIME;
+
+        const commandExecutionsTimes = this.bot.getGuild(message.guild.id).lastCommandExecutions;
+        const lastUserCommandTimes = commandExecutionsTimes.get(message.member);
+        const messageTimestamp = message.createdTimestamp;
+
+        if (messageTimestamp) {
+            if (!lastUserCommandTimes) {
+                commandExecutionsTimes.set(message.member, { count: 1, timestamp: messageTimestamp });
+                return true;
+            } else {
+                // If the message count already reached the max count, trigger flood protection without message
+                if (lastUserCommandTimes.count >= floodMaxCommands) {
+                    // Check if a flood reset is required
+                    if ((lastUserCommandTimes.timestamp + floodTimeout) < messageTimestamp) {
+                        lastUserCommandTimes.count = 1;
+                        lastUserCommandTimes.timestamp = messageTimestamp;
+                        return true;
+                    }
+
+                    return false;
+                }
+
+                // Reset the counter if last message is longer ago than flood timeout
+                if ((lastUserCommandTimes.timestamp + floodTimeout) < messageTimestamp) {
+                    lastUserCommandTimes.count = 1;
+                }
+
+                // Add to count if the message triggers the protection
+                if ((lastUserCommandTimes.timestamp + floodDelay) > messageTimestamp) {
+                    lastUserCommandTimes.count++;
+                    lastUserCommandTimes.timestamp = messageTimestamp;
+                }
+
+                if (lastUserCommandTimes.count < floodMaxCommands) {
+                    lastUserCommandTimes.timestamp = messageTimestamp;
+
+                    return true;
+                }
+
+                message.reply(`too quick, you got timed out for ${Util.formatTime(floodTimeout)}`);
+                return false;
+            }
+        }
+    }
+
     async execute(message: Discord.Message, cmd: string, args: any[] = []) {
         const errorHandler = (err) => {
             message.reply('something went wrong executing this command');
@@ -72,6 +126,10 @@ export default class CommandHandler {
             return;
         }
 
+        if (!this.handleFloodProtection(message)) {
+            return;
+        }
+
         const guild = this.bot.getGuild(message.guild.id);
         const command = this.bot.getCommand(cmd)
 
@@ -79,8 +137,6 @@ export default class CommandHandler {
             return message.reply('insufficient permissions to execute this command')
         }
 
-        // TODO: Flood protection
-        ;
         // Test if required args are given
         const requiredArgs = command.args ? command.args.filter(arg => arg.required).length : 0;
         if (requiredArgs > args.length) {

@@ -18,6 +18,9 @@ export interface Config {
         MAX_WARN_EXPIRATION_TIME: string;
         MAX_WARN_BANTIME: string;
         MAX_WARN_BANTIME_MULTIPLIER: string;
+        FLOOD_PROTECTION_DELAY: string;
+        FLOOD_PROTECTION_MAX_COMMANDS: string;
+        FLOOD_TIMEOUT_TIME: string;
     };
     webserver: {
         port: string;
