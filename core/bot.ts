@@ -10,6 +10,7 @@ import PickupModel from '../models/pickup';
 import PlayerModel from '../models/player';
 import PickupState from './pickupState';
 import Logger from './logger';
+import Console from '../console';
 
 export default class Bot {
     private botIsReady = false;
@@ -44,6 +45,7 @@ export default class Bot {
             await this.registerEventListeners();
             this.mainLoop();
             this.secondaryLoop();
+            new Console(this);
             this.botIsReady = true;
         });
     }

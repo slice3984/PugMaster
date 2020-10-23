@@ -25,7 +25,8 @@
       "."
     ],
     "exec": "npm run debug:bot",
-    "ext": "ts"
+    "ext": "ts",
+    "stdin": false
   },
   "repository": {
     "type": "git",
@@ -42,6 +43,7 @@
     "@types/ejs": "^3.0.4",
     "@types/express": "^4.17.8",
     "@types/express-rate-limit": "^5.1.0",
+    "@types/inquirer": "^7.3.1",
     "@types/node": "^14.11.2",
     "@types/socket.io": "^2.1.11",
     "@types/socket.io-client": "^1.4.34",
@@ -75,6 +77,8 @@
     "express-rate-limit": "^5.1.3",
     "express-session": "^1.17.1",
     "ffmpeg-static": "^4.2.7",
+    "inquirer": "^7.3.3",
+    "inquirer-autocomplete-prompt": "^1.2.0",
     "mysql2": "^2.2.5",
     "socket.io": "^2.3.0"
   }

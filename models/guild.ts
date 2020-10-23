@@ -45,6 +45,12 @@ export default class GuildModel {
         return isBanned[0][0].banned;
     }
 
+    static async banGuild(guildId: bigint) {
+        await db.execute(`
+        INSERT INTO banned_guilds VALUES (?)
+        `, [guildId]);
+    }
+
     static async getGuildSettings(guild: Discord.Guild): Promise<GuildSettings> {
         const data = await transaction(db, async (db) => {
             let data: any = await db.execute(`
@@ -684,5 +690,29 @@ export default class GuildModel {
         `, [guildId, ...playerIds]);
 
         return data[0].map(row => row.player_id.toString());
+    }
+
+    static async resetState(guildId: bigint) {
+        await transaction(db, async (db) => {
+            // Pickup
+            await db.execute(`
+            DELETE FROM state_pickup WHERE guild_id = ?
+            `, [guildId]);
+
+            // Pickup players
+            await db.execute(`
+            DELETE FROM state_pickup_players WHERE guild_id = ?
+            `, [guildId]);
+
+            // Guild players
+            await db.execute(`
+            DELETE FROM state_guild_player WHERE guild_id = ?
+            `, [guildId]);
+
+            // Teams
+            await db.execute(`
+            DELETE FROM state_teams WHERE guild_id = ?
+            `, [guildId]);
+        });
     }
 }

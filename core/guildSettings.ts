@@ -4,6 +4,7 @@ import { Validator } from "./validator";
 import GuildModel from '../models/guild';
 import Util from './util';
 import ServerModel from '../models/server';
+import Logger from './logger';
 
 // Only storing frequently accessed data and sync with db
 export default class GuildSettings {
@@ -261,5 +262,18 @@ export default class GuildSettings {
 
     public get defaultServer(): number {
         return this._defaultServer;
+    }
+
+    public async resetState() {
+        try {
+            for (const [key, value] of this.pendingPickups) {
+                clearTimeout(this.pendingPickups.get(key));
+            }
+
+            this.pendingPickups.clear();
+            await GuildModel.resetState(BigInt(this.guild.id));
+        } catch (err) {
+            Logger.logError('Something went wrong resetting the state', err, true, this.guild.id, this.guild.name);
+        }
     }
 }

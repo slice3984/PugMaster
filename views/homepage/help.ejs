@@ -53,6 +53,7 @@
                                     <span>Miscellaneous</span>
                                 </div>
                                 <ul>
+                                    <li><a href="#introduction">Introduction for players new to pickups</a></li>
                                     <li><a href="#set-permissions">Set permissions, create a moderator role</a></li>
                                 </ul>
                             </div>
@@ -427,6 +428,41 @@
                             <p><span class="red">*</span>Can be none to disable / clear</p>
                             <p>Variables which are used for the <a href="./commands#modify_pickup">modify_pickup</a>
                                 command
+                        </div>
+                        <div id="introduction" class="hidden">
+                            <h3>How do pickups work?</h3>
+                            <p>This bot is used to organize pickups/matches on a discord server.</p>
+                            <p>After a pickup reached its maximum player capacity the pickup will start and show the
+                                server you have to connect to.</p>
+                            <p>(In case of enabled afk check you have to !ready when the bot asks for it)</p>
+                            <p class="margin-top-small">You can add to a pickup using the following command:</p>
+                            <div class="code-block">!add pickup</div>
+                            <p>Executing this command results in adding you to the pickup queue for the pickup "pickup".
+                            </p>
+                            <p>To remove from a pickup you use:</p>
+                            <div class="code-block">!remove pickup</div>
+                            <p>It is also possible to pass multiple pickups to the add and remove commands, examples:
+                            </p>
+                            <div class="code-block">!add pickup1 pickup2</div>
+                            <div class="code-block">!remove pickup1 pickup2</div>
+                            <p>Calling add or remove without arguments results in adding to default & active pickups or
+                                removing from all pickups you added to.</p>
+                            <p>You can also replace !add and !remove by + or -, examples:</p>
+                            <div class="code-block">+pickup1 pickup2</div>
+                            <div class="code-block">-pickup1 pickup2</div>
+                            <p class="margin-top-small">To list available pickups you can add to you use:</p>
+                            <div class="code-block">!pickups</div>
+                            <p>To display all added players:</p>
+                            <div class="code-block">!who</div> or <div class="code-block">??</div>
+                            <p>To set a time limit after the bot auto removes you from all pickups you added to:</p>
+                            <div class="code-block">!expire time</div>
+                            <p>time has to be replaced with a time string in the following format: 1h 2m (1 hour 2
+                                minutes).</p>
+                            <p>If you add on mobile it is recommended to use the</p>
+                            <div class="code-block">!ao</div>
+                            <p>command which prevents removal on offline status.</p>
+                            <p class="margin-top-small">A complete command reference can be found here: <a
+                                    href="./commands">commands</a></p>
                         </div>
                         <div id="set-permissions" class="hidden">
                             <h3>Set command permissions for a role</h3>
