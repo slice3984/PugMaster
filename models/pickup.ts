@@ -1,4 +1,4 @@
-import { PickupSettings } from '../core/types';
+import { PickupSettings, RateablePickup } from '../core/types';
 import db from '../core/db';
 import { transaction } from '../core/db';
 import { PoolConnection } from 'mysql2/promise';
@@ -530,8 +530,140 @@ export default class PickupModel {
         await transaction(db, async (db) => {
             const conn = db as PoolConnection;
 
-            await GuildModel.removeAfks(conn, guildId, addedPlayerIds);
+            await GuildModel.removeAfks(conn, guildId, ...addedPlayerIds);
             await this.setPendings(conn, guildId, 'fill', ...pickupConfigIds);
+        });
+    }
+
+    static async getLatestStoredRateEnabledPickup(guildId: bigint, onlyAlreadyRated: boolean): Promise<RateablePickup | null> {
+        const data: any = await db.execute(`
+        SELECT pc.id AS pickupConfigId, pc.name, ps.id AS pickupId, ps.started_at, pp.team, p.user_id, p.elo, p.current_nick, pp.is_captain, rr.result FROM pickup_configs pc
+        JOIN pickups ps ON ps.pickup_config_id = pc.id
+        JOIN pickup_players pp ON ps.id = pp.pickup_id
+        LEFT JOIN rated_results rr ON rr.pickup_id = ps.id AND rr.team = pp.team
+        JOIN players p ON p.id = pp.player_id
+        WHERE pc.guild_id = ? AND pc.is_rated = 1 AND rr.pickup_id IS${onlyAlreadyRated ? ' NOT' : ''} NULL
+        AND ps.id = (SELECT MAX(p.id) FROM pickups p
+                    JOIN pickup_configs pc ON pc.id = p.pickup_config_id
+                    WHERE pc.guild_id = ? AND pc.is_rated = 1 AND p.has_teams = 1)
+        `, [guildId, guildId])
+
+        if (!data[0].length) {
+            return null;
+        }
+
+        let pickupId: number;
+        let pickupConfigId: number;
+        let name: string;
+        let startedAt: Date;
+        let isRated: boolean;
+        let captains = [];
+        const teams = new Map();
+
+        data[0].forEach((row, index) => {
+            if (!index) {
+                pickupId = row.pickupId;
+                pickupConfigId = row.pickupConfigId;
+                name = row.name;
+                startedAt = row.started_at;
+                isRated = onlyAlreadyRated;
+            }
+
+            if (row.is_captain) {
+                captains.push({ team: row.team, id: row.user_id.toString(), elo: row.elo, nick: row.current_nick });
+            }
+
+            const team = teams.get(row.team);
+
+            if (!team) {
+                teams.set(row.team, {
+                    name: row.team,
+                    outcome: row.result,
+                    players: [{ id: row.user_id.toString(), elo: row.elo, nick: row.current_nick }]
+                });
+            } else {
+                team.players.push({ id: row.user_id.toString(), elo: row.elo, nick: row.current_nick });
+            }
+        });
+
+        return {
+            pickupId,
+            pickupConfigId,
+            name,
+            startedAt,
+            isRated,
+            captains,
+            teams: Array.from(teams.values())
+        } as unknown as RateablePickup;
+    }
+
+    static async reportOutcome(pickupId: number, team: string, outcome: 'loss' | 'draw') {
+        await db.execute(`
+        INSERT INTO state_rating_reports VALUES (?, ?, ?)
+        `, [pickupId, team, outcome]);
+    }
+
+    static async getReportedOutcomes(pickupId: number):
+        Promise<{ team: string; outcome: 'loss' | 'draw' | 'win' }[] | null> {
+        const data: any = await db.execute(`
+        SELECT * FROM state_rating_reports WHERE pickup_id = ?
+        `, [pickupId]);
+
+        if (!data[0].length) {
+            return null;
+        }
+
+        return data[0].map(row => {
+            return {
+                team: row.team,
+                outcome: row.outcome
+            }
+        });
+    }
+
+    static async getPickupRatings(pickupId: number):
+        Promise<{ captain: { id: string; nick: string }; reported: 'draw' | 'loss' | 'win' | null }[]> {
+        const data: any = await db.execute(`
+        SELECT ps.user_id, ps.current_nick, rr.result FROM pickup_players p
+        JOIN players ps ON p.player_id = ps.id
+        LEFT JOIN rated_results rr ON rr.pickup_id = p.pickup_id
+        WHERE p.pickup_id = ? AND p.is_captain = 1
+        `, [pickupId]);
+
+        if (!data[0].length) {
+            return null;
+        }
+
+        const reports = [];
+
+        data[0].forEach(row => {
+            reports.push({
+                captain: {
+                    id: row.user_id,
+                    nick: row.current_nick
+                },
+                reported: row.result
+            });
+        });
+
+        return reports;
+    }
+
+    static async ratePickup(pickupId: number, outcomes: { team: string; result: 'win' | 'draw' | 'loss' }[]) {
+        const values = [];
+
+        outcomes.forEach(outcome => {
+            values.push(pickupId, outcome.team, outcome.result);
+        });
+
+        await transaction(db, async (db) => {
+            await db.execute(`
+            INSERT INTO rated_results VALUES ${Array(outcomes.length).fill('(?, ?, ?)').join(',')}
+            `, values);
+
+            await db.execute(`
+            UPDATE pickups SET is_rated = 1 WHERE id = ?
+            `, [pickupId]);
         });
     }
 }

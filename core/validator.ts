@@ -312,7 +312,7 @@ export namespace Validator {
 
     export namespace Guild {
         export function areValidKeys(...keys) {
-            const validKeys = ['prefix', 'global_expire', 'trust_time', 'explicit_trust', 'whitelist', 'blacklist', 'promotion_delay', 'server',
+            const validKeys = ['prefix', 'global_expire', 'report_expire', 'trust_time', 'explicit_trust', 'whitelist', 'blacklist', 'promotion_delay', 'server',
                 'start_message', 'sub_message', 'notify_message', 'iteration_time', 'afk_time', 'afk_check_iterations', 'picking_iterations', 'warn_streaks', 'warns_until_ban', 'warn_streak_expiration',
                 'warn_expiration', 'warn_bantime', 'warn_bantime_multiplier'];
 
@@ -358,6 +358,24 @@ export namespace Validator {
 
                         if (guildSettings.globalExpireTime === validTime) {
                             errors.push({ type: key, errorMessage: `global expire is already set to ${Util.formatTime(validTime)}` });
+                        }
+                        break;
+                    case 'report_expire':
+                        const validReportExpireTime = Util.validateTimeString(value, 86400000, 1800000);
+
+                        if (validReportExpireTime === 'exceeded') {
+                            errors.push({ type: key, errorMessage: `max report expire time is ${Util.formatTime(86400000)}` });
+                            break;
+                        } else if (validReportExpireTime === 'subceeded') {
+                            errors.push({ type: key, errorMessage: `min report expire time is ${Util.formatTime(1800000)}` });
+                            break;
+                        } else if (validReportExpireTime === 'invalid') {
+                            errors.push({ type: key, errorMessage: 'invalid time amounts given' });
+                            break;
+                        }
+
+                        if (guildSettings.trustTime === validReportExpireTime) {
+                            errors.push({ type: key, errorMessage: `report expire time is already set to ${Util.formatTime(validReportExpireTime)}` });
                         }
                         break;
                     case 'trust_time':

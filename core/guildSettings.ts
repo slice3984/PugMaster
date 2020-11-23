@@ -20,6 +20,7 @@ export default class GuildSettings {
         private _promotionDelay: number,
         private _lastPromote: Date | null,
         private _globalExpireTime: number | null,
+        private _reportExpireTime: number,
         private _trustTime: number,
         private _explicitTrust: boolean | null,
         private _disabledCommands: string[],
@@ -47,7 +48,7 @@ export default class GuildSettings {
         for (const prop of properties) {
 
             if (prop.value === 'none') {
-                if (['prefix', 'warn_streaks', 'iteration_time', 'afk_time', 'afk_check_iterations', 'picking_iterations', 'warn_streak_expiration',
+                if (['prefix', 'report_expire', 'warn_streaks', 'iteration_time', 'afk_time', 'afk_check_iterations', 'picking_iterations', 'warn_streak_expiration',
                     'warn_expiration', 'warn_bantime', 'warn_bantime_multiplier', 'warns_until_ban'].includes(prop.key)) {
                     errors.push({ type: 'none', errorMessage: `you can't disable property ${prop.key}` });
                 } else {
@@ -81,7 +82,7 @@ export default class GuildSettings {
             let dbColumn = keyNames.includes(key) ? dbColumnNames[keyNames.indexOf(key)] : key;
 
             // Convert to ms if required
-            if (['global_expire', 'trust_time', 'promotion_delay', 'afk_time', 'warn_bantime', 'warn_expiration', 'warn_streak_expiration'].includes(key)) {
+            if (['global_expire', 'report_expire', 'trust_time', 'promotion_delay', 'afk_time', 'warn_bantime', 'warn_expiration', 'warn_streak_expiration'].includes(key)) {
                 value = (Util.timeStringToTime(value) * 60 * 1000).toString();
             }
 
@@ -114,6 +115,7 @@ export default class GuildSettings {
             switch (key) {
                 case 'prefix': this._prefix = value; break;
                 case 'global_expire': this._globalExpireTime = value ? +value : null; break;
+                case 'report_expire': this._reportExpireTime = +value; break;
                 case 'trust_time': this._trustTime = value ? +value : null; break;
                 case 'explicit_trust': this._explicitTrust = value ? value === '1' ? true : false : null; break;
                 case 'whitelist': this._whitelistRole = value ? BigInt(value) : null; break;
@@ -184,6 +186,10 @@ export default class GuildSettings {
 
     public get globalExpireTime(): number {
         return this._globalExpireTime;
+    }
+
+    public get reportExpireTime(): number {
+        return this._reportExpireTime;
     }
 
     public get promotionDelay(): number {

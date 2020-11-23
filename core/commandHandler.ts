@@ -145,9 +145,9 @@ export default class CommandHandler {
             return message.reply(reply);
         }
 
-        if (guild.commandSettings.has(cmd)) {
+        if (guild.commandSettings.has(command.cmd)) {
             try {
-                await command.exec(this.bot, message, args, guild.commandSettings.get(cmd));
+                await command.exec(this.bot, message, args, guild.commandSettings.get(command.cmd));
             } catch (err) { errorHandler(err) }
         } else {
             const defaults = command.defaults ? command.defaults.map(def => def.value) : null;

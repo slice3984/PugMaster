@@ -9,7 +9,7 @@ import ServerModel from '../models/server';
 export default class Util {
     private constructor() { }
 
-    static async getUser(guild: Discord.Guild, identifier: string, fetch = false) {
+    static async getUser(guild: Discord.Guild, identifier: string, fetch = false): Promise<Discord.User | Discord.GuildMember> {
         let id: string | RegExpMatchArray = identifier.match(/<@!?(\d+)>/);
         if (!id) {
             if (!/\d+/.test(identifier)) {
@@ -36,7 +36,14 @@ export default class Util {
 
             return user;
         } else {
-            const user = guild.members.cache.get(id);
+            let user;
+
+            try {
+                user = await guild.members.fetch(id);
+            } catch (_err) {
+                return null;
+            }
+
             return user;
         }
     }

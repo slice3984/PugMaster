@@ -4,6 +4,7 @@
     "compilerOptions": {
         "lib": [
             "dom"
-        ]
+        ],
+        "sourceMap": true
     }
 }

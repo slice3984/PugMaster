@@ -1,5 +1,6 @@
 import db, { transaction } from '../core/db';
 import { PickupInfo, PickupInfoAPI, PlayerSearchResult } from '../core/types';
+import PickupModel from './pickup';
 
 export default class StatsModel {
     private constructor() { }
@@ -11,6 +12,14 @@ export default class StatsModel {
         // Check if there are multiple teams
         if (Array.isArray(teams[0])) {
             gotTeams = true;
+        } else {
+            const pickupSettings = await PickupModel.getPickupSettings(guildId, pickupConfigId);
+            // if the team amount is equal the player count we can assign each player to a team
+            if (teams.length === pickupSettings.teamCount) {
+                gotTeams = true;
+                captains = (teams as bigint[]).map(p => BigInt(p));  // Every player is also a captain
+                teams = (teams as bigint[]).map(p => [p]);
+            }
         }
 
         await transaction(db, async (db) => {
@@ -339,16 +348,15 @@ export default class StatsModel {
 
     static async getPickupInfo(guildId: bigint, pickupId: number): Promise<PickupInfoAPI | { foundPickup: boolean }> {
         const data: any = await db.execute(`
-        SELECT p.id, p.is_rated, pp.team, ps.elo, ps.current_nick, ps.user_id, rr.winner_team FROM pickups p
+        SELECT p.id, p.is_rated, pp.team, ps.elo, ps.current_nick, ps.user_id, rr.result FROM pickups p
         JOIN pickup_players pp ON p.id = pp.pickup_id
         JOIN players ps ON pp.player_id = ps.id
-        LEFT JOIN rated_results rr ON rr.pickup_id = p.id
+        LEFT JOIN rated_results rr ON rr.pickup_id = p.id AND rr.team = pp.team
         WHERE p.guild_id = ? and p.id = ?
         `, [guildId, pickupId]);
 
         let puId: number;
         let isRated: boolean;
-        let winnerTeam: string | null;
 
         const teams = new Map();
 
@@ -362,7 +370,6 @@ export default class StatsModel {
             if (!index) {
                 puId = row.id;
                 isRated = Boolean(row.is_rated);
-                winnerTeam = row.winner_team;
             }
 
             if (!row.team) {
@@ -371,6 +378,7 @@ export default class StatsModel {
                 if (!team) {
                     teams.set('A', {
                         name: 'A',
+                        outcome: null,
                         players: [{ id: row.user_id.toString(), elo: row.elo, nick: row.current_nick }]
                     });
                 } else {
@@ -385,7 +393,15 @@ export default class StatsModel {
 
                 if (!team) {
                     teams.set(row.team, {
-                        name: row.team, players: [{ id: row.user_id.toString(), elo: row.elo, nick: row.current_nick }]
+                        name: row.team,
+                        outcome: row.result,
+                        players: [
+                            {
+                                id: row.user_id.toString(),
+                                elo: row.elo,
+                                nick: row.current_nick
+                            }
+                        ]
                     });
                 } else {
                     team.players.push({
@@ -401,7 +417,6 @@ export default class StatsModel {
             foundPickup: true,
             id: puId,
             isRated,
-            winnerTeam,
             teams: Array.from(teams.values())
         } as unknown as PickupInfoAPI;
 
@@ -579,5 +594,26 @@ export default class StatsModel {
                 nick: row.current_nick
             }
         })
+    }
+
+    static async replacePlayer(guildId: bigint, pickupId: number, playerToReplace: bigint, replacementPlayer: bigint) {
+        const playerToReplaceId: any = await db.execute(`
+        SELECT id FROM players
+        WHERE guild_id = ? AND user_id = ?
+        `, [guildId, playerToReplace]);
+
+        const replacementPlayerId: any = await db.execute(`
+        SELECT id FROM players
+        WHERE guild_id = ? AND user_id = ?
+        `, [guildId, replacementPlayer]);
+
+
+        if (!playerToReplaceId[0].length || !replacementPlayerId[0].length) {
+            return null;
+        }
+        await db.execute(`
+        UPDATE pickup_players SET player_id = ?
+        WHERE pickup_id = ? AND player_id = ?
+        `, [replacementPlayerId[0][0].id, pickupId, playerToReplaceId[0][0].id]);
     }
 }

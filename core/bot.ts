@@ -32,6 +32,9 @@ export default class Bot {
                     name: ConfigTool.getConfig().webserver.domain,
                     type: 'PLAYING'
                 }
+            },
+            ws: {
+                intents: ['GUILDS', 'GUILD_MESSAGES', 'GUILD_PRESENCES', 'GUILD_MEMBERS']
             }
         });
 
@@ -243,8 +246,54 @@ export default class Bot {
 
     private secondaryLoop() {
         setInterval(async () => {
+            // Clear expired sub requests
+            const guildsToClearRequests = [];
+
+            for (const [id, guildSettings] of this.guilds.entries()) {
+                const latestUnratedPickup = await PickupModel.getLatestStoredRateEnabledPickup(id, false);
+
+                if (!latestUnratedPickup) {
+                    break;
+                }
+
+                const endTimestamp = latestUnratedPickup.startedAt.getTime() + guildSettings.reportExpireTime;
+
+                if (Date.now() > endTimestamp) {
+                    guildsToClearRequests.push(id);
+                }
+            }
+
+            await GuildModel.clearSubRequests(...guildsToClearRequests);
+
             // Clear unused state guild players
             await GuildModel.clearUnusedPlayerStates();
+
+            // Clear expired reports
+            const reports = await GuildModel.getStateReportTimes();
+            const pickupsToClear = [];
+            const guildsToCheck = []; // Reports of guilds not in here get cleared as well (disconnected guilds)
+
+            if (reports) {
+                for (const [guild, info] of reports) {
+                    const guildSettings = this.guilds.get(BigInt(guild));
+
+                    if (!guildSettings) {
+                        continue;
+                    }
+
+                    const timeoutTime = guildSettings.reportExpireTime;
+
+                    for (const infoObj of info) {
+                        if ((infoObj.start.getTime() + timeoutTime) < new Date().getTime()) {
+                            pickupsToClear.push(infoObj.pickupId);
+                        }
+                    }
+
+                    guildsToCheck.push(BigInt(guild));
+                }
+
+                await GuildModel.clearStateReports(pickupsToClear, guildsToCheck);
+            }
 
             // Clear guild flood times
             this.guilds.forEach(guild => guild.lastCommandExecutions.clear());

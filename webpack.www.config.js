@@ -11,7 +11,7 @@ const viewsDir = './views/';
 
 const config = {
     mode: process.env.ENV || 'development',
-    devtool: 'inline-source-map',
+    devtool: "#inline-source-map",
     entry: {
         'homepage': [wwwDir + 'homepage/app.ts', wwwDir + 'homepage/scss/main.scss'],
         'webinterface': [wwwDir + 'webinterface/app.ts', wwwDir + 'webinterface/scss/main.scss']
@@ -27,7 +27,8 @@ const config = {
                     loader: 'ts-loader',
                     options: {
                         configFile: "www/tsconfig.json",
-                        onlyCompileBundledFiles: true
+                        onlyCompileBundledFiles: true,
+
                     }
                 }],
                 exclude: [
@@ -70,10 +71,10 @@ const config = {
         ),
         new LiveReloadPlugin(),
     ],
-    optimization: {
-        minimize: true,
+    optimization: {        
         minimizer: [new TerserPlugin({
             test: /\.js(\?.*)?$/i,
+            sourceMap: true
         })],
     },
 };

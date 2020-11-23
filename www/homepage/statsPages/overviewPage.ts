@@ -306,7 +306,7 @@ export default class OverviewPage {
 
         times.forEach(time => timesData.push({ t: time, y: 0 }));
 
-        const formatedtimes = dates.map(date => new Date(date).toLocaleTimeString(undefined, { hour12: false, hour: '2-digit' }))
+        const formatedtimes = dates.map(date => new Date(date).getHours().toString())
             .map(hour => {
                 if (hour[0] === '0') {
                     if (hour.length > 1 && hour[1] !== '0') {

@@ -482,4 +482,32 @@ export default class PlayerModel {
 
         return null;
     }
+
+    static async setSubRequest(guildId: bigint, userId: bigint, toSend: bigint) {
+        await db.execute(`
+        INSERT INTO state_guild_player (guild_id, player_id, sub_request)
+        VALUES (?, ?, ?)
+        ON DUPLICATE KEY UPDATE sub_request = ?
+        `, [guildId, userId, toSend, toSend]);
+    }
+
+    static async getSubRequest(guildId: bigint, userId: bigint): Promise<string> {
+        const result: any = await db.execute(`
+        SELECT sub_request FROM state_guild_player
+        WHERE guild_id = ? AND player_id = ?
+        `, [guildId, userId]);
+
+        if (!result[0].length) {
+            return null;
+        }
+
+        return result[0][0].sub_request ? result[0][0].sub_request.toString() : null;
+    }
+
+    static async clearSubRequest(guildId: bigint, userId: bigint) {
+        await db.execute(`
+        UPDATE state_guild_player SET sub_request = NULL
+        WHERE guild_id = ? AND player_id = ?
+        `, [guildId, userId]);
+    }
 }

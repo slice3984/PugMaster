@@ -30,6 +30,7 @@ export const createTables = () => new Promise(async (res, _req) => {
       global_blacklist_role BIGINT NULL,
       global_whitelist_role BIGINT NULL,
       global_expire INT NULL DEFAULT 21600000,
+      report_expire INT NULL DEFAULT 7200000,
       server_id INT NULL,
       start_message VARCHAR(200) NOT NULL DEFAULT '**%name** pickup started\n\n%teams\n\n%map[Map: **%map**]\n%ip[IP: **%ip**] %password[Password: **%password**]',
       sub_message VARCHAR(200) NOT NULL DEFAULT 'sub required for **%name** pickup\n%ip[IP: **%ip**] %password[Password: **%password**]',
@@ -173,10 +174,13 @@ export const createTables = () => new Promise(async (res, _req) => {
       id INT NOT NULL AUTO_INCREMENT,
       guild_id BIGINT NOT NULL,
       user_id BIGINT NOT NULL,
-      elo INT NULL,
       notifications TINYINT NOT NULL DEFAULT 1,
       trusted TINYINT NULL,
       current_nick VARCHAR(32) NOT NULL,
+      elo DOUBLE NULL DEFAULT NULL,
+      variance DOUBLE NULL DEFAULT NULL,
+      prev_elo DOUBLE NULL DEFAULT NULL,
+      prev_variance DOUBLE NULL DEFAULT NULL,
       PRIMARY KEY (id),
       INDEX guild_id_idx (guild_id ASC) VISIBLE,
       CONSTRAINT fk_players
@@ -221,6 +225,7 @@ export const createTables = () => new Promise(async (res, _req) => {
       player_count SMALLINT NOT NULL,
       team_count SMALLINT NOT NULL DEFAULT 2,
       is_default_pickup TINYINT NOT NULL DEFAULT 0,
+      is_rated TINYINT NULL DEFAULT 0,
       mappool_id INT NULL,
       afk_check TINYINT NOT NULL DEFAULT 0,
       pick_mode ENUM('no_teams', 'manual', 'elo') NOT NULL DEFAULT 'no_teams',
@@ -329,16 +334,30 @@ export const createTables = () => new Promise(async (res, _req) => {
         ENGINE = InnoDB; 
         `,
     `
-    CREATE TABLE IF NOT EXISTS rated_results (
-      winner_team VARCHAR(2) NOT NULL,
+    CREATE TABLE IF NOT EXISTS state_rating_reports (
       pickup_id INT NOT NULL,
+      team VARCHAR(2) NOT NULL,
+      outcome ENUM('win', 'draw', 'loss') NOT NULL,
+      INDEX fk_pickup_id_state_rating_reports_idx (pickup_id ASC) VISIBLE,
+      CONSTRAINT fk_pickup_id_state_rating_reports
+        FOREIGN KEY (pickup_id)
+        REFERENCES pickups (id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE)
+    ENGINE = InnoDB;
+    `,
+    `
+    CREATE TABLE IF NOT EXISTS rated_results (
+      pickup_id INT NOT NULL,
+      team VARCHAR(2) NOT NULL,
+      result ENUM('win', 'draw', 'loss') NOT NULL,
       INDEX pickup_id_idx (pickup_id ASC) VISIBLE,
       CONSTRAINT fk_rated_results_pickup
         FOREIGN KEY (pickup_id)
         REFERENCES pickups (id)
         ON DELETE CASCADE
         ON UPDATE CASCADE)
-        ENGINE = InnoDB;
+    ENGINE = InnoDB;
         `,
     `
     CREATE TABLE IF NOT EXISTS pickup_servers (
@@ -486,6 +505,7 @@ export const createTables = () => new Promise(async (res, _req) => {
         pickup_expire DATETIME NULL,
         last_add DATETIME NULL,
         is_afk TINYINT NULL,
+        sub_request BIGINT NULL DEFAULT NULL,
         INDEX fk_state_guild_player_guild_id_idx (guild_id ASC) VISIBLE,
         UNIQUE(guild_id, player_id),
         CONSTRAINT fk_state_guild_player_guild_id

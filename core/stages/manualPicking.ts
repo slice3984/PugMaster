@@ -40,10 +40,11 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
 
         if (captainRole) {
             for (const player of shuffledPlayers) {
-                const playerObj = await Util.getUser(guild, player.id, true) as Discord.GuildMember;
+                const playerObj = await Util.getUser(guild, player.id) as Discord.GuildMember;
 
+                // TODO: Check if members & roles are fetched correct now
                 if (playerObj) {
-                    if (playerObj.roles.cache.has(captainRole)) {
+                    if (playerObj.roles && playerObj.roles.cache.has(captainRole)) {
                         captains.push(player);
                         shuffledPlayers.splice(shuffledPlayers.findIndex(p => p === player), 1);
                     }

@@ -441,9 +441,28 @@ export default class PickupsPage {
             const aboutEl = document.createElement('div');
             aboutEl.className = 'pickup-item__about';
 
+            const outcomes = pickupInfo.teams.map(t => {
+                return {
+                    team: t.name,
+                    outcome: t.outcome
+                }
+            })
+                .filter(outcome => outcome.outcome)
+                .sort((a, b) => {
+                    const compareValues = new Map([['win', 0], ['draw', 1], ['loss', 2]]);
+                    return compareValues.get(a.outcome) - compareValues.get(b.outcome);
+                });
+
+            const outcomesFormatted = [];
+
+            outcomes.forEach(team => {
+                const outcomeStr = team.outcome === 'win' ? 'Won' : team.outcome === 'draw' ? 'Drew' : 'Lost';
+                outcomesFormatted.push(`<span class=${team.outcome === 'win' ? 'green' : team.outcome === 'draw' ? 'blue' : 'red'}>Team ${team.team} - ${outcomeStr}</span>`);
+            });
+
             aboutEl.innerHTML = `
             <p>Rated: ${pickupInfo.isRated ? '<span class="green">Yes</span>' : '<span class="red">No</span>'}</p>
-            <p>Winner: ${pickupInfo.winnerTeam ? `<span class="green">Team ${pickupInfo.winnerTeam}</span>` : '<span class="red">Unknown</span>'}</p> 
+            <p>Outcome: ${outcomesFormatted.length ? outcomesFormatted.join(' | ') : '-'}
             `;
 
             contentEl.append(aboutEl);
@@ -475,13 +494,13 @@ interface PickupInfoAPI {
     foundPickup: boolean;
     id: number;
     isRated: boolean;
-    winnerTeam: string | null;
     teams: {
         name: string;
+        outcome: 'win' | 'draw' | 'loss' | null,
         players: {
             id: string;
             elo: number;
             nick: string;
         }[]
-    }[];
+    }[]
 }

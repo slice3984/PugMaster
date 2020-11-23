@@ -97,6 +97,7 @@ export default class GuildModel {
                 data.promotion_delay,
                 data.last_promote,
                 data.global_expire,
+                data.report_expire,
                 data.trust_time ? data.trust_time : null,
                 data.explicit_trust ? data.explicit_trust : null,
                 disabledCommands,
@@ -279,7 +280,7 @@ export default class GuildModel {
     static async clearUnusedPlayerStates() {
         await db.query(`
         DELETE FROM state_guild_player
-        WHERE ao_expire IS NULL AND pickup_expire IS NULL
+        WHERE ao_expire IS NULL AND pickup_expire IS NULL AND sub_request IS NULL
         AND last_add IS NULL AND is_afk IS NULL
         `);
     }
@@ -714,5 +715,54 @@ export default class GuildModel {
             DELETE FROM state_teams WHERE guild_id = ?
             `, [guildId]);
         });
+    }
+
+    static async getStateReportTimes(): Promise<Map<string, { start: Date, pickupId: number }[]> | null> {
+        const data: any = await db.query(`
+        SELECT p.guild_id, p.id, p.started_at FROM pickups p
+        JOIN state_rating_reports srr ON srr.pickup_id = p.id
+        GROUP BY p.id
+        `);
+
+        if (!data[0].length) {
+            return null;
+        }
+
+        const reports = new Map();
+
+        data[0].forEach(row => {
+            const guildId = row.guild_id;
+
+            if (!reports.has(guildId)) {
+                reports.set(guildId, [{ start: row.started_at, pickupId: row.id }]);
+            } else {
+                reports.get(guildId).push({ start: row.started_at, pickupId: row.id });
+            }
+        });
+
+        return reports;
+    }
+
+    static async clearStateReports(pickupsToClear: number[], activeGuilds: bigint[]) {
+        await db.execute(`
+        DELETE srr FROM state_rating_reports srr
+        JOIN pickups p ON srr.pickup_id = p.id
+        WHERE pickup_id IN (${Array(pickupsToClear.length).fill('?').join(',')})
+        OR guild_id NOT IN (${Array(activeGuilds.length).fill('?').join(',')})
+        `, [...pickupsToClear, ...activeGuilds])
+    }
+
+    static async clearSubRequestsForPlayer(guildId: bigint, playerId: bigint) {
+        await db.execute(`
+        UPDATE state_guild_player SET sub_request = NULL
+        WHERE guild_id = ? AND sub_request = ?
+        `, [guildId, playerId]);
+    }
+
+    static async clearSubRequests(...guildIds) {
+        await db.execute(`
+        UPDATE state_guild_player SET sub_request = NULL
+        WHERE guild_id IN (${Array(guildIds.length).fill('?').join(',')})
+        `, guildIds);
     }
 }

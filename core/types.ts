@@ -138,15 +138,33 @@ export interface PickupInfoAPI {
     foundPickup: boolean;
     id: number;
     isRated: boolean;
-    winnerTeam: string | null;
     teams: {
         name: string;
+        outcome: 'win' | 'draw' | 'loss' | null,
         players: {
             id: string;
             elo: number;
             nick: string;
         }[]
-    }
+    }[]
+}
+
+export interface RateablePickup {
+    pickupId: number;
+    pickupConfigId: number;
+    name: string;
+    startedAt: Date;
+    isRated: boolean;
+    captains: { team: string; id: string; elo: number; nick: string }[]; // Can be empty if the team got autopicked
+    teams: {
+        name: string;
+        outcome: 'win' | 'draw' | 'loss' | null,
+        players: {
+            id: string;
+            elo: number;
+            nick: string;
+        }[]
+    }[]
 }
 
 export interface PlayerSearchResult {
