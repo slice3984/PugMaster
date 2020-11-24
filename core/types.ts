@@ -73,6 +73,7 @@ export interface PickupSettings {
     mapPoolId: number | null;
     afkCheck: boolean;
     pickMode: 'no_teams' | 'manual' | 'elo';
+    rated: boolean;
     whitelistRole: string | null;
     blacklistRole: string | null;
     promotionRole: string | null;

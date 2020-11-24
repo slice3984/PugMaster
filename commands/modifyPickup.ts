@@ -26,9 +26,9 @@ const command: Command = {
         if (params.length > 2) {
             const value = params[2];
 
-            const dbColumnNames = ['player_count', 'team_count', 'is_default_pickup', 'afk_check', 'pick_mode', 'whitelist_role',
+            const dbColumnNames = ['player_count', 'team_count', 'is_default_pickup', 'is_rated', 'afk_check', 'pick_mode', 'whitelist_role',
                 'blacklist_role', 'promotion_role', 'captain_role', 'server_id', 'mappool_id', 'server_id'];
-            const keyNames = ['players', 'teams', 'default', 'afkcheck', 'pickmode', 'whitelist', 'blacklist', 'promotion', 'captain', 'server', 'mappool', 'server'];
+            const keyNames = ['players', 'teams', 'default', 'rated', 'afkcheck', 'pickmode', 'whitelist', 'blacklist', 'promotion', 'captain', 'server', 'mappool', 'server'];
             let dbColumn = keyNames.includes(key) ? dbColumnNames[keyNames.indexOf(key)] : key;
 
             const keyisValid = Validator.Pickup.areValidKeys(key);
@@ -39,7 +39,7 @@ const command: Command = {
 
             // Clear value if possible
             if (value === 'none') {
-                if (['name', 'players', 'teams', 'default', 'afkcheck', 'pickmode'].includes(key)) {
+                if (['name', 'players', 'teams', 'default', 'rated', 'afkcheck', 'pickmode'].includes(key)) {
                     return message.reply('you can\'t disable this property');
                 }
 
@@ -119,6 +119,7 @@ const command: Command = {
                 `Default Pickup: **${settings.isDefaultPickup ? 'yes' : 'no'}**\n` +
                 `AFK check: **${settings.afkCheck ? 'enabled' : 'disabled'}**\n` +
                 `Pick mode: **${settings.pickMode}**\n` +
+                `Rated: **${settings.rated ? 'rated' : 'unrated'}**\n` +
                 `Map pool: **${mapPoolName}**\n` +
                 `Server: **${serverName}**\n` +
                 `Whitelist role: **${whitelistRole ? whitelistRole.name : '-'}**\n` +

@@ -1,13 +1,11 @@
 import Discord from 'discord.js';
 import PickupModel from "../models/pickup";
 import Util from "./util";
-import Bot from "./bot";
 import { ValidationError, Command, PickupSettings } from './types';
 import MappoolModel from '../models/mappool';
 import ServerModel from '../models/server';
 import GuildSettings from './guildSettings';
 import ConfigTool from './configTool';
-import { isArray } from 'util';
 
 const config = ConfigTool.getConfig();
 
@@ -15,7 +13,7 @@ export namespace Validator {
     export namespace Pickup {
         export function areValidKeys(...keys) {
             const validKeys = ['name', 'players', 'teams', 'default', 'mappool', 'afkcheck',
-                'pickmode', 'whitelist', 'blacklist', 'promotion', 'captain', 'server'];
+                'pickmode', 'rated', 'whitelist', 'blacklist', 'promotion', 'captain', 'server'];
             const invalidKeys = keys.filter(key => !validKeys.includes(key));
 
             return invalidKeys;
@@ -142,11 +140,31 @@ export namespace Validator {
                             pickupSettings = await PickupModel.getPickupSettings(BigInt(guild.id), pickup);
                         }
 
+                        if (value.toLocaleLowerCase() === 'no_teams' && pickupSettings.rated) {
+                            errors.push({ type: 'pickmode', errorMessage: 'no_teams is invalid for pickups in rated mode, disable rated mode first' });
+                            break;
+                        }
+
                         if ((pickupSettings.playerCount / pickupSettings.teamCount) < 2 && ['manual', 'elo'].includes(value)) {
                             errors.push({ type: 'pickmode', errorMessage: `can't use ${value.toLowerCase()} pick mode for a pickup with one player teams` });
                             break;
                         }
 
+                        break;
+                    case 'rated':
+                        if (!['true', 'false'].includes(value)) {
+                            errors.push({ type: 'rated', errorMessage: 'value has to be true or false' });
+                            break;
+                        }
+
+                        if (!pickupSettings) {
+                            pickupSettings = await PickupModel.getPickupSettings(BigInt(guild.id), pickup);
+                        }
+
+                        if ((pickupSettings.playerCount / pickupSettings.teamCount) > 1 && pickupSettings.pickMode === 'no_teams') {
+                            errors.push({ type: 'rated', errorMessage: 'pickup has to be in manual or elo picking mode to be rateable' });
+                            break;
+                        }
                         break;
                     case 'whitelist':
                         const whitelistRole = Util.getRole(guild, value);

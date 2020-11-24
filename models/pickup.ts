@@ -317,6 +317,7 @@ export default class PickupModel {
             mapPoolId: settings.mappool_id ? settings.mappool_id : null,
             afkCheck: Boolean(settings.afk_check),
             pickMode: settings.pick_mode,
+            rated: Boolean(settings.is_rated),
             whitelistRole: settings.whitelist_role ? settings.whitelist_role.toString() : null,
             blacklistRole: settings.blacklist_role ? settings.blacklist_role.toString() : null,
             promotionRole: settings.promotion_role ? settings.promotion_role.toString() : null,
