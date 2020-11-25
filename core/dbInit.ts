@@ -228,7 +228,7 @@ export const createTables = () => new Promise(async (res, _req) => {
       is_rated TINYINT NULL DEFAULT 0,
       mappool_id INT NULL,
       afk_check TINYINT NOT NULL DEFAULT 0,
-      pick_mode ENUM('no_teams', 'manual', 'elo') NOT NULL DEFAULT 'no_teams',
+      pick_mode ENUM('no_teams', 'manual', 'random', 'elo') NOT NULL DEFAULT 'no_teams',
       whitelist_role BIGINT NULL,
       blacklist_role BIGINT NULL,
       promotion_role BIGINT NULL,

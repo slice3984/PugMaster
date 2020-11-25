@@ -263,7 +263,9 @@ export default class Bot {
                 }
             }
 
-            await GuildModel.clearSubRequests(...guildsToClearRequests);
+            if (guildsToClearRequests.length) {
+                await GuildModel.clearSubRequests(...guildsToClearRequests);
+            }
 
             // Clear unused state guild players
             await GuildModel.clearUnusedPlayerStates();

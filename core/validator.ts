@@ -131,8 +131,8 @@ export namespace Validator {
                         }
                         break;
                     case 'pickmode':
-                        if (!['no_teams', 'manual', 'elo'].includes(value)) {
-                            errors.push({ type: 'pickmode', errorMessage: 'value has to be no_teams, manual or elo' });
+                        if (!['no_teams', 'manual', 'random', 'elo'].includes(value)) {
+                            errors.push({ type: 'pickmode', errorMessage: 'value has to be no_teams, manual, random or elo' });
                             break;
                         }
 
@@ -145,7 +145,7 @@ export namespace Validator {
                             break;
                         }
 
-                        if ((pickupSettings.playerCount / pickupSettings.teamCount) < 2 && ['manual', 'elo'].includes(value)) {
+                        if ((pickupSettings.playerCount / pickupSettings.teamCount) < 2 && ['manual', 'random', 'elo'].includes(value)) {
                             errors.push({ type: 'pickmode', errorMessage: `can't use ${value.toLowerCase()} pick mode for a pickup with one player teams` });
                             break;
                         }
@@ -162,7 +162,7 @@ export namespace Validator {
                         }
 
                         if ((pickupSettings.playerCount / pickupSettings.teamCount) > 1 && pickupSettings.pickMode === 'no_teams') {
-                            errors.push({ type: 'rated', errorMessage: 'pickup has to be in manual or elo picking mode to be rateable' });
+                            errors.push({ type: 'rated', errorMessage: 'pickup has to be in manual, random or elo picking mode to be rateable' });
                             break;
                         }
                         break;

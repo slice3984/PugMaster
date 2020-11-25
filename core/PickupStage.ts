@@ -6,6 +6,7 @@ import GuildModel from '../models/guild';
 import StatsModel from '../models/stats';
 import afkCheckStage from './stages/afkCheck';
 import { manualPicking } from './stages/manualPicking';
+import { randomTeams } from './stages/randomTeams';
 import { PickupSettings } from './types';
 import Bot from './bot';
 import Logger from './logger';
@@ -70,9 +71,32 @@ export default class PickupStage {
                         }
 
                         await PickupModel.clearTeams(BigInt(guild.id), pickupSettings.id);
-                        await this.startPickup(guild, pickupSettings.id)
+                        await this.startPickup(guild, pickupSettings.id);
                     } catch (err) {
                         Logger.logError('start attempt after failed picking failed in PickupStage', err, false, guild.id, guild.name);
+                        await PickupModel.resetPickup(BigInt(guild.id), pickupSettings.id);
+
+                        if (pickupChannel) {
+                            pickupChannel.send(`something went wrong starting **pickup ${pickupSettings.name}** without teams, pickup cleared`);
+                        }
+                    }
+                }
+                break;
+            case 'random':
+                try {
+                    await randomTeams(guild, pickupSettings.id);
+                } catch (err) {
+                    Logger.logError('random team picking failed in PickupStage', err, false, guild.id, guild.name);
+                    try {
+                        // Start without teams
+                        if (pickupChannel) {
+                            pickupChannel.send(`something went wrong with **pickup ${pickupSettings.name}** in random team generation, attempting to start without teams`);
+                        }
+
+                        await this.startPickup(guild, pickupSettings.id);
+                    } catch (err) {
+                        Logger.logError('start attempt after failed random generation failed in PickupStage', err, false, guild.id, guild.name);
+
                         await PickupModel.resetPickup(BigInt(guild.id), pickupSettings.id);
 
                         if (pickupChannel) {
