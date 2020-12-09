@@ -1,5 +1,6 @@
 import express, { json } from 'express';
 import Bot from '../core/bot';
+import Util from '../core/util';
 import StatsModel from '../models/stats';
 
 const client = Bot.getInstance().getClient();
@@ -57,7 +58,7 @@ export default (async (req: express.Request, res: express.Response) => {
 
     const id = playerInfo.id;
     const name = playerInfo.name;
-    const elo = playerInfo.elo;
+    const elo = Util.tsToEloNumber(playerInfo.elo);
     const pickupAmount = playedPickupCounts.reduce((prev, curr) => prev += curr.amount, 0);
     const playedPickups = playedPickupCounts.map(pickup => {
         return { name: pickup.name, amount: pickup.amount }

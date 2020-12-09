@@ -85,7 +85,8 @@ export interface PickupInfo {
     id: number;
     name: string;
     startedAt: Date;
-    playerNicks: String[];
+    isRated: boolean;
+    teams: { name: string; outcome: 'win' | 'draw' | 'loss' | null; players: { nick: string; isCaptain: boolean }[] }[]
 }
 
 export interface PlayerNicks {

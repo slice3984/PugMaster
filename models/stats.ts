@@ -1,5 +1,6 @@
 import db, { transaction } from '../core/db';
 import { PickupInfo, PickupInfoAPI, PlayerSearchResult } from '../core/types';
+import Util from '../core/util';
 import PickupModel from './pickup';
 
 export default class StatsModel {
@@ -77,55 +78,110 @@ export default class StatsModel {
 
         if (!identifier) {
             pickup = await db.execute(`
-            SELECT p.current_nick, pc.name, ps.started_at, ps.id FROM players p
+            SELECT ANY_VALUE(p.current_nick) as current_nick,
+            ANY_VALUE(pc.name) as name,
+            ANY_VALUE(pp.is_captain) as is_captain,
+            ANY_VALUE(pc.is_rated) as is_rated,
+            ANY_VALUE(pp.team) as team,
+            ANY_VALUE(rr.result) as result,
+            ANY_VALUE(ps.started_at) as started_at,
+            ANY_VALUE(ps.id) as id FROM players p
             JOIN pickup_players pp ON pp.player_id = p.id
             JOIN pickups ps ON pp.pickup_id = ps.id
             JOIN pickup_configs pc ON ps.pickup_config_id = pc.id
+            LEFT JOIN rated_results rr ON pp.pickup_id = rr.pickup_id
             WHERE ps.id = (SELECT MAX(id) FROM pickups WHERE guild_id = ?)
+            GROUP BY p.user_id
             `, [guildId]);
         } else {
             if (!identifier.isPlayer) {
                 // By pickup
                 pickup = await db.execute(`
-                SELECT p.current_nick, pc.name, ps.started_at, ps.id FROM players p
+                SELECT ANY_VALUE(p.current_nick) as current_nick,
+                ANY_VALUE(pc.name) as name,
+                ANY_VALUE(pp.is_captain) as is_captain,
+                ANY_VALUE(pc.is_rated) as is_rated,
+                ANY_VALUE(pp.team) as team,
+                ANY_VALUE(rr.result) as result,
+                ANY_VALUE(ps.started_at) as started_at,
+                ANY_VALUE(ps.id) as id FROM players p
                 JOIN pickup_players pp ON pp.player_id = p.id
                 JOIN pickups ps ON pp.pickup_id = ps.id
                 JOIN pickup_configs pc ON ps.pickup_config_id = pc.id
+                LEFT JOIN rated_results rr ON pp.pickup_id = rr.pickup_id
                 WHERE ps.id = (
 					SELECT MAX(ps.id) FROM pickups ps
                     JOIN pickup_configs pc ON ps.pickup_config_id = pc.id
                     WHERE pc.guild_id = ? AND pc.name = ?
-				)           
+                )
+                GROUP BY p.user_id
             `, [guildId, identifier.value]);
             } else {
                 // By player
                 pickup = await db.execute(`
-                SELECT p.current_nick, pc.name, ps.started_at, ps.id FROM players p
+                SELECT ANY_VALUE(p.current_nick) as current_nick,
+                ANY_VALUE(pc.name) as name,
+                ANY_VALUE(pp.is_captain) as is_captain,
+                ANY_VALUE(pc.is_rated) as is_rated,
+                ANY_VALUE(pp.team) as team,
+                ANY_VALUE(rr.result) as result,
+                ANY_VALUE(ps.started_at) as started_at,
+                ANY_VALUE(ps.id) as id FROM players p
                 JOIN pickup_players pp ON pp.player_id = p.id
                 JOIN pickups ps ON pp.pickup_id = ps.id
                 JOIN pickup_configs pc ON ps.pickup_config_id = pc.id
+                LEFT JOIN rated_results rr ON pp.pickup_id = rr.pickup_id
                 WHERE ps.id = (SELECT MAX(pickup_id) FROM pickup_players WHERE player_id = ?)
+                GROUP BY p.user_id
                 `, [identifier.value])
             }
         }
 
         if (pickup[0].length > 0) {
-            pickup = pickup[0];
+            let id, name, startedAt, isRated;
+            const teams = new Map();
 
-            const id = pickup[0].id;
-            const name = pickup[0].name;
-            const startedAt = pickup[0].started_at;
-            const playerNicks = [];
+            pickup[0].forEach((row, index) => {
+                if (!index) {
+                    id = row.id,
+                        name = row.name,
+                        startedAt = row.started_at,
+                        isRated = Boolean(row.is_rated)
+                }
 
-            pickup.forEach(row => {
-                playerNicks.push(row.current_nick);
+                // No team pickups - Default to team A
+                if (!row.team) {
+                    if (!teams.get('A')) {
+                        teams.set('A', {
+                            name: 'A',
+                            outcome: null,
+                            players: [{ nick: row.current_nick, isCaptain: Boolean(row.is_captain) }]
+                        });
+                    } else {
+                        teams.get('A').players.push({ nick: row.current_nick, isCaptain: Boolean(row.is_captain) });
+                    }
+                } else {
+                    // Teams
+                    const team = teams.get(row.team);
+
+                    if (!team) {
+                        teams.set(row.team, {
+                            name: row.team,
+                            outcome: row.outcome,
+                            players: [{ nick: row.current_nick, isCaptain: Boolean(row.is_captain) }]
+                        })
+                    } else {
+                        team.players.push({ nick: row.current_nick, isCaptain: Boolean(row.is_captain) });
+                    }
+                }
             });
 
             return {
                 id,
                 name,
                 startedAt,
-                playerNicks
+                isRated,
+                teams: Array.from(teams.values()).sort((a, b) => a.name.localeCompare(b.name)) // sort in case of wrong order 
             }
         } else {
             return null;
@@ -379,12 +435,12 @@ export default class StatsModel {
                     teams.set('A', {
                         name: 'A',
                         outcome: null,
-                        players: [{ id: row.user_id.toString(), elo: row.elo, nick: row.current_nick }]
+                        players: [{ id: row.user_id.toString(), elo: Util.tsToEloNumber(row.elo), nick: row.current_nick }]
                     });
                 } else {
                     team.players.push({
                         id: row.user_id.toString(),
-                        elo: row.elo,
+                        elo: Util.tsToEloNumber(row.elo),
                         nick: row.current_nick
                     });
                 }
@@ -398,7 +454,7 @@ export default class StatsModel {
                         players: [
                             {
                                 id: row.user_id.toString(),
-                                elo: row.elo,
+                                elo: Util.tsToEloNumber(row.elo),
                                 nick: row.current_nick
                             }
                         ]
@@ -406,7 +462,7 @@ export default class StatsModel {
                 } else {
                     team.players.push({
                         id: row.user_id.toString(),
-                        elo: row.elo,
+                        elo: Util.tsToEloNumber(row.elo),
                         nick: row.current_nick
                     })
                 }
@@ -471,7 +527,7 @@ export default class StatsModel {
                 id: row.user_id,
                 currentNick: row.current,
                 knownAs: row.old,
-                elo: row.elo
+                elo: Util.tsToEloNumber(row.elo)
             });
 
             currentId = row.user_id;
@@ -484,7 +540,7 @@ export default class StatsModel {
                     id: row.user_id,
                     currentNick: row.current,
                     knownAs: row.old,
-                    elo: row.elo
+                    elo: Util.tsToEloNumber(row.elo)
                 }
             });
 

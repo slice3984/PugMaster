@@ -18,9 +18,9 @@ const command: Command = {
     perms: false,
     exec: async (bot, message, params, defaults) => {
         const guildSettings = bot.getGuild(message.guild.id);
-        const latestUnratedPickup = await PickupModel.getLatestStoredRateEnabledPickup(BigInt(message.guild.id), false);
+        const latestUnratedPickup = await PickupModel.getLatestStoredRateEnabledPickup(BigInt(message.guild.id));
 
-        if (!latestUnratedPickup) {
+        if (!latestUnratedPickup || latestUnratedPickup.isRated) {
             return message.reply('no rateable pickup found');
         }
 

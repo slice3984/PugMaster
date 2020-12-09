@@ -1,4 +1,6 @@
-import { Command } from '../core/types';
+import Discord from 'discord.js';
+import PickupStage from '../core/PickupStage';
+import { Command, RateablePickup } from '../core/types';
 import Util from '../core/util';
 import PickupModel from '../models/pickup';
 
@@ -8,15 +10,28 @@ const command: Command = {
     category: 'pickup',
     shortDesc: 'Report a draw as captain for the last rated pickup you played in',
     desc: 'Report a draw as captain for the last rated pickup you played in',
+    args: [
+        { name: '[pickupId]', desc: 'Pickup you want to report for, no argument for the latest unrated pickup you played in', required: false }
+    ],
     global: false,
     perms: false,
     exec: async (bot, message, params, defaults) => {
         const guildSettings = bot.getGuild(message.guild.id);
         const prefix = guildSettings.prefix;
 
-        const latestUnratedPickup = await PickupModel.getLatestStoredRateEnabledPickup(BigInt(message.guild.id), false);
+        let latestUnratedPickup: RateablePickup;
 
-        if (!latestUnratedPickup) {
+        if (params[0]) {
+            if (!/^\d+$/.test(params[0])) {
+                return message.reply('pickup id has to be a number');
+            }
+
+            latestUnratedPickup = await PickupModel.getLatestStoredRateEnabledPickup(BigInt(message.guild.id), BigInt(message.author.id), +params[0]);
+        } else {
+            latestUnratedPickup = await PickupModel.getLatestStoredRateEnabledPickup(BigInt(message.guild.id), BigInt(message.author.id));
+        }
+
+        if (!latestUnratedPickup || latestUnratedPickup.isRated) {
             return message.reply('no rateable pickup found');
         }
 
@@ -40,7 +55,7 @@ const command: Command = {
 
         let leftCaptains;
 
-        if (reports) {
+        if (reports.length) {
             reports.push({ team: captain.team, outcome: 'draw' });
 
             leftCaptains = latestUnratedPickup.captains.filter(c => {
@@ -65,8 +80,12 @@ const command: Command = {
 
         // Last report, rate the pickup
         if (!leftCaptainCount) {
-            // TODO: Rate pickup
-            return;
+            reports.forEach(report => latestUnratedPickup.teams.find(t => t.name === report.team).outcome = report.outcome);
+
+            const draw = latestUnratedPickup.teams.find(t => t.name === captain.team);
+            draw.outcome = 'draw';
+
+            return await rateMatch(message, latestUnratedPickup);
         }
 
         // If there is only 1 rating left and only 1 draw reported, ask for draw report to finalize
@@ -81,6 +100,12 @@ const command: Command = {
             `(${leftCaptains.map(captain => `<@${captain.id}>`).join(', ')})`
         );
     }
+}
+
+const rateMatch = async (message: Discord.Message, pickup: RateablePickup) => {
+    await PickupStage.rateMatch(false, message.guild.id, pickup);
+    const results = pickup.teams.map(t => `Team ${t.name} - **${t.outcome.toUpperCase()}**`).join(' / ');
+    message.channel.send(`Rated pickup **#${pickup.pickupId}** - **${pickup.name}**: ${results}`);
 }
 
 module.exports = command;

@@ -21,7 +21,7 @@ const command: Command = {
         const guildSettings = bot.getGuild(message.guild.id);
 
         // Make sure the player is able to getting subbed
-        const latestUnratedPickup = await PickupModel.getLatestStoredRateEnabledPickup(BigInt(message.guild.id), false);
+        const latestUnratedPickup = await PickupModel.getLatestStoredRateEnabledPickup(BigInt(message.guild.id));
 
         if (!latestUnratedPickup) {
             return message.reply('no pickup found you can be subbed for');

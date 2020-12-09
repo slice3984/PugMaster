@@ -536,18 +536,52 @@ export default class PickupModel {
         });
     }
 
-    static async getLatestStoredRateEnabledPickup(guildId: bigint, onlyAlreadyRated: boolean): Promise<RateablePickup | null> {
-        const data: any = await db.execute(`
-        SELECT pc.id AS pickupConfigId, pc.name, ps.id AS pickupId, ps.started_at, pp.team, p.user_id, p.elo, p.current_nick, pp.is_captain, rr.result FROM pickup_configs pc
-        JOIN pickups ps ON ps.pickup_config_id = pc.id
-        JOIN pickup_players pp ON ps.id = pp.pickup_id
-        LEFT JOIN rated_results rr ON rr.pickup_id = ps.id AND rr.team = pp.team
-        JOIN players p ON p.id = pp.player_id
-        WHERE pc.guild_id = ? AND pc.is_rated = 1 AND rr.pickup_id IS${onlyAlreadyRated ? ' NOT' : ''} NULL
-        AND ps.id = (SELECT MAX(p.id) FROM pickups p
-                    JOIN pickup_configs pc ON pc.id = p.pickup_config_id
-                    WHERE pc.guild_id = ? AND pc.is_rated = 1 AND p.has_teams = 1)
-        `, [guildId, guildId])
+    static async getLatestStoredRateEnabledPickup(guildId: bigint, playerId?: bigint, puId?: number): Promise<RateablePickup | null> {
+        let data: any;
+
+        if (playerId) {
+            if (puId) {
+                data = await db.execute(`
+                SELECT pc.id AS pickupConfigId, pc.name, ps.id AS pickupId, ps.started_at, pp.team, p.user_id, p.elo, p.current_nick, pp.is_captain, rr.result FROM pickup_configs pc
+                JOIN pickups ps ON ps.pickup_config_id = pc.id
+                JOIN pickup_players pp ON ps.id = pp.pickup_id
+                LEFT JOIN rated_results rr ON rr.pickup_id = ps.id AND rr.team = pp.team
+                JOIN players p ON p.id = pp.player_id
+                WHERE pc.guild_id = ? AND pc.is_rated = 1
+                AND ps.id = (SELECT MAX(p.id) FROM pickups p
+                            JOIN pickup_configs pc ON pc.id = p.pickup_config_id
+                            JOIN pickup_players pp ON p.id = pp.pickup_id
+                            JOIN players ps ON ps.id = pp.player_id
+                            WHERE pc.guild_id = ? AND pc.is_rated = 1 AND p.has_teams = 1 AND ps.user_id = ? AND p.id = ?)
+                `, [guildId, guildId, playerId, puId]);
+            } else {
+                data = await db.execute(`
+                SELECT pc.id AS pickupConfigId, pc.name, ps.id AS pickupId, ps.started_at, pp.team, p.user_id, p.elo, p.current_nick, pp.is_captain, rr.result FROM pickup_configs pc
+                JOIN pickups ps ON ps.pickup_config_id = pc.id
+                JOIN pickup_players pp ON ps.id = pp.pickup_id
+                LEFT JOIN rated_results rr ON rr.pickup_id = ps.id AND rr.team = pp.team
+                JOIN players p ON p.id = pp.player_id
+                WHERE pc.guild_id = ? AND pc.is_rated = 1
+                AND ps.id = (SELECT MAX(p.id) FROM pickups p
+                            JOIN pickup_configs pc ON pc.id = p.pickup_config_id
+                            JOIN pickup_players pp ON p.id = pp.pickup_id
+                            JOIN players ps ON ps.id = pp.player_id
+                            WHERE pc.guild_id = ? AND pc.is_rated = 1 AND p.has_teams = 1 AND ps.user_id = ?)
+                `, [guildId, guildId, playerId]);
+            }
+        } else {
+            data = await db.execute(`
+            SELECT pc.id AS pickupConfigId, pc.name, ps.id AS pickupId, ps.started_at, pp.team, p.user_id, p.elo, p.current_nick, pp.is_captain, rr.result FROM pickup_configs pc
+            JOIN pickups ps ON ps.pickup_config_id = pc.id
+            JOIN pickup_players pp ON ps.id = pp.pickup_id
+            LEFT JOIN rated_results rr ON rr.pickup_id = ps.id AND rr.team = pp.team
+            JOIN players p ON p.id = pp.player_id
+            WHERE pc.guild_id = ? AND pc.is_rated = 1
+            AND ps.id = (SELECT MAX(p.id) FROM pickups p
+                        JOIN pickup_configs pc ON pc.id = p.pickup_config_id
+                        WHERE pc.guild_id = ? AND pc.is_rated = 1 AND p.has_teams = 1)
+            `, [guildId, guildId]);
+        }
 
         if (!data[0].length) {
             return null;
@@ -567,7 +601,7 @@ export default class PickupModel {
                 pickupConfigId = row.pickupConfigId;
                 name = row.name;
                 startedAt = row.started_at;
-                isRated = onlyAlreadyRated;
+                isRated = row.result !== null ? true : false;
             }
 
             if (row.is_captain) {
@@ -611,7 +645,7 @@ export default class PickupModel {
         `, [pickupId]);
 
         if (!data[0].length) {
-            return null;
+            return [];
         }
 
         return data[0].map(row => {
@@ -650,21 +684,66 @@ export default class PickupModel {
         return reports;
     }
 
-    static async ratePickup(pickupId: number, outcomes: { team: string; result: 'win' | 'draw' | 'loss' }[]) {
-        const values = [];
+    static async getLatestRatedPickup(guildId: bigint): Promise<RateablePickup | null> {
+        const data: any = await db.execute(`
+        SELECT pc.id AS pickupConfigId, pc.name, ps.id AS pickupId, ps.started_at, pp.team, p.user_id, p.elo, p.current_nick, pp.is_captain, rr.result FROM pickup_configs pc
+        JOIN pickups ps ON ps.pickup_config_id = pc.id
+        JOIN pickup_players pp ON ps.id = pp.pickup_id
+        LEFT JOIN rated_results rr ON rr.pickup_id = ps.id AND rr.team = pp.team
+        JOIN players p ON p.id = pp.player_id
+        WHERE pc.guild_id = ? AND pc.is_rated = 1
+        AND ps.id = (SELECT MAX(p.id) FROM pickups p
+                    JOIN pickup_configs pc ON pc.id = p.pickup_config_id
+                    LEFT JOIN rated_results rr ON p.id = rr.pickup_id
+                    WHERE pc.guild_id = ? AND pc.is_rated = 1 AND rr.result IS NOT NULL);
+        `, [guildId, guildId]);
 
-        outcomes.forEach(outcome => {
-            values.push(pickupId, outcome.team, outcome.result);
+        if (!data[0].length) {
+            return null;
+        }
+
+        let pickupId: number;
+        let pickupConfigId: number;
+        let name: string;
+        let startedAt: Date;
+        let isRated: boolean;
+        let captains = [];
+        const teams = new Map();
+
+        data[0].forEach((row, index) => {
+            if (!index) {
+                pickupId = row.pickupId;
+                pickupConfigId = row.pickupConfigId;
+                name = row.name;
+                startedAt = row.started_at;
+                isRated = row.result !== null ? true : false;
+            }
+
+            if (row.is_captain) {
+                captains.push({ team: row.team, id: row.user_id.toString(), elo: row.elo, nick: row.current_nick });
+            }
+
+            const team = teams.get(row.team);
+
+            if (!team) {
+                teams.set(row.team, {
+                    name: row.team,
+                    outcome: row.result,
+                    players: [{ id: row.user_id.toString(), elo: row.elo, nick: row.current_nick }]
+                });
+            } else {
+                team.players.push({ id: row.user_id.toString(), elo: row.elo, nick: row.current_nick });
+            }
         });
 
-        await transaction(db, async (db) => {
-            await db.execute(`
-            INSERT INTO rated_results VALUES ${Array(outcomes.length).fill('(?, ?, ?)').join(',')}
-            `, values);
-
-            await db.execute(`
-            UPDATE pickups SET is_rated = 1 WHERE id = ?
-            `, [pickupId]);
-        });
+        return {
+            pickupId,
+            pickupConfigId,
+            name,
+            startedAt,
+            isRated,
+            captains,
+            teams: Array.from(teams.values())
+        } as unknown as RateablePickup;
     }
 }

@@ -14,7 +14,8 @@ export default mysql2.createPool({
     connectionLimit: 10,
     queueLimit: 0,
     supportBigNumbers: true,
-    bigNumberStrings: false
+    bigNumberStrings: false,
+    multipleStatements: true
 }).promise();
 
 export const transaction = (async (conn: PoolConnection | Pool,

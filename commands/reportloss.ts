@@ -1,4 +1,6 @@
-import { Command } from '../core/types';
+import Discord from 'discord.js';
+import PickupStage from '../core/PickupStage';
+import { Command, RateablePickup } from '../core/types';
 import Util from '../core/util';
 import PickupModel from '../models/pickup';
 
@@ -8,15 +10,28 @@ const command: Command = {
     category: 'pickup',
     shortDesc: 'Report a loss as captain for the last rated pickup you played in',
     desc: 'Report a loss as captain for the last rated pickup you played in',
+    args: [
+        { name: '[pickupId]', desc: 'Pickup you want to report for, no argument for the latest unrated pickup you played in', required: false }
+    ],
     global: false,
     perms: false,
     exec: async (bot, message, params, defaults) => {
         const guildSettings = bot.getGuild(message.guild.id);
         const prefix = guildSettings.prefix;
 
-        const latestUnratedPickup = await PickupModel.getLatestStoredRateEnabledPickup(BigInt(message.guild.id), false);
+        let latestUnratedPickup: RateablePickup;
 
-        if (!latestUnratedPickup) {
+        if (params[0]) {
+            if (!/^\d+$/.test(params[0])) {
+                return message.reply('pickup id has to be a number');
+            }
+
+            latestUnratedPickup = await PickupModel.getLatestStoredRateEnabledPickup(BigInt(message.guild.id), BigInt(message.author.id), +params[0]);
+        } else {
+            latestUnratedPickup = await PickupModel.getLatestStoredRateEnabledPickup(BigInt(message.guild.id), BigInt(message.author.id));
+        }
+
+        if (!latestUnratedPickup || latestUnratedPickup.isRated) {
             return message.reply('no rateable pickup found');
         }
 
@@ -34,19 +49,21 @@ const command: Command = {
 
         const reports = await PickupModel.getReportedOutcomes(latestUnratedPickup.pickupId);
 
-        if (reports && reports.filter(r => r.team === captain.team).length) {
+        if (reports.filter(r => r.team === captain.team).length) {
             return message.reply('you already rated this pickup');
         }
 
         if (latestUnratedPickup.teams.length === 2) {
-            await PickupModel.reportOutcome(latestUnratedPickup.pickupId, captain.team, 'loss');
-            await message.reply(`reported loss for **team ${captain.team}**`);
-            // TODO: Rate pickup
+            const loss = latestUnratedPickup.teams.find(t => t.name === captain.team);
+            loss.outcome = 'loss';
+            latestUnratedPickup.teams.find(t => t !== loss).outcome = 'win';
+
+            await rateMatch(message, latestUnratedPickup);
         } else {
             // In case of more than 2 teams other teams have to report as well
             let leftCaptains;
 
-            if (reports) {
+            if (reports.length) {
                 reports.push({ team: captain.team, outcome: 'loss' });
 
                 leftCaptains = latestUnratedPickup.captains.filter(c => {
@@ -63,11 +80,11 @@ const command: Command = {
                         return await message.reply(`it is not possible to report loss, please ${prefix}reportdraw to finalize the rating`);
                     }
 
-                    await PickupModel.reportOutcome(latestUnratedPickup.pickupId, captain.team, 'loss');
-                    await message.reply(`reported loss for **team ${captain.team}**`);
-
                     // Pickup is ready to be rated, only 1 report left after this report
                     if ((reports.length === latestUnratedPickup.teams.length - 1) && drawReports.length) {
+                        await PickupModel.reportOutcome(latestUnratedPickup.pickupId, captain.team, 'loss');
+                        await message.reply(`reported loss for **team ${captain.team}**`);
+
                         // Only left possible report is draw, ask the left captain to finalize with reporting draw
                         if (drawReports.length < 2) {
                             return await message.channel.send(`<@${leftCaptains[0].id}> please ${prefix}reportdraw to finalize the rating`);
@@ -75,8 +92,14 @@ const command: Command = {
                             return await message.channel.send(`<@${leftCaptains[0].id}> please ${prefix}reportdraw or ${prefix}reportloss to finalize the rating`);
                         }
                     }
-                    // TODO: Rate pickup
-                    return;
+
+                    reports.forEach(report => latestUnratedPickup.teams.find(t => t.name === report.team).outcome = report.outcome);
+
+                    const loss = latestUnratedPickup.teams.find(t => t.name === captain.team);
+                    loss.outcome = 'loss';
+                    latestUnratedPickup.teams.find(t => t.outcome === null).outcome = 'win';
+
+                    return await rateMatch(message, latestUnratedPickup);
                 }
             } else {
                 // No reported outcomes so far
@@ -98,6 +121,12 @@ const command: Command = {
             );
         }
     }
+}
+
+const rateMatch = async (message: Discord.Message, pickup: RateablePickup) => {
+    await PickupStage.rateMatch(false, message.guild.id, pickup);
+    const results = pickup.teams.map(t => `Team ${t.name} - **${t.outcome.toUpperCase()}**`).join(' / ');
+    message.channel.send(`Rated pickup **#${pickup.pickupId}** - **${pickup.name}**: ${results}`);
 }
 
 module.exports = command;

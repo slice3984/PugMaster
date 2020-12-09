@@ -250,9 +250,9 @@ export default class Bot {
             const guildsToClearRequests = [];
 
             for (const [id, guildSettings] of this.guilds.entries()) {
-                const latestUnratedPickup = await PickupModel.getLatestStoredRateEnabledPickup(id, false);
+                const latestUnratedPickup = await PickupModel.getLatestStoredRateEnabledPickup(id);
 
-                if (!latestUnratedPickup) {
+                if (!latestUnratedPickup || latestUnratedPickup.isRated) {
                     break;
                 }
 

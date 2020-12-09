@@ -1,8 +1,7 @@
 import Discord from 'discord.js';
 import GuildModel from '../models/guild';
 import Bot from './bot';
-import { ValidationError, TimeError, PickupSettings } from './types';
-import { settings } from 'cluster';
+import { TimeError, PickupSettings } from './types';
 import MappoolModel from '../models/mappool';
 import ServerModel from '../models/server';
 
@@ -430,4 +429,6 @@ export default class Util {
     static removeObjectArrayDuplicates<T>(arr: T[], propertyToCheck: string): T[] {
         return [...new Map(arr.map(obj => [obj[propertyToCheck], obj])).values()];
     }
+
+    static tsToEloNumber(skill: number) { return Math.ceil(skill * 16) }
 }

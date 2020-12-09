@@ -1,4 +1,4 @@
-import { Command } from '../core/types';
+import { Command, PickupInfo } from '../core/types';
 import StatsModel from '../models/stats';
 import Util from '../core/util';
 import PlayerModel from '../models/player';
@@ -24,8 +24,7 @@ const command: Command = {
                 return message.channel.send(`no pickups stored`);
             }
 
-            const timeDif = new Date().getTime() - pickup.startedAt.getTime();
-            message.channel.send(`#${pickup.id} ${pickup.name} - ${Util.formatTime(timeDif)} ago: ${pickup.playerNicks.map(nick => `\`${nick}\``).join(', ')}`);
+            message.channel.send(formatOutput(pickup));
         } else {
             const identifier = params.join(' ');
             let pickup;
@@ -39,9 +38,7 @@ const command: Command = {
                 if (!pickup) {
                     return message.reply('no pickup stored');
                 }
-
-                const timeDif = new Date().getTime() - pickup.startedAt.getTime();
-                return message.channel.send(`#${pickup.id} ${pickup.name} - ${Util.formatTime(timeDif)} ago: ${pickup.playerNicks.map(nick => `\`${nick}\``).join(', ')}`);
+                message.channel.send(formatOutput(pickup));
             } else {
                 // Check for player
                 const nicks = await PlayerModel.getPlayer(BigInt(message.guild.id), identifier);
@@ -66,19 +63,42 @@ const command: Command = {
                     return message.reply(`${nick} played no pickups`);
                 }
 
-                const timeDif = new Date().getTime() - pickup.startedAt.getTime();
-                const players = pickup.playerNicks.map(nick => {
-                    if (nick === nicks.players[0].currentNick) {
-                        return `**>**\`${nick}\``;
-                    } else {
-                        return `\`${nick}\``;
-                    }
-                }).join(', ');
-
-                return message.channel.send(`#${pickup.id} ${pickup.name} - ${Util.formatTime(timeDif)} ago: ${players}`);
+                return message.channel.send(formatOutput(pickup, nicks.players[0].currentNick));
             }
         }
     }
+}
+
+const formatOutput = (pickupInfo: PickupInfo, toHighlight?: string | null) => {
+    const formatPlayers = (nicks: string[]) => {
+        return nicks.map(nick => {
+            if (toHighlight && nick === toHighlight) {
+                return `**>**\`${nick}\``;
+            } else {
+                return `\`${nick}\``;
+            }
+        });
+    }
+
+    const timeDif = new Date().getTime() - pickupInfo.startedAt.getTime();
+    let str = `Pickup **#${pickupInfo.id}** - **${pickupInfo.name}** - ${Util.formatTime(timeDif)} ago`;
+
+    if (pickupInfo.teams.length > 1) {
+        // 1 player per team pickups are considered as duel
+        if (pickupInfo.teams[0].players.length === 1) {
+            const nicks = formatPlayers(pickupInfo.teams.flatMap(t => t.players).map(p => p.nick)).join(' **vs** ');
+            str += `\nPlayers: ${nicks}`;
+        } else {
+            pickupInfo.teams.forEach(team => {
+                const nicks = formatPlayers(team.players.map(p => p.nick)).join(', ');
+                str += `\n**Team ${team.name}**: ${nicks}`;
+            });
+        }
+    } else {
+        str += `\nPlayers: ${formatPlayers(pickupInfo.teams.flatMap(t => t.players).map(p => p.nick)).join(', ')}`;
+    }
+
+    return str;
 }
 
 module.exports = command;
