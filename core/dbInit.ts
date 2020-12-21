@@ -177,10 +177,8 @@ export const createTables = () => new Promise(async (res, _req) => {
       notifications TINYINT NOT NULL DEFAULT 1,
       trusted TINYINT NULL,
       current_nick VARCHAR(32) NOT NULL,
-      elo DOUBLE NULL DEFAULT NULL,
+      rating DOUBLE NULL DEFAULT NULL,
       variance DOUBLE NULL DEFAULT NULL,
-      prev_elo DOUBLE NULL DEFAULT NULL,
-      prev_variance DOUBLE NULL DEFAULT NULL,
       PRIMARY KEY (id),
       INDEX guild_id_idx (guild_id ASC) VISIBLE,
       CONSTRAINT fk_players
@@ -319,6 +317,8 @@ export const createTables = () => new Promise(async (res, _req) => {
       player_id INT NOT NULL,
       team VARCHAR(2) NULL,
       is_captain TINYINT NOT NULL DEFAULT 0,
+      rating DOUBLE NULL DEFAULT NULL,
+      variance DOUBLE NULL DEFAULT NULL,
       INDEX pickup_id_idx (pickup_id ASC) VISIBLE,
       INDEX player_id_idx (player_id ASC) VISIBLE,
       CONSTRAINT pickup_id
@@ -546,7 +546,7 @@ export const createTables = () => new Promise(async (res, _req) => {
     });
     await conn.commit();
     await conn.release();
-    res();
+    return;
   } catch (err) {
     await conn.query('ROLLBACK');
     await conn.release();

@@ -10,6 +10,7 @@ import Logger from './logger';
 export default class GuildSettings {
     pendingPickups = new Map();
     lastCommandExecutions: Map<Discord.GuildMember, { count: number; timestamp: number }> = new Map();
+    commandCooldowns: Map<string, number> = new Map();
 
     constructor(
         private guild: Discord.Guild,

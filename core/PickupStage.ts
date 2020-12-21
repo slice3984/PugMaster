@@ -1,15 +1,13 @@
 import Discord from 'discord.js';
-import { rate, Rating } from 'ts-trueskill';
 import PickupModel from "../models/pickup";
 import PickupState from './pickupState';
 import Util from './util';
 import GuildModel from '../models/guild';
 import StatsModel from '../models/stats';
-import EloModel from '../models/elo';
 import afkCheckStage from './stages/afkCheck';
 import { manualPicking } from './stages/manualPicking';
 import { randomTeams } from './stages/randomTeams';
-import { PickupSettings, RateablePickup } from './types';
+import { PickupSettings } from './types';
 import Bot from './bot';
 import Logger from './logger';
 
@@ -171,81 +169,5 @@ export default class PickupStage {
                 pickupChannel.send(`something went wrong storing the **${aboutToStart.name}** pickup, pickup not stored`);
             }
         }
-    }
-
-    static async rateMatch(usePrevRatings: boolean, guildId: string, pickupToRate: RateablePickup) {
-        const playerIds = pickupToRate.teams.flatMap(p => p.players.map(p2 => p2.id));
-
-        let storedRatings;
-
-        if (usePrevRatings) {
-            storedRatings = await EloModel.getEloRatings(BigInt(guildId), true, ...playerIds.map(id => BigInt(id)));
-        } else {
-            storedRatings = await EloModel.getEloRatings(BigInt(guildId), false, ...playerIds.map(id => BigInt(id)));
-        }
-
-        const newRatings: { playerId: string; rating: Rating }[][] = [];
-
-        // Get trueskill ratings for every player
-        pickupToRate.teams.forEach(team => {
-            const teamRatings: { playerId: string; rating: Rating }[] = [];
-
-            team.players.forEach(player => {
-                const previousRating = storedRatings.find(rating => rating.playerId === player.id);
-
-                // No previous rating, create a new one
-                if (!previousRating) {
-                    const rating = new Rating();
-                    teamRatings.push({
-                        playerId: player.id,
-                        rating
-                    });
-                } else {
-                    teamRatings.push({
-                        playerId: player.id,
-                        rating: new Rating(previousRating.mu, previousRating.sigma)
-                    });
-                }
-            });
-
-            newRatings.push(teamRatings);
-        });
-
-        // Calculate new ratings
-        const ratingArr = newRatings.map(t => t.map(p => p.rating));
-        const computedValues = rate(ratingArr, pickupToRate.teams.map(t => {
-            switch (t.outcome) {
-                case 'win':
-                    return -1;
-                case 'draw':
-                    return 0;
-                case 'loss':
-                    return 1;
-            }
-        }));
-
-        const outcomes = pickupToRate.teams.map(t => {
-            return {
-                team: t.name,
-                result: t.outcome
-            }
-        });
-
-        const ratingUpdates: { id: bigint; mu: number; sigma: number }[] = [];
-
-        computedValues.flat(10).forEach((rating, index) => {
-            ratingUpdates.push({
-                id: BigInt(playerIds[index]),
-                mu: rating.mu,
-                sigma: rating.sigma
-            });
-        });
-
-        await EloModel.ratePickup(BigInt(guildId), pickupToRate.pickupId, usePrevRatings, outcomes, ...ratingUpdates);
-    }
-
-    static async unrateMatch(guildId: string, pickupToUnrate: RateablePickup) {
-        const playerIds = pickupToUnrate.teams.flatMap(p => p.players.map(p2 => BigInt(p2.id)));
-        await EloModel.unratePickup(BigInt(guildId), pickupToUnrate.pickupId, ...playerIds);
     }
 }

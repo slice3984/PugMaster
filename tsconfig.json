@@ -18,7 +18,8 @@
     ],
     "include": [
         "./commands/**/*",
-        "./core/**/*"
+        "./core/**/*",
+        "./models/**/*"
     ],
     "exclude": [
         ""

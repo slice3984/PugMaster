@@ -5,6 +5,7 @@ import Logger from './logger';
 import { Config } from './types';
 import ConfigTool from './configTool';
 import Util from './util';
+import GuildSettings from './guildSettings';
 
 export default class CommandHandler {
     private bot: Bot;
@@ -67,12 +68,31 @@ export default class CommandHandler {
         return false;
     }
 
-    private handleFloodProtection(message: Discord.Message): boolean {
+    private handleGuildCommandCooldown(message: Discord.Message, cmd: string, guildSettings: GuildSettings): boolean {
+        const messageTimestamp = message.createdTimestamp;
+        const command = this.bot.getCommand(cmd);
+        const cmdCooldownTime = command.cooldown * 1000; // Given in seconds
+        const cooldownTimes = guildSettings.commandCooldowns;
+        const commandTime = cooldownTimes.get(command.cmd);
+
+        if (commandTime) {
+            if (commandTime + cmdCooldownTime > messageTimestamp) {
+                const timeLeft = (commandTime + cmdCooldownTime) - messageTimestamp;
+                message.reply(`you can execute this command again in ${Util.formatTime(timeLeft)}`);
+                return false;
+            }
+        }
+        cooldownTimes.set(command.cmd, messageTimestamp);
+
+        return true;
+    }
+
+    private handleFloodProtection(message: Discord.Message, guildSettings: GuildSettings): boolean {
         const floodDelay = +this.config.settings.FLOOD_PROTECTION_DELAY;
         const floodMaxCommands = +this.config.settings.FLOOD_PROTECTION_MAX_COMMANDS;
         const floodTimeout = +this.config.settings.FLOOD_TIMEOUT_TIME;
 
-        const commandExecutionsTimes = this.bot.getGuild(message.guild.id).lastCommandExecutions;
+        const commandExecutionsTimes = guildSettings.lastCommandExecutions;
         const lastUserCommandTimes = commandExecutionsTimes.get(message.member);
         const messageTimestamp = message.createdTimestamp;
 
@@ -117,6 +137,8 @@ export default class CommandHandler {
     }
 
     async execute(message: Discord.Message, cmd: string, args: any[] = []) {
+        const guildSettings = this.bot.getGuild(message.guild.id);
+
         const errorHandler = (err) => {
             message.reply('something went wrong executing this command');
             Logger.logError(`Error in executing '${cmd}' command, args: ${args.length ? args.join(', ') : '-'}`, err, false, message.guild.id, message.guild.name);
@@ -126,7 +148,7 @@ export default class CommandHandler {
             return;
         }
 
-        if (!this.handleFloodProtection(message)) {
+        if (!this.handleFloodProtection(message, guildSettings)) {
             return;
         }
 
@@ -143,6 +165,10 @@ export default class CommandHandler {
             let reply = `arguments are missing, usage: ${guild.prefix}${command.cmd} `;
             command.args.forEach(arg => reply += `${arg.name} `);
             return message.reply(reply);
+        }
+
+        if (!this.handleGuildCommandCooldown(message, cmd, guildSettings)) {
+            return;
         }
 
         if (guild.commandSettings.has(command.cmd)) {

@@ -58,7 +58,7 @@ export default (async (req: express.Request, res: express.Response) => {
 
     const id = playerInfo.id;
     const name = playerInfo.name;
-    const elo = Util.tsToEloNumber(playerInfo.elo);
+    const rating = Util.tsToEloNumber(playerInfo.rating);
     const pickupAmount = playedPickupCounts.reduce((prev, curr) => prev += curr.amount, 0);
     const playedPickups = playedPickupCounts.map(pickup => {
         return { name: pickup.name, amount: pickup.amount }
@@ -72,7 +72,7 @@ export default (async (req: express.Request, res: express.Response) => {
         id,
         name,
         previousNames: playerNicks,
-        elo,
+        rating,
         pickupAmount,
         playedPickups,
         lastPickupTimes,
@@ -86,7 +86,7 @@ interface PlayerInfo {
     id: string;
     name: string;
     previousNames: string[];
-    elo: number;
+    rating: number;
     pickupAmount: number;
     playedPickups: { name: string; amount: number }[];
     lastPickupTimes: { name: string; date: Date }[];

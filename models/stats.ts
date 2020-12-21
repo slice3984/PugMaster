@@ -53,7 +53,7 @@ export default class StatsModel {
                 }
 
                 await db.query(`
-                INSERT INTO pickup_players VALUES ${players.join(', ')}
+                INSERT INTO pickup_players (pickup_id, player_id, team, is_captain) VALUES ${players.join(', ')}
                 `);
             } else {
                 const playerIds: any = await db.execute(`
@@ -404,7 +404,7 @@ export default class StatsModel {
 
     static async getPickupInfo(guildId: bigint, pickupId: number): Promise<PickupInfoAPI | { foundPickup: boolean }> {
         const data: any = await db.execute(`
-        SELECT p.id, p.is_rated, pp.team, ps.elo, ps.current_nick, ps.user_id, rr.result FROM pickups p
+        SELECT p.id, p.is_rated, pp.team, ps.rating, ps.current_nick, ps.user_id, rr.result FROM pickups p
         JOIN pickup_players pp ON p.id = pp.pickup_id
         JOIN players ps ON pp.player_id = ps.id
         LEFT JOIN rated_results rr ON rr.pickup_id = p.id AND rr.team = pp.team
@@ -435,12 +435,12 @@ export default class StatsModel {
                     teams.set('A', {
                         name: 'A',
                         outcome: null,
-                        players: [{ id: row.user_id.toString(), elo: Util.tsToEloNumber(row.elo), nick: row.current_nick }]
+                        players: [{ id: row.user_id.toString(), rating: Util.tsToEloNumber(row.rating), nick: row.current_nick }]
                     });
                 } else {
                     team.players.push({
                         id: row.user_id.toString(),
-                        elo: Util.tsToEloNumber(row.elo),
+                        rating: Util.tsToEloNumber(row.rating),
                         nick: row.current_nick
                     });
                 }
@@ -454,7 +454,7 @@ export default class StatsModel {
                         players: [
                             {
                                 id: row.user_id.toString(),
-                                elo: Util.tsToEloNumber(row.elo),
+                                rating: Util.tsToEloNumber(row.rating),
                                 nick: row.current_nick
                             }
                         ]
@@ -462,7 +462,7 @@ export default class StatsModel {
                 } else {
                     team.players.push({
                         id: row.user_id.toString(),
-                        elo: Util.tsToEloNumber(row.elo),
+                        rating: Util.tsToEloNumber(row.rating),
                         nick: row.current_nick
                     })
                 }
@@ -497,7 +497,7 @@ export default class StatsModel {
         // Didn't find a better not overcomplicated query, returns 3x the same user in the worst case
         // always keep the first result of a user and discard the rest
         const data: any = await db.execute(`
-        SELECT * FROM (SELECT p.guild_id, p.user_id, p.elo, p.id as id, p.current_nick as current, pn.nick as old, pn.updated_at FROM players p
+        SELECT * FROM (SELECT p.guild_id, p.user_id, p.rating, p.id as id, p.current_nick as current, pn.nick as old, pn.updated_at FROM players p
             LEFT JOIN player_nicks pn ON p.id = pn.player_id WHERE p.guild_id = ?) as t
         WHERE t.user_id = ? 
         OR t.current LIKE ?
@@ -527,7 +527,7 @@ export default class StatsModel {
                 id: row.user_id,
                 currentNick: row.current,
                 knownAs: row.old,
-                elo: Util.tsToEloNumber(row.elo)
+                rating: Util.tsToEloNumber(row.rating)
             });
 
             currentId = row.user_id;
@@ -540,7 +540,7 @@ export default class StatsModel {
                     id: row.user_id,
                     currentNick: row.current,
                     knownAs: row.old,
-                    elo: Util.tsToEloNumber(row.elo)
+                    rating: Util.tsToEloNumber(row.rating)
                 }
             });
 
@@ -575,7 +575,7 @@ export default class StatsModel {
 
     static async getPlayerNickHistory(guildId: bigint, playerId: bigint): Promise<string[]> {
         const data: any = await db.execute(`
-        SELECT p.elo, p.current_nick, pn.nick, pn.updated_at FROM players p
+        SELECT p.rating, p.current_nick, pn.nick, pn.updated_at FROM players p
         LEFT JOIN player_nicks pn ON pn.player_id = p.id
         WHERE p.guild_id = ? AND p.user_id = ?
         ORDER BY pn.updated_at;
@@ -611,9 +611,9 @@ export default class StatsModel {
         });
     }
 
-    static async getPlayerInfo(guildId: bigint, playerId: bigint): Promise<{ id: string; name: string; elo: number | null } | null> {
+    static async getPlayerInfo(guildId: bigint, playerId: bigint): Promise<{ id: string; name: string; rating: number | null } | null> {
         const data: any = await db.execute(`
-        SELECT user_id, current_nick, elo FROM players
+        SELECT user_id, current_nick, rating FROM players
         WHERE guild_id = ? AND user_id = ?
         `, [guildId, playerId]);
 
@@ -624,7 +624,7 @@ export default class StatsModel {
         return {
             id: data[0][0].user_id.toString(),
             name: data[0][0].current_nick,
-            elo: data[0][0].elo
+            rating: data[0][0].rating
         };
     }
 

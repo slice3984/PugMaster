@@ -17,6 +17,8 @@ export default class DevApp {
     private reloadPickupsBtnEl = document.getElementById('reload-pickups');
     private offlineEventBtnEl = document.getElementById('offline');
     private memberRemoveEventBtnEl = document.getElementById('member-remove');
+    private clearRatedPickupsBtnEl = document.getElementById('clear-rated');
+    private removeAllPickupsBtnEl = document.getElementById('delete-all');
 
     private currentGuildId: string;
     private currentFakePlayer: { id: string; name: string };
@@ -70,11 +72,30 @@ export default class DevApp {
 
             this.writeToConsole(`Triggered member remove event for ${this.currentFakePlayer.name}`);
         });
+
+        this.clearRatedPickupsBtnEl.addEventListener('click', () => {
+            if (!this.currentGuildId) {
+                return this.writeToConsole('No guild selected');
+            }
+
+            this.client.emit('clear-rated', this.currentGuildId);
+            this.writeToConsole(`Unrated all rated pickups for guild ${this.guilds.get(this.currentGuildId).name}`);
+        });
+
+        this.removeAllPickupsBtnEl.addEventListener('click', () => {
+            if (!this.currentGuildId) {
+                return this.writeToConsole('No guild selected');
+            }
+
+            this.client.emit('delete-all', this.currentGuildId);
+            this.writeToConsole(`Deleted all pickups for guild ${this.guilds.get(this.currentGuildId).name}`);
+        });
     }
 
     private eventHandler() {
         this.client.on('init-data', data => this.initData(data));
         this.client.on('guild-update', data => this.updateGuild(data));
+        this.client.on('fakestart-response', data => this.fakeStartResponseHandler(data));
     }
 
     private initData(jsonString: string) {
@@ -218,7 +239,15 @@ export default class DevApp {
 
             removePlayerBtnEl.addEventListener('click', () => {
                 this.removeFromPickup(guildId, pickup.id);
-            })
+            });
+
+            const fakeStartBtnEl = document.createElement('div');
+            fakeStartBtnEl.className = 'pickup__btn';
+            fakeStartBtnEl.textContent = 'Fake start';
+
+            fakeStartBtnEl.addEventListener('click', () => {
+                this.fakestartPickup(guildId, pickup.id);
+            });
 
             const clearPickupBtnEl = document.createElement('div');
             clearPickupBtnEl.className = 'pickup__btn';
@@ -228,7 +257,7 @@ export default class DevApp {
                 this.clearPickup(guildId, pickup.id);
             });
 
-            pickupContainerEl.append(pickupNameEl, addPlayerBtnEl, removePlayerBtnEl, clearPickupBtnEl);
+            pickupContainerEl.append(pickupNameEl, addPlayerBtnEl, removePlayerBtnEl, fakeStartBtnEl, clearPickupBtnEl);
             this.pickupBoxEl.appendChild(pickupContainerEl);
         });
     }
@@ -289,6 +318,15 @@ export default class DevApp {
         this.client.emit('remove', JSON.stringify(data));
     }
 
+    private fakestartPickup(guildId: string, configId: number) {
+        const data = {
+            guildId,
+            configId
+        };
+
+        this.client.emit('fakestart', JSON.stringify(data));
+    }
+
     private clearPickup(guildId: string, configId: number) {
         const data = {
             guild: guildId,
@@ -296,6 +334,10 @@ export default class DevApp {
         };
 
         this.client.emit('clear', JSON.stringify(data));
+    }
+
+    private fakeStartResponseHandler(message: string) {
+        this.writeToConsole(message);
     }
 
     private updateGuild(data: string) {

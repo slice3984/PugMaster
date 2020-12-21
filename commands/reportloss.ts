@@ -1,5 +1,5 @@
 import Discord from 'discord.js';
-import PickupStage from '../core/PickupStage';
+import Rating from '../core/rating';
 import { Command, RateablePickup } from '../core/types';
 import Util from '../core/util';
 import PickupModel from '../models/pickup';
@@ -124,7 +124,7 @@ const command: Command = {
 }
 
 const rateMatch = async (message: Discord.Message, pickup: RateablePickup) => {
-    await PickupStage.rateMatch(false, message.guild.id, pickup);
+    await Rating.rateMatch(message.guild.id, pickup);
     const results = pickup.teams.map(t => `Team ${t.name} - **${t.outcome.toUpperCase()}**`).join(' / ');
     message.channel.send(`Rated pickup **#${pickup.pickupId}** - **${pickup.name}**: ${results}`);
 }

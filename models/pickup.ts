@@ -542,7 +542,7 @@ export default class PickupModel {
         if (playerId) {
             if (puId) {
                 data = await db.execute(`
-                SELECT pc.id AS pickupConfigId, pc.name, ps.id AS pickupId, ps.started_at, pp.team, p.user_id, p.elo, p.current_nick, pp.is_captain, rr.result FROM pickup_configs pc
+                SELECT pc.id AS pickupConfigId, pc.name, ps.id AS pickupId, ps.started_at, pp.team, p.user_id, p.rating, p.current_nick, pp.is_captain, rr.result FROM pickup_configs pc
                 JOIN pickups ps ON ps.pickup_config_id = pc.id
                 JOIN pickup_players pp ON ps.id = pp.pickup_id
                 LEFT JOIN rated_results rr ON rr.pickup_id = ps.id AND rr.team = pp.team
@@ -556,7 +556,7 @@ export default class PickupModel {
                 `, [guildId, guildId, playerId, puId]);
             } else {
                 data = await db.execute(`
-                SELECT pc.id AS pickupConfigId, pc.name, ps.id AS pickupId, ps.started_at, pp.team, p.user_id, p.elo, p.current_nick, pp.is_captain, rr.result FROM pickup_configs pc
+                SELECT pc.id AS pickupConfigId, pc.name, ps.id AS pickupId, ps.started_at, pp.team, p.user_id, p.rating, p.current_nick, pp.is_captain, rr.result FROM pickup_configs pc
                 JOIN pickups ps ON ps.pickup_config_id = pc.id
                 JOIN pickup_players pp ON ps.id = pp.pickup_id
                 LEFT JOIN rated_results rr ON rr.pickup_id = ps.id AND rr.team = pp.team
@@ -571,7 +571,7 @@ export default class PickupModel {
             }
         } else {
             data = await db.execute(`
-            SELECT pc.id AS pickupConfigId, pc.name, ps.id AS pickupId, ps.started_at, pp.team, p.user_id, p.elo, p.current_nick, pp.is_captain, rr.result FROM pickup_configs pc
+            SELECT pc.id AS pickupConfigId, pc.name, ps.id AS pickupId, ps.started_at, pp.team, p.user_id, p.rating, p.current_nick, pp.is_captain, rr.result FROM pickup_configs pc
             JOIN pickups ps ON ps.pickup_config_id = pc.id
             JOIN pickup_players pp ON ps.id = pp.pickup_id
             LEFT JOIN rated_results rr ON rr.pickup_id = ps.id AND rr.team = pp.team
@@ -605,7 +605,7 @@ export default class PickupModel {
             }
 
             if (row.is_captain) {
-                captains.push({ team: row.team, id: row.user_id.toString(), elo: row.elo, nick: row.current_nick });
+                captains.push({ team: row.team, id: row.user_id.toString(), rating: row.rating, nick: row.current_nick });
             }
 
             const team = teams.get(row.team);
@@ -614,10 +614,69 @@ export default class PickupModel {
                 teams.set(row.team, {
                     name: row.team,
                     outcome: row.result,
-                    players: [{ id: row.user_id.toString(), elo: row.elo, nick: row.current_nick }]
+                    players: [{ id: row.user_id.toString(), rating: row.rating, nick: row.current_nick }]
                 });
             } else {
-                team.players.push({ id: row.user_id.toString(), elo: row.elo, nick: row.current_nick });
+                team.players.push({ id: row.user_id.toString(), rating: row.rating, nick: row.current_nick });
+            }
+        });
+
+        return {
+            pickupId,
+            pickupConfigId,
+            name,
+            startedAt,
+            isRated,
+            captains,
+            teams: Array.from(teams.values())
+        } as unknown as RateablePickup;
+    }
+
+    static async getStoredRateEnabledPickup(guildId: bigint, puId: number): Promise<RateablePickup | null> {
+        const data: any = await db.execute(`
+        SELECT pc.id AS pickupConfigId, pc.name, ps.id AS pickupId, ps.started_at, pp.team, p.user_id, p.rating, p.current_nick, pp.is_captain, rr.result FROM pickup_configs pc
+        JOIN pickups ps ON ps.pickup_config_id = pc.id
+        JOIN pickup_players pp ON ps.id = pp.pickup_id
+        LEFT JOIN rated_results rr ON rr.pickup_id = ps.id AND rr.team = pp.team
+        JOIN players p ON p.id = pp.player_id
+        WHERE pc.guild_id = ? AND ps.id = ? AND pc.is_rated = 1
+        `, [guildId, puId]);
+
+        if (!data[0].length) {
+            return null;
+        }
+
+        let pickupId: number;
+        let pickupConfigId: number;
+        let name: string;
+        let startedAt: Date;
+        let isRated: boolean;
+        let captains = [];
+        const teams = new Map();
+
+        data[0].forEach((row, index) => {
+            if (!index) {
+                pickupId = row.pickupId;
+                pickupConfigId = row.pickupConfigId;
+                name = row.name;
+                startedAt = row.started_at;
+                isRated = row.result !== null ? true : false;
+            }
+
+            if (row.is_captain) {
+                captains.push({ team: row.team, id: row.user_id.toString(), rating: row.rating, nick: row.current_nick });
+            }
+
+            const team = teams.get(row.team);
+
+            if (!team) {
+                teams.set(row.team, {
+                    name: row.team,
+                    outcome: row.result,
+                    players: [{ id: row.user_id.toString(), rating: row.rating, nick: row.current_nick }]
+                });
+            } else {
+                team.players.push({ id: row.user_id.toString(), rating: row.rating, nick: row.current_nick });
             }
         });
 
@@ -686,7 +745,7 @@ export default class PickupModel {
 
     static async getLatestRatedPickup(guildId: bigint): Promise<RateablePickup | null> {
         const data: any = await db.execute(`
-        SELECT pc.id AS pickupConfigId, pc.name, ps.id AS pickupId, ps.started_at, pp.team, p.user_id, p.elo, p.current_nick, pp.is_captain, rr.result FROM pickup_configs pc
+        SELECT pc.id AS pickupConfigId, pc.name, ps.id AS pickupId, ps.started_at, pp.team, p.user_id, p.rating, p.current_nick, pp.is_captain, rr.result FROM pickup_configs pc
         JOIN pickups ps ON ps.pickup_config_id = pc.id
         JOIN pickup_players pp ON ps.id = pp.pickup_id
         LEFT JOIN rated_results rr ON rr.pickup_id = ps.id AND rr.team = pp.team
@@ -720,7 +779,7 @@ export default class PickupModel {
             }
 
             if (row.is_captain) {
-                captains.push({ team: row.team, id: row.user_id.toString(), elo: row.elo, nick: row.current_nick });
+                captains.push({ team: row.team, id: row.user_id.toString(), rating: row.rating, nick: row.current_nick });
             }
 
             const team = teams.get(row.team);
@@ -729,10 +788,10 @@ export default class PickupModel {
                 teams.set(row.team, {
                     name: row.team,
                     outcome: row.result,
-                    players: [{ id: row.user_id.toString(), elo: row.elo, nick: row.current_nick }]
+                    players: [{ id: row.user_id.toString(), rating: row.rating, nick: row.current_nick }]
                 });
             } else {
-                team.players.push({ id: row.user_id.toString(), elo: row.elo, nick: row.current_nick });
+                team.players.push({ id: row.user_id.toString(), rating: row.rating, nick: row.current_nick });
             }
         });
 

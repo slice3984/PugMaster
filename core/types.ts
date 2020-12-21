@@ -1,4 +1,5 @@
 import Discord from 'discord.js';
+import { Rating } from 'ts-trueskill';
 import Bot from './bot';
 
 export interface Config {
@@ -38,6 +39,7 @@ interface DefaultValue {
 
 export interface Command {
     cmd: string;
+    cooldown?: number;
     category: 'pickup' | 'info' | 'admin';
     aliases?: string[];
     shortDesc: string;
@@ -145,7 +147,7 @@ export interface PickupInfoAPI {
         outcome: 'win' | 'draw' | 'loss' | null,
         players: {
             id: string;
-            elo: number;
+            rating: number;
             nick: string;
         }[]
     }[]
@@ -157,13 +159,13 @@ export interface RateablePickup {
     name: string;
     startedAt: Date;
     isRated: boolean;
-    captains: { team: string; id: string; elo: number; nick: string }[]; // Can be empty if the team got autopicked
+    captains: { team: string; id: string; rating: number; nick: string }[]; // Can be empty if the team got autopicked
     teams: {
         name: string;
         outcome: 'win' | 'draw' | 'loss' | null,
         players: {
             id: string;
-            elo: number;
+            rating: number;
             nick: string;
         }[]
     }[]
@@ -173,9 +175,20 @@ export interface PlayerSearchResult {
     id: string;
     currentNick: string;
     knownAs: string | null;
-    elo: number | null;
+    rating: number | null;
 }
 
 export interface GuildMemberExtended extends Discord.GuildMember {
     lastMessageTimestamp: number;
+}
+
+export interface RatingTeam {
+    team: string,
+    outcome: 'win' | 'loss' | 'draw',
+    players: { id: string, rating: Rating }[]
+}
+
+export interface RatingPickup {
+    pickupId: number;
+    teams: RatingTeam[]
 }

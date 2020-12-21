@@ -5,14 +5,14 @@ interface SearchResult {
     id: string;
     currentNick: string;
     knownAs: string;
-    elo: number
+    rating: number
 }
 
 interface PlayerInfo {
     id: string;
     name: string;
     previousNames: string[];
-    elo: number;
+    rating: number;
     pickupAmount: number;
     playedPickups: { name: string; amount: number }[];
     lastPickupTimes: { name: string; date: Date }[];
@@ -201,7 +201,7 @@ export default class PlayerPage {
 
     private renderPlayerInfo() {
         this.playerNameEl.textContent = this.playerInfo.name;
-        this.playerEloEl.textContent = this.playerInfo.elo ? this.playerInfo.elo.toString() : 'None';
+        this.playerEloEl.textContent = this.playerInfo.rating ? this.playerInfo.rating.toString() : 'None';
         this.playerPickupAmountEl.textContent = this.playerInfo.pickupAmount.toString();
 
         if (this.playerInfo.previousNames.length) {
@@ -355,7 +355,7 @@ export default class PlayerPage {
         </div>
         <div class="player-search__item-right">
             <div>Elo:</div>
-            <div>${data.elo ? data.elo : 'None'}</div>
+            <div>${data.rating ? data.rating : 'None'}</div>
         </div>
         `;
 

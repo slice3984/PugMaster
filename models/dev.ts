@@ -1,5 +1,4 @@
-import { RowDataPacket } from 'mysql2';
-import db from '../core/db';
+import db, { transaction } from '../core/db';
 import PlayerModel from './player';
 
 interface FakeUser {
@@ -13,16 +12,16 @@ export default class DevModel {
 
     static async getFakeUsers(guildId: BigInt): Promise<FakeUser[]> {
         // Fake users got a id < 100000000000001000
-        const results = await db.execute(`
+        const results: any = await db.execute(`
         SELECT p.user_id, p.current_nick FROM players p
         WHERE p.user_id < 100000000000001000 AND p.guild_id = ?
-        `, [guildId]) as RowDataPacket[][];
+        `, [guildId]);
 
         const users: FakeUser[] = [];
 
         results[0].forEach(row => {
             users.push({
-                id: row.user_id,
+                id: row.user_id.toString(),
                 name: row.current_nick
             });
         });
@@ -37,7 +36,7 @@ export default class DevModel {
         WHERE p.guild_id = ? AND p.user_id < 100000000000001000
         `, [guildId]);
 
-        const id = maxFakePlayerId[0][0].id;
+        const id = maxFakePlayerId[0][0].id.toString();
         const displayId = id.replace('100000000000000', '');
 
         const fakeNick = `Fake ${displayId}`;
@@ -73,5 +72,43 @@ export default class DevModel {
         DELETE FROM state_pickup_players
         WHERE guild_id = ? AND pickup_config_id = ?
         `, [guildId, pickupConfigId]);
+    }
+
+    static async unrateAllPickups(guildId: bigint) {
+        await transaction(db, async db => {
+            // Rated results
+            await db.execute(`
+            DELETE rr.* FROM rated_results rr
+            JOIN pickups p ON rr.pickup_id = p.id
+			WHERE p.is_rated = 1 and p.guild_id = ?
+            `, [guildId]);
+
+            // Pickups
+            await db.execute(`
+            UPDATE pickups SET is_rated = 0
+            WHERE guild_id = ?
+            `, [guildId]);
+
+            // Players
+            await db.execute(`
+            UPDATE pickup_players pp
+            JOIN pickups ps ON ps.id = pp.pickup_id
+            SET pp.rating = null, pp.variance = null
+            WHERE ps.guild_id =  ?
+            `, [guildId]);
+
+            // Ratings
+            await db.execute(`
+            UPDATE players SET rating = null, variance = null
+            WHERE guild_id = ?
+            `, [guildId]);
+        });
+    }
+
+    static async clearAllStoredPickups(guildId: bigint) {
+        await db.execute(`
+        DELETE FROM pickups
+        WHERE guild_id = ?
+        `, [guildId]);
     }
 }

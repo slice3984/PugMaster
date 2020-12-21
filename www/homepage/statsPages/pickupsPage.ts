@@ -433,7 +433,7 @@ export default class PickupsPage {
 
                 contentEl.append(headingTeam);
 
-                team.players.forEach(player => playerListEl.append(generatePlayerEl(player.id, player.nick, player.elo)));
+                team.players.forEach(player => playerListEl.append(generatePlayerEl(player.id, player.nick, player.rating)));
 
                 contentEl.append(playerListEl);
             });
@@ -499,7 +499,7 @@ interface PickupInfoAPI {
         outcome: 'win' | 'draw' | 'loss' | null,
         players: {
             id: string;
-            elo: number;
+            rating: number;
             nick: string;
         }[]
     }[]

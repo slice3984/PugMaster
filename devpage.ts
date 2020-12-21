@@ -7,6 +7,8 @@ import Bot from './core/bot';
 import DevModel from './models/dev';
 import PickupModel from './models/pickup';
 import PickupState from './core/pickupState';
+import StatsModel from './models/stats';
+import Util from './core/util';
 
 export default class DevPage {
     private botInstance: Bot;
@@ -51,6 +53,12 @@ export default class DevPage {
                 const data = JSON.parse(receivedData);
                 await this.removeFromPickup(data.guildId, data.userId, data.configId);
                 socket.emit('guild-update', await this.getSingleGuild(data.guildId));
+            });
+
+            socket.on('fakestart', async receivedData => {
+                const data = JSON.parse(receivedData);
+                const response = await this.fakeStart(data.guildId, data.configId);
+                socket.emit('fakestart-response', response);
             });
 
             socket.on('clear', async receivedData => {
@@ -99,6 +107,15 @@ export default class DevPage {
                 } as Discord.GuildMember;
 
                 this.botInstance.getClient().emit('guildMemberRemove', member);
+            });
+
+            socket.on('clear-rated', async guildId => {
+                console.log(guildId);
+                await DevModel.unrateAllPickups(BigInt(guildId));
+            });
+
+            socket.on('delete-all', async guildId => {
+                await DevModel.clearAllStoredPickups(BigInt(guildId));
             });
         });
     }
@@ -150,6 +167,31 @@ export default class DevPage {
 
     private async removeFromPickup(guildId: string, userId: string, configId: number) {
         await PickupState.removePlayer(guildId, userId, true, configId);
+    }
+
+    private async fakeStart(guildId: string, configId: number) {
+        const pickupSettings = await PickupModel.getPickupSettings(BigInt(guildId), configId);
+        const avaialbleFakePlayers = Util.shuffleArray(await DevModel.getFakeUsers(BigInt(guildId)));
+
+        if (pickupSettings.playerCount > avaialbleFakePlayers.length) {
+            return `Insufficient amount of fake players, need ${pickupSettings.playerCount - avaialbleFakePlayers.length} more fake players`;
+        }
+
+        // Generate fake teams if required
+        let teams = [];
+
+        if (['random', 'manual'].includes(pickupSettings.pickMode)) {
+            for (let i = 0; i < pickupSettings.teamCount; i++) {
+                const amountPlayers = pickupSettings.playerCount / pickupSettings.teamCount;
+                const team = avaialbleFakePlayers.splice(0, amountPlayers);
+                teams.push(team.map(p => BigInt(p.id)));
+            }
+        } else {
+            teams = avaialbleFakePlayers.splice(0, pickupSettings.playerCount).map(p => BigInt(p.id));
+        }
+
+        await StatsModel.storePickup(BigInt(guildId), configId, teams);
+        return `Created a new ${pickupSettings.name} fake pickup`;
     }
 
     private async clearPickup(guildId: string, configId: number) {
