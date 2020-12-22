@@ -3,6 +3,7 @@ import Rating from '../core/rating';
 import { Command, RateablePickup } from '../core/types';
 import Util from '../core/util';
 import PickupModel from '../models/pickup';
+import RatingModel from '../models/rating';
 
 const command: Command = {
     cmd: 'reportdraw',
@@ -51,6 +52,12 @@ const command: Command = {
 
         if (reports && reports.filter(r => r.team === captain.team).length) {
             return message.reply('you already rated this pickup');
+        }
+
+        const amountFollowingPickups = await RatingModel.getAmountOfFollowingPickups(BigInt(message.guild.id), latestUnratedPickup.pickupId);
+
+        if (amountFollowingPickups > Rating.RERATE_AMOUNT_LIMIT) {
+            return message.reply(`the given pickup is too far in the past, it is only possible to report outcomes for pickups less than ${Rating.RERATE_AMOUNT_LIMIT} rated pickups in the past`);
         }
 
         let leftCaptains;

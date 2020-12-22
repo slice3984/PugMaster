@@ -102,7 +102,7 @@ export default class RatingModel {
             // Generate qeueries
             for (const [playerId, playerRating] of ratingsMap) {
                 playersQueries +=
-                    `UPDATE players SET rating = ${playerRating.mu}, variance = ${playerRating.sigma}` +
+                    `UPDATE players SET rating = ${playerRating.mu}, variance = ${playerRating.sigma} ` +
                     `WHERE guild_id = ${guildId} AND user_id = ${playerId};`;
             }
         } else {
@@ -110,11 +110,11 @@ export default class RatingModel {
             playerRatings.forEach(playerRating => {
                 if (!playerRating.mu) {
                     playersQueries +=
-                        `UPDATE players SET rating = null, variance = null` +
+                        `UPDATE players SET rating = null, variance = null ` +
                         `WHERE guild_id = ${guildId} AND user_id = ${playerRating.id};`;
                 } else {
                     playersQueries +=
-                        `UPDATE players SET rating = ${playerRating.mu}, variance = ${playerRating.sigma}` +
+                        `UPDATE players SET rating = ${playerRating.mu}, variance = ${playerRating.sigma} ` +
                         `WHERE guild_id = ${guildId} AND user_id = ${playerRating.id};`;
                 }
             });
