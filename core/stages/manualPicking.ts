@@ -87,6 +87,9 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
             }
         }
 
+        // If there is only one captain with a captain role available the captain would always get first pick, randomize captains
+        captains = Util.shuffleArray(captains);
+
         const captainsObj = captains.map((captain, index) => {
             return {
                 id: BigInt(captain.id),
@@ -101,7 +104,7 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
 
         if (pickupChannel) {
             pickupChannel.send(
-                `Team picking for **${pickupSettings.name}** started\n` +
+                `Team picking for **${pickupSettings.name}** started${pickupSettings.pickMode === 'autopick' ? ' - Maximum average player elo uncertainty exceeded for auto generated teams' : ''}\n` +
                 `Players removed from other pickups\n\n` +
                 `**Captains:** ${captains.map(captain => `<@${captain.id}>`).join(', ')}\n` +
                 `**Left players:** ${shuffledPlayers.map(player => `<@${player.id}>`).join(', ')}\n\n` +
@@ -197,7 +200,7 @@ const startPickup = async (guild: Discord.Guild, guildSettings: GuildSettings, p
             }
 
             await PickupModel.clearTeams(BigInt(guild.id), pendingPickup.pickupConfigId);
-            await PickupStage.startPickup(guild, pendingPickup.pickupConfigId)
+            await PickupStage.startPickup({ guild, pickupConfigId: pendingPickup.pickupConfigId });
         } catch (err) {
             Logger.logError('starting failed manual picking pickup failed', err, false, guild.id, guild.name);
             await PickupModel.resetPickup(BigInt(guild.id), pendingPickup.pickupConfigId);
@@ -213,7 +216,7 @@ const startPickup = async (guild: Discord.Guild, guildSettings: GuildSettings, p
 
         try {
             await PickupModel.clearTeams(BigInt(guild.id), pendingPickup.pickupConfigId);
-            await PickupStage.startPickup(guild, pendingPickup.pickupConfigId, teams, captains.map(c => BigInt(c.id)));
+            await PickupStage.startPickup({ guild, pickupConfigId: pendingPickup.pickupConfigId, teams, captains: captains.map(c => BigInt(c.id)) });
         } catch (err) {
             Logger.logError('starting manual picked pickup with teams failed', err, false, guild.id, guild.name);
             await startWithoutTeams();

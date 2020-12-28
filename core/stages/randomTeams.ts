@@ -14,5 +14,5 @@ export const randomTeams = async (guild: Discord.Guild, pickupConfigId: number) 
         teams.push(players.splice(0, playersInTeam));
     }
 
-    await PickupStage.startPickup(guild, pickupConfigId, teams);
+    await PickupStage.startPickup({ guild, pickupConfigId, teams });
 }

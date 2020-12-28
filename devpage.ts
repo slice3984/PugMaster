@@ -180,7 +180,7 @@ export default class DevPage {
         // Generate fake teams if required
         let teams = [];
 
-        if (['random', 'manual'].includes(pickupSettings.pickMode)) {
+        if (['random', 'manual', 'elo', 'autopick'].includes(pickupSettings.pickMode)) {
             for (let i = 0; i < pickupSettings.teamCount; i++) {
                 const amountPlayers = pickupSettings.playerCount / pickupSettings.teamCount;
                 const team = avaialbleFakePlayers.splice(0, amountPlayers);

@@ -1,7 +1,7 @@
 import Discord from 'discord.js';
 import GuildModel from '../models/guild';
 import Bot from './bot';
-import { TimeError, PickupSettings } from './types';
+import { TimeError, PickupSettings, PickupStartConfiguration } from './types';
 import MappoolModel from '../models/mappool';
 import ServerModel from '../models/server';
 
@@ -238,11 +238,11 @@ export default class Util {
         return sum;
     }
 
-    static async parseStartMessage(guildId: bigint, message: string, pickupSettings: PickupSettings, teams: BigInt[][]) {
-        const guildSettings = Bot.getInstance().getGuild(guildId);
+    static async parseStartMessage(message: string, pickupSettings: PickupSettings, config: PickupStartConfiguration) {
+        const guildSettings = Bot.getInstance().getGuild(config.guild.id);
 
-        // %name, %teams, %map, %ip, %password, #placeholder[only display if it exists]
-        const placeHolders = ['%name', '%teams', '%map', '%ip', '%password'];
+        // %name, %teams, %map, %ip, %password, %pickmode, %drawchance, #placeholder[only display if it exists]
+        const placeHolders = ['%name', '%teams', '%map', '%ip', '%password', '%pickmode', '%drawchance'];
 
         // Remove conditions for placeholders which will always exist
         message = message.replace(/(%name|%teams)\[(.*?)\]/g, '$2');
@@ -270,10 +270,10 @@ export default class Util {
                     break;
                 case '%teams':
                     const formattedTeams = [];
-                    if (!Array.isArray(teams[0])) {
-                        formattedTeams.push('Players', teams.map(id => `<@${id.toString()}>`).join(', '));
+                    if (!Array.isArray(config.teams[0])) {
+                        formattedTeams.push('Players', (config.teams as bigint[]).map(id => `<@${id.toString()}>`).join(', '));
                     } else {
-                        teams.forEach((team, index) => {
+                        config.teams.forEach((team, index) => {
                             formattedTeams.push(`Team ${String.fromCharCode(65 + index)}`); // Team A, Team B..
                             formattedTeams.push(team.map(id => `<@${id.toString()}>`).join(', '));
                         });
@@ -288,8 +288,8 @@ export default class Util {
                         break;
                     }
 
-                    const poolName = await MappoolModel.getPoolName(guildId, pickupSettings.mapPoolId);
-                    const maps = await MappoolModel.getMaps(guildId, poolName);
+                    const poolName = await MappoolModel.getPoolName(BigInt(config.guild.id), pickupSettings.mapPoolId);
+                    const maps = await MappoolModel.getMaps(BigInt(config.guild.id), poolName);
 
                     message = message.replace(/(%map)\[(.*?)\]/g, '$2');
                     message = message.replace(toReplace, maps[Math.floor(Math.random() * maps.length)]);
@@ -304,9 +304,9 @@ export default class Util {
 
                     if (!server) {
                         if (pickupSettings.serverId) {
-                            server = await ServerModel.getServer(guildId, pickupSettings.serverId);
+                            server = await ServerModel.getServer(BigInt(config.guild.id), pickupSettings.serverId);
                         } else {
-                            server = await ServerModel.getServer(guildId, guildSettings.defaultServer);
+                            server = await ServerModel.getServer(BigInt(config.guild.id), guildSettings.defaultServer);
                         }
                     }
 
@@ -323,9 +323,9 @@ export default class Util {
 
                     if (!server) {
                         if (pickupSettings.serverId) {
-                            server = await ServerModel.getServer(guildId, pickupSettings.serverId);
+                            server = await ServerModel.getServer(BigInt(config.guild.id), pickupSettings.serverId);
                         } else {
-                            server = await ServerModel.getServer(guildId, guildSettings.defaultServer);
+                            server = await ServerModel.getServer(BigInt(config.guild.id), guildSettings.defaultServer);
                         }
                     }
 
@@ -338,6 +338,23 @@ export default class Util {
 
                     message = message.replace(/(%password)\[(.*?)\]/g, '$2');
                     message = message.replace(toReplace, server.password);
+                    break;
+                case '%pickmode':
+                    const mode = pickupSettings.pickMode === 'no_teams' ? 'no teams' : pickupSettings.pickMode;
+                    message = message.replace(placeholder, mode);
+                    break;
+                case '%drawchance':
+                    if (!config.drawProbability) {
+                        message = message.replace(/\n%drawchance\[.*?\]\n/g, '\n');
+                        message = message.replace(/%drawchance\[.*?\]/g, '');
+                        message = message.replace(toReplace, '');
+                        break;
+                    }
+
+                    const drawchance = Math.round(config.drawProbability * 100);
+
+                    message = message.replace(/(%drawchance)\[(.*?)\]/g, '$2');
+                    message = message.replace(toReplace, drawchance.toString());
             }
         }
         return message;

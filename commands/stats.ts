@@ -1,6 +1,7 @@
 import { Command } from '../core/types';
 import StatsModel from '../models/stats';
 import PlayerModel from '../models/player';
+import Util from '../core/util';
 
 const command: Command = {
     cmd: 'stats',
@@ -48,19 +49,22 @@ const command: Command = {
 
                 } else {
                     return message.reply(`found multiple players using the given name, try calling the command with the player id again`);
-
                 }
             }
 
             const stats = await StatsModel.getStats(BigInt(message.guild.id), players.players[0].id);
+            const info = await StatsModel.getPlayerInfo(BigInt(message.guild.id), BigInt(players.players[0].userId));
 
             if (!stats.length) {
                 return message.reply('no pickup records found for this player');
             }
 
-            message.channel.send(`**${stats[0].nick}**: ` + stats.map(pickup => `\`${pickup.name}\` (**${pickup.amount}**)`).join(' '));
-        }
+            const msg = `Stats for **${stats[0].nick}**\n` +
+                `**Elo:** ${info.rating ? `${Util.tsToEloNumber(info.rating)} ± ${Util.tsToEloNumber(info.variance)}` : '-'}\n` +
+                `**Pickups:** ${stats.map(pickup => `\`${pickup.name}\` (**${pickup.amount}**)`).join(' ')}`;
 
+            message.channel.send(msg);
+        }
     }
 }
 

@@ -35,6 +35,7 @@ export default class GuildSettings {
         private _afkTime: number,
         private _afkCheckIterations: number,
         private _pickingIterations: number,
+        private _maxAvgVariance: number,
         private _warnStreaks: number,
         private _warnsUntilBan: number,
         private _warnStreakExpiration: number,
@@ -49,8 +50,8 @@ export default class GuildSettings {
         for (const prop of properties) {
 
             if (prop.value === 'none') {
-                if (['prefix', 'report_expire', 'warn_streaks', 'iteration_time', 'afk_time', 'afk_check_iterations', 'picking_iterations', 'warn_streak_expiration',
-                    'warn_expiration', 'warn_bantime', 'warn_bantime_multiplier', 'warns_until_ban'].includes(prop.key)) {
+                if (['prefix', 'report_expire', 'warn_streaks', 'iteration_time', 'afk_time', 'afk_check_iterations', 'picking_iterations',
+                    'max_avg_elo_variance', 'warn_streak_expiration', 'warn_expiration', 'warn_bantime', 'warn_bantime_multiplier', 'warns_until_ban'].includes(prop.key)) {
                     errors.push({ type: 'none', errorMessage: `you can't disable property ${prop.key}` });
                 } else {
                     continue;
@@ -130,6 +131,7 @@ export default class GuildSettings {
                 case 'afk_time': this._afkTime = +value; break;
                 case 'afk_check_iterations': this._afkCheckIterations = +value; break;
                 case 'picking_iterations': this._pickingIterations = +value; break;
+                case 'max_avg_elo_variance': this._maxAvgVariance = +value; break;
                 case 'warn_streaks': this._warnStreaks = value ? +value : null; break;
                 case 'warns_until_ban': this._warnsUntilBan = value ? +value : null; break;
                 case 'warn_streak_expiration': this._warnStreakExpiration = +value; break;
@@ -229,6 +231,10 @@ export default class GuildSettings {
 
     public get afkTime(): number {
         return this._afkTime;
+    }
+
+    public get maxAvgVariance(): number {
+        return this._maxAvgVariance;
     }
 
     public get warnBanTimeMultiplier(): number {

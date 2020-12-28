@@ -131,7 +131,7 @@ export namespace Validator {
                         }
                         break;
                     case 'pickmode':
-                        if (!['no_teams', 'manual', 'random', 'elo'].includes(value)) {
+                        if (!['no_teams', 'manual', 'random', 'elo', 'autopick'].includes(value)) {
                             errors.push({ type: 'pickmode', errorMessage: 'value has to be no_teams, manual, random or elo' });
                             break;
                         }
@@ -162,7 +162,7 @@ export namespace Validator {
                         }
 
                         if ((pickupSettings.playerCount / pickupSettings.teamCount) > 1 && pickupSettings.pickMode === 'no_teams') {
-                            errors.push({ type: 'rated', errorMessage: 'pickup has to be in manual, random or elo picking mode to be rateable' });
+                            errors.push({ type: 'rated', errorMessage: 'pickup has to be in manual, random, elo or autopick picking mode to be rateable' });
                             break;
                         }
                         break;
@@ -331,8 +331,8 @@ export namespace Validator {
     export namespace Guild {
         export function areValidKeys(...keys) {
             const validKeys = ['prefix', 'global_expire', 'report_expire', 'trust_time', 'explicit_trust', 'whitelist', 'blacklist', 'promotion_delay', 'server',
-                'start_message', 'sub_message', 'notify_message', 'iteration_time', 'afk_time', 'afk_check_iterations', 'picking_iterations', 'warn_streaks', 'warns_until_ban', 'warn_streak_expiration',
-                'warn_expiration', 'warn_bantime', 'warn_bantime_multiplier'];
+                'start_message', 'sub_message', 'notify_message', 'iteration_time', 'afk_time', 'afk_check_iterations', 'picking_iterations', 'max_avg_elo_variance', 'warn_streaks',
+                'warns_until_ban', 'warn_streak_expiration', 'warn_expiration', 'warn_bantime', 'warn_bantime_multiplier'];
 
             const invalidKeys = keys.filter(key => !validKeys.includes(key));
 
@@ -554,6 +554,22 @@ export namespace Validator {
                         if (+value < 1 || +value > 5) {
                             errors.push({ type: key, errorMessage: `${key.replace('_', ' ')} has to be a number between 1-5` });
                             break;
+                        }
+                        break;
+                    case 'max_avg_elo_variance':
+                        if (!/^\d+$/.test(value)) {
+                            errors.push({ type: key, errorMessage: 'amount has to be a number' });
+                            break;
+                        }
+
+                        // max variance = mu / sigma
+                        if (+value < Util.tsToEloNumber(1) || +value > Util.tsToEloNumber(25 / 3)) {
+                            errors.push({ type: key, errorMessage: `${key.replace('_', ' ')} has to be a number between ${Util.tsToEloNumber(1)} and ${Util.tsToEloNumber(25 / 3)}` });
+                            break;
+                        }
+
+                        if (guildSettings.maxAvgVariance === +value) {
+                            errors.push({ type: key, errorMessage: `max average elo variance is already set to ${Util.tsToEloNumber(+value)}` });
                         }
                         break;
                     case 'warn_streaks':

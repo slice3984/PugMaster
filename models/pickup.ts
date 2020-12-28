@@ -1,3 +1,4 @@
+import * as ts from 'ts-trueskill';
 import { PickupSettings, RateablePickup } from '../core/types';
 import db from '../core/db';
 import { transaction } from '../core/db';
@@ -35,19 +36,19 @@ export default class PickupModel {
     }
 
     static async getActivePickup(guildId: bigint, nameOrConfigId: number | string):
-        Promise<{ name: string, players: { id: string | null, nick: string }[]; maxPlayers: number; teams: number; configId: number }> {
+        Promise<{ name: string, players: { id: string | null, nick: string, rating: ts.Rating | null }[]; maxPlayers: number; teams: number; configId: number }> {
         let result;
 
         if (typeof nameOrConfigId === 'number') {
             result = await db.execute(`
-            SELECT c.id, c.name, s.player_id, c.player_count, c.team_count, p.current_nick FROM pickup_configs c
+            SELECT c.id, c.name, s.player_id, c.player_count, c.team_count, p.current_nick, p.rating, p.variance FROM pickup_configs c
             LEFT JOIN state_pickup_players s ON s.pickup_config_id = c.id
             LEFT JOIN players p on p.user_id = s.player_id AND p.guild_id = s.guild_id
             WHERE c.guild_id = ? AND c.id = ?;
             `, [guildId, nameOrConfigId]);
         } else {
             result = await db.execute(`
-            SELECT c.id, c.name, s.player_id, c.player_count, c.team_count, p.current_nick FROM pickup_configs c
+            SELECT c.id, c.name, s.player_id, c.player_count, c.team_count, p.current_nick, p.rating, p.variance FROM pickup_configs c
             LEFT JOIN state_pickup_players s ON s.pickup_config_id = c.id
             LEFT JOIN players p on p.user_id = s.player_id AND p.guild_id = s.guild_id
             WHERE c.guild_id = ? AND c.name = ?;
@@ -63,7 +64,8 @@ export default class PickupModel {
         for (const row of result[0]) {
             players.push({
                 id: row.player_id.toString(),
-                nick: row.current_nick
+                nick: row.current_nick,
+                rating: row.rating ? new ts.Rating(row.rating, row.variance) : new ts.Rating()
             });
         }
 

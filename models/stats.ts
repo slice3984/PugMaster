@@ -611,9 +611,9 @@ export default class StatsModel {
         });
     }
 
-    static async getPlayerInfo(guildId: bigint, playerId: bigint): Promise<{ id: string; name: string; rating: number | null } | null> {
+    static async getPlayerInfo(guildId: bigint, playerId: bigint): Promise<{ id: string; name: string; rating: number | null; variance: number | null } | null> {
         const data: any = await db.execute(`
-        SELECT user_id, current_nick, rating FROM players
+        SELECT user_id, current_nick, rating, variance FROM players
         WHERE guild_id = ? AND user_id = ?
         `, [guildId, playerId]);
 
@@ -624,7 +624,8 @@ export default class StatsModel {
         return {
             id: data[0][0].user_id.toString(),
             name: data[0][0].current_nick,
-            rating: data[0][0].rating
+            rating: data[0][0].rating,
+            variance: data[0][0].variance
         };
     }
 

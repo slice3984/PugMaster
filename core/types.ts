@@ -74,7 +74,7 @@ export interface PickupSettings {
     isDefaultPickup: boolean;
     mapPoolId: number | null;
     afkCheck: boolean;
-    pickMode: 'no_teams' | 'manual' | 'random' | 'elo';
+    pickMode: 'no_teams' | 'manual' | 'random' | 'elo' | 'autopick';
     rated: boolean;
     whitelistRole: string | null;
     blacklistRole: string | null;
@@ -191,4 +191,12 @@ export interface RatingTeam {
 export interface RatingPickup {
     pickupId: number;
     teams: RatingTeam[]
+}
+
+export interface PickupStartConfiguration {
+    guild: Discord.Guild,
+    pickupConfigId: number,
+    teams?: bigint[] | bigint[][];
+    captains?: bigint[];
+    drawProbability?: number;
 }
