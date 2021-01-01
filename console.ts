@@ -5,6 +5,7 @@ import Bot from "./core/bot";
 import Logger from "./core/logger";
 import Util from "./core/util";
 import GuildModel from "./models/guild";
+import PickupModel from "./models/pickup";
 
 export default class Console {
     private guild: Discord.Guild;
@@ -98,7 +99,7 @@ export default class Console {
                 type: 'list',
                 name: 'menu',
                 message: 'Select option',
-                choices: ['Clear state', 'Send message', 'Ban guild', 'Home']
+                choices: ['Clear state', 'Show active pickups', 'Send message', 'Ban guild', 'Home']
             }
         ]);
 
@@ -125,7 +126,22 @@ export default class Console {
 
                 this.showGuildMenu();
                 break;
+            case 'Show active pickups':
+                const pickups = Array.from((await PickupModel.getActivePickups(BigInt(this.guild.id))).values())
+                    .sort((a, b) => b.players.length - a.players.length);
 
+                if (pickups.length === 0) {
+                    console.log('No active pickups for this guild');
+                } else {
+                    const activePickups = [];
+                    pickups.forEach(pickup => {
+                        activePickups.push(`${pickup.name} - ${pickup.players.length} / ${pickup.maxPlayers}` +
+                            `${pickup.maxPlayers === pickup.players.length ? ' - PENDING' : ''}`);
+                    });
+                    console.log(`Active pickups\n`, activePickups.join('\n'));
+                }
+                this.showGuildMenu();
+                break;
             case 'Send message':
                 const message = await inquirer.prompt([
                     {
