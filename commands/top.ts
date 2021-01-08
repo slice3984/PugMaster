@@ -1,20 +1,21 @@
 import { Command } from '../core/types';
+import Util from '../core/util';
 import StatsModel from '../models/stats';
 
 const command: Command = {
     cmd: 'top',
     category: 'info',
-    shortDesc: 'Shows top 10 players based on amount of played pickups',
-    desc: 'Shows top 10 players based on amount of played pickups',
+    shortDesc: 'Shows top 10 players based on amount of played pickups or elo ratings',
+    desc: 'Shows top 10 players based on amount of played pickups or elo ratings',
     args: [
-        { name: '[day/week/month/year]', desc: 'Period of top players, last day, week, month or year', required: false }
+        { name: '[day/week/month/year/elo]', desc: 'Period of players with most pickups as: day, week, month, year or elo to see elo rankings', required: false }
     ],
     global: false,
     perms: false,
     exec: async (bot, message, params) => {
 
         if (!params.length) {
-            const top = await StatsModel.getTop(BigInt(message.guild.id), 'alltime', 10);
+            const top = await StatsModel.getTopPickupAmount(BigInt(message.guild.id), 'alltime', 10);
 
             if (!top.length) {
                 return message.reply('no pickups found');
@@ -24,21 +25,29 @@ const command: Command = {
                 `**Top 10 Players (amount played)**\n` +
                 `${top.map(player => `\`${player.nick}\` (**${player.amount}**)`).join(' ')}`);
         } else {
-            const time = params[0].toLowerCase();
+            const option = params[0].toLowerCase();
 
-            if (!['day', 'week', 'month', 'year'].includes(time)) {
-                return message.reply('invalid time period given did you mean: day, week, month or year?');
+            if (!['day', 'week', 'month', 'year', 'elo'].includes(option)) {
+                return message.reply('Did you mean day, week, month, year or elo?');
             }
 
-            const top = await StatsModel.getTop(BigInt(message.guild.id), time, 10);
+            let top;
+            let isElo = false;
+
+            if (option === 'elo') {
+                isElo = true;
+                top = await StatsModel.getTopRatings(BigInt(message.guild.id));
+            } else {
+                top = await StatsModel.getTopPickupAmount(BigInt(message.guild.id), option, 10);
+            }
 
             if (!top.length) {
-                return message.reply('no pickups found');
+                return message.reply(`no ${isElo ? 'ratings' : 'pickups'} found`);
             }
 
             message.channel.send(
-                `**Top 10 Players - ${time} (amount played)**\n` +
-                `${top.map(player => `\`${player.nick}\` (**${player.amount}**)`).join(' ')}`);
+                `**Top 10 Players - ${isElo ? 'Ratings' : `Played (${option})`}**\n` +
+                `${top.map(player => `\`${player.nick}\` (**${isElo ? `${Util.tsToEloNumber(player.rating)} ± ${Util.tsToEloNumber(player.variance)}` : player.amount}**)`).join(' ')}`);
         }
     }
 }

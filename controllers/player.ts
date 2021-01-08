@@ -58,7 +58,7 @@ export default (async (req: express.Request, res: express.Response) => {
 
     const id = playerInfo.id;
     const name = playerInfo.name;
-    const rating = Util.tsToEloNumber(playerInfo.rating);
+    const rating = { rating: Util.tsToEloNumber(playerInfo.rating), variance: Util.tsToEloNumber(playerInfo.variance) };
     const pickupAmount = playedPickupCounts.reduce((prev, curr) => prev += curr.amount, 0);
     const playedPickups = playedPickupCounts.map(pickup => {
         return { name: pickup.name, amount: pickup.amount }
@@ -86,7 +86,7 @@ interface PlayerInfo {
     id: string;
     name: string;
     previousNames: string[];
-    rating: number;
+    rating: { rating: number; variance: number };
     pickupAmount: number;
     playedPickups: { name: string; amount: number }[];
     lastPickupTimes: { name: string; date: Date }[];

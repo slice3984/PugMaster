@@ -188,7 +188,7 @@ export default class StatsModel {
         }
     }
 
-    static async getTop(guildId: bigint, period: 'alltime' | 'day' | 'week' | 'month' | 'year', limit: number):
+    static async getTopPickupAmount(guildId: bigint, period: 'alltime' | 'day' | 'week' | 'month' | 'year', limit: number):
         Promise<{ nick: string, amount: number }[]> {
         let results;
         let intervalTime;
@@ -236,6 +236,27 @@ export default class StatsModel {
         });
 
         return top;
+    }
+
+    static async getTopRatings(guildId: bigint): Promise<{ nick: string, rating: number, variance: number }[]> {
+        const results: any = await db.execute(`
+        SELECT current_nick, rating, variance FROM players
+        WHERE rating IS NOT NULL AND guild_id = ?
+        ORDER BY rating DESC
+        LIMIT 10    
+        `, [guildId]);
+
+        const ratings = [];
+
+        results[0].forEach(row => {
+            ratings.push({
+                nick: row.current_nick,
+                rating: row.rating,
+                variance: row.variance
+            });
+        });
+
+        return ratings;
     }
 
     static async getStats(guildId: bigint, identifier?: string | number) {

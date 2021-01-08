@@ -12,7 +12,7 @@ interface PlayerInfo {
     id: string;
     name: string;
     previousNames: string[];
-    rating: number;
+    rating: { rating: number; variance: number };
     pickupAmount: number;
     playedPickups: { name: string; amount: number }[];
     lastPickupTimes: { name: string; date: Date }[];
@@ -201,7 +201,7 @@ export default class PlayerPage {
 
     private renderPlayerInfo() {
         this.playerNameEl.textContent = this.playerInfo.name;
-        this.playerEloEl.textContent = this.playerInfo.rating ? this.playerInfo.rating.toString() : 'None';
+        this.playerEloEl.textContent = this.playerInfo.rating ? `${this.playerInfo.rating.rating} ± ${this.playerInfo.rating.variance}` : 'None';
         this.playerPickupAmountEl.textContent = this.playerInfo.pickupAmount.toString();
 
         if (this.playerInfo.previousNames.length) {

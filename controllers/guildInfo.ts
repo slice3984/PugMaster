@@ -2,6 +2,7 @@ import express from 'express';
 import { GuildInfo } from '../core/types';
 import Bot from '../core/bot';
 import StatsModel from '../models/stats';
+import Util from '../core/util';
 
 const client = Bot.getInstance().getClient();
 
@@ -46,7 +47,8 @@ export default (async (req: express.Request, res: express.Response) => {
 
     const pickupPlayers = await StatsModel.getPlayerCount(BigInt(guildId));
     let pickupStats = await StatsModel.getStats(BigInt(guildId));
-    const topPlayers = await StatsModel.getTop(BigInt(guildId), 'alltime', 10);
+    const topPlayers = await StatsModel.getTopPickupAmount(BigInt(guildId), 'alltime', 10);
+    const topPlayersRatings = await StatsModel.getTopRatings(BigInt(guildId));
     const pickupDates = await StatsModel.getLastPickupDates(BigInt(guildId), 30);
     const overallPlayedPickups = pickupStats.reduce((val, current) => val + current.amount, 0);
 
@@ -68,6 +70,12 @@ export default (async (req: express.Request, res: express.Response) => {
         pickupCount: overallPlayedPickups,
         lastGame: { date: lastGame.startedAt, name: lastGame.name },
         pickupsChartData: pickupStats,
+        topPlayersRatingsChartData: topPlayersRatings.map(obj => {
+            return {
+                nick: obj.nick,
+                amount: Util.tsToEloNumber(obj.rating)
+            };
+        }),
         topPlayersChartData: topPlayers,
         activityTimesChartData: pickupDates
     };

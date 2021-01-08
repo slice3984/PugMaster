@@ -19,6 +19,10 @@ interface GuildInfo {
         nick: string;
         amount: number;
     }[];
+    topPlayersRatingsChartData?: {
+        nick: string;
+        amount: number;
+    }[];
     activityTimesChartData?: Date[];
 }
 
@@ -228,20 +232,59 @@ export default class OverviewPage {
     }
 
     private generateTopChart() {
+        // Button refs
+        const amountBtnEl = document.getElementById('top-amount');
+        const ratingBtnEl = document.getElementById('top-rating');
+
+        const buttonRefs = [
+            document.getElementById('top-amount'),
+            document.getElementById('top-rating')
+        ];
+
+        let activeRef = buttonRefs[0];
+
+        const switchDataset = setName => {
+            activeRef.classList.toggle('overview__btn--active');
+
+            let labels;
+            let data;
+            let titleString = '';
+
+            switch (setName) {
+                case 'amount':
+                    labels = this.guildInfo.topPlayersChartData.map(obj => obj.nick);
+                    data = this.guildInfo.topPlayersChartData.map(player => player.amount);
+                    activeRef = amountBtnEl;
+                    titleString = 'Amount';
+                    break;
+                case 'rating':
+                    labels = this.guildInfo.topPlayersRatingsChartData.map(obj => obj.nick);
+                    data = this.guildInfo.topPlayersRatingsChartData.map(player => player.amount);;
+                    activeRef = ratingBtnEl;
+                    titleString = 'Rating';
+            };
+
+            activeRef.classList.toggle('overview__btn--active');
+
+            this.topChart.data.datasets.pop();
+
+            this.topChart.data.labels = labels;
+            this.topChart.data.datasets.push({
+                label: `${setName === 'amount' ? 'Pickups played' : 'Rating'}`,
+                backgroundColor,
+                borderColor,
+                borderWidth: 1,
+                data
+            });
+
+            this.topChart.options.title.text = `Top 10 Players - ${titleString}${setName === 'amount' ? ' (Last 30 days)' : ''}`;
+            this.topChart.update();
+        };
+
         this.topChart = new Chart(this.topCanvasEl.getContext('2d'), {
             type: 'bar',
-            data: {
-                labels: this.guildInfo.topPlayersChartData.map(player => player.nick),
-                datasets: [{
-                    label: 'Pickups played',
-                    data: this.guildInfo.topPlayersChartData.map(player => player.amount),
-                    backgroundColor,
-                    borderColor,
-                    borderWidth: 1
-                }]
-            },
             options: {
-                title: { display: true, text: 'Top 10 Players', fontColor: this.chartFontColor, fontFamily: 'Verdana, Geneva, Tahoma, sans-serif', fontSize: 16 },
+                title: { display: true, fontColor: this.chartFontColor, fontFamily: 'Verdana, Geneva, Tahoma, sans-serif', fontSize: 16 },
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
@@ -253,6 +296,26 @@ export default class OverviewPage {
                 }
             }
         });
+
+        switchDataset('amount');
+
+        const datasetNames = ['amount', 'rating'];
+
+        // No ratings, no need to display any button
+        if (!this.guildInfo.topPlayersRatingsChartData.length) {
+            buttonRefs.forEach(btn => btn.style.display = 'none');
+            return;
+        }
+
+        buttonRefs.forEach((ref, index) => {
+            ref.addEventListener('click', () => {
+                if (activeRef === ref) {
+                    return;
+                }
+
+                switchDataset(datasetNames[index]);
+            })
+        })
     }
 
     private generateActivityChart() {

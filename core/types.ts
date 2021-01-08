@@ -135,6 +135,10 @@ export interface GuildInfo {
         nick: string;
         amount: number;
     }[];
+    topPlayersRatingsChartData?: {
+        nick: string;
+        amount: number;
+    }[];
     activityTimesChartData?: Date[];
 }
 
