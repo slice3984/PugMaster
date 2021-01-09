@@ -27,6 +27,7 @@
                                     <ul>
                                         <li><a href="#first-steps">First steps</a></li>
                                         <li><a href="#settings">Settings</a></li>
+                                        <li><a href="#setup-rated">Setting up rating / elo</a></li>
                                     </ul>
                                 </div>
                             </div>
@@ -55,6 +56,9 @@
                                     <ul>
                                         <li><a href="#introduction">Introduction for players new to pickups</a></li>
                                         <li><a href="#set-permissions">Set permissions, create a moderator role</a></li>
+                                        <li><a href="#rating-help">How does rating work?</a></li>
+                                        <li><a href="#pickmodes">Pickmodes explained</a></li>
+                                        <li><a href="#messages">Setting start, notify and sub messages</a></li>
                                     </ul>
                                 </div>
                             </div>
@@ -63,7 +67,8 @@
                             <div id="first-steps" class="hidden">
                                 <h3>Creating the pickup channel</h3>
                                 <p>The bot requires a pickup channel which is used to organize pickups and execute all
-                                    <a href="./commands">commands</a>.</p>
+                                    <a href="./commands">commands</a>.
+                                </p>
                                 <p>The pickup channel can be created using the <a href="./commands#pickup">pickup</a>
                                     command, execute the following command in the channel you want pickups to happen:
                                 </p>
@@ -142,6 +147,26 @@
                                 <div class="code-block">!modify_command expire disable</div>
                                 <p>to enable the command again:</p>
                                 <div class="code-block">!modify_command expire enable</div>
+                            </div>
+                            <div id="setup-rated" class="hidden">
+                                <h3>How to setup pickup rating</h3>
+                                <p>The bot uses <a href="https://trueskill.org/">trueskill</a> for its rating system. To
+                                    make a pickup rateable the pickup has to be in a pickmode which is able to generate
+                                    teams.</p>
+                                <p>The following pickmodes are suitable for rated mode: manual, random, elo and
+                                    autopick.
+                                </p>
+                                <p>To modify a pickup to use a different pickmode you use the <a
+                                        href="./commands#modify_pickup">modify_pickup</a> command, example:</p>
+                                <div class="code-block">!modify_pickup name pickmode manual</div>
+                                <p class="margin-top-small">Now that our pickup is able to generate teams we enable
+                                    rating using the <a href="./commands#modify_pickup">modify_pickup</a> command once
+                                    again:</p>
+                                <div class="code-block">!modify_pickup name rated true</div>
+                                <p>Executing both commands results in having a pickup with teams being able to be rated
+                                    using the rating commands.</p>
+                                <p class="margin-top-small">More info about rating a pickup can be found in the
+                                    "Miscellaneous - How does rating work?" section.</p>
                             </div>
                             <div id="bot-variables" class="hidden">
                                 <table class="table">
@@ -527,6 +552,141 @@
                                 <p class="margin-top-small">Commands which require permissions can be found on the <a
                                         href="./commands">commands</a> page in the "Admin" section.</p>
                                 </p>
+                            </div>
+                            <div id="rating-help" class="hidden">
+                                <h3>Introduction</h3>
+                                <p>This section will describe how a pickup can be rated as user or admin.</p>
+                                <h3 class="margin-top-medium">Reporting wins, draws and losses</h3>
+                                <p>To be able to report a certain result for a pickup the player has to be a captain of
+                                    the pickup to be rated.</p>
+                                <p>Only pickups in rated mode in "manual" pickmode with player picked teams are rateable
+                                    by players.</p>
+                                <p>To report a outcome the following commands are available to players: <a
+                                        href="./commands#reportdraw">reportdraw</a> and <a
+                                        href="./commands#reportloss">reportloss</a>.</p>
+                                <p class="margin-top-small">For example, when team A loses the captain of team A
+                                    executes the <a href="./commands#reportloss">reportloss</a> command to report a loss
+                                    for his team.</p>
+                                <p>In case of pickups with more than two teams or reporting a draw other captains have
+                                    to confirm by reporting as well.</p>
+                                <h3 class="margin-top-medium">Rating & Unrating pickups as admin</h3>
+                                <p>With sufficient permissions admins are able to use the <a
+                                        href="./commands#rate">rate</a> and <a href="./commands#unrate">unrate</a>
+                                    commands.</p>
+                                <p class="margin-top-small">Rating or rerating can be done with the <a
+                                        href="./commands#rate">rate</a> command,
+                                    example:</p>
+                                <div class="code-block">!rate 231 A:W B:L</div>
+                                <p>Rates or rerates the pickup with the id 231 and reports a win for Team A and a loss
+                                    for team B.</p>
+                                <p>Possible outcomes are W - Win, D - Draw, L - Loss.</p>
+                                <p class="margin-top-small">Using the <a href="./commands#rate">unrate</a> command it is
+                                    also possible to unrate a pickup:</p>
+                                <div class="code-block">!unrate 231</div>
+                                <p>Executing this command results in unrating the pickup with the id 231.</p>
+                                <p class="margin-top-small">Due to its nature of how the rating works internally the bot
+                                    can only rate, rerate or
+                                    unrate
+                                    pickups up to 10 already rated pickups in the past.</p>
+                            </div>
+                            <div id="pickmodes" class="hidden">
+                                <h3>Introduction</h3>
+                                <p>The bot offers various pickmodes which are explained in this chapter.</p>
+                                <p>To change the pickmode of a specific pickup the <a
+                                        href="./commands#modify_pickup">modify_pickup</a> command is used, example:</p>
+                                <div class="code-block">!modify_pickup name pickmode manual</div>
+                                <p>Sets the pickmode for pickup "name" to manual.</p>
+                                <p class="margin-top-small">The following pickmodes are available:</p>
+                                <h3 class="margin-top-small">no_teams</h3>
+                                <p>The default pickmode for pickups, no team generation for pickups with more than two
+                                    players.</p>
+                                <p>Pickups with two players are treated as two team pickups and are able to be rated
+                                    with enabled rated mode.</p>
+                                <h3 class="margin-top-small">manual</h3>
+                                <p>Pickups in this mode enable player picking. The bot selects the required amount of
+                                    captains based on the captain role and amount of played pickups.</p>
+                                <p>If a player got a captain role for the given pickup, the player will be prioritized
+                                    over players with more played games.</p>
+                                <p>In this mode each captain picks players for his team if no players are left the
+                                    pickup starts with the picked teams.</p>
+                                <h3 class="margin-top-small">random</h3>
+                                <p>The bot generates random teams for the given pickup.</p>
+                                <h3 class="margin-top-small">elo</h3>
+                                <p>The bot attempts to generate balanced teams based on the available player ratings.
+                                </p>
+                                <h3 class="margin-top-small">autopick</h3>
+                                <p>Combines manual and elo pickmode, if a certain max average player elo variance
+                                    threshold is
+                                    exceeded the pickup will start in manual pickmode.</p>
+                                <p>Otherwise the bot generates teams in elo pickmode.</p>
+                                <p>The max average elo value can be set with the <a
+                                        href="./commands#modify_bot">modify_bot</a> command, example:</p>
+                                <div class="code-block">!modify_bot max_avg_elo_variance 32</div>
+                                <p>Sets the max average elo variance to 32, if the average player elo variance is
+                                    exceeded in a autopick
+                                    pickup manaul pickmode will be used.</p>
+                            </div>
+                            <div id="messages" class="hidden">
+                                <h3>Modifying start, notify and sub messages</h3>
+                                <p>The bot offers a few placeholder variables to set a custom message for the start,
+                                    notify and sub message.</p>
+                                <p>The following variables are available:</p>
+                                <table class="table margin-top-small">
+                                    <thead>
+                                        <th>Variable</th>
+                                        <th>Description</th>
+                                        <th>Usable for</th>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>%name</td>
+                                            <td>Name of the pickup</td>
+                                            <td>start, notify and sub</td>
+                                        </tr>
+                                        <tr>
+                                            <td>%ip</td>
+                                            <td>Server ip for the pickup</td>
+                                            <td>start, notify and sub</td>
+                                        </tr>
+                                        <tr>
+                                            <td>%password</td>
+                                            <td>Server password for the pickup</td>
+                                            <td>start, notify and sub</td>
+                                        </tr>
+                                        <tr>
+                                            <td>%teams</td>
+                                            <td>Teams of the pickup</td>
+                                            <td>start</td>
+                                        </tr>
+                                        <tr>
+                                            <td>%map</td>
+                                            <td>Random map for the pickup</td>
+                                            <td>start</td>
+                                        </tr>
+                                        <tr>
+                                            <td>%pickmode</td>
+                                            <td>Pickmode for the pickup</td>
+                                            <td>start</td>
+                                        </tr>
+                                        <tr>
+                                            <td>%drawchance</td>
+                                            <td>Probability in % for each team to draw</td>
+                                            <td>start</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <p>The messages can be modified using the <a href="./commands#modify_bot">modify_bot</a>
+                                    command:</p>
+                                <div class="code-block">!modify_bot start_message %name pickup started, IP: %ip
+                                    Password: %password</div>
+                                <p>Results in modifying the start message and replacing the placeholders with the
+                                    correct values in case of a pickup start.</p>
+                                <p>If no value is available the placeholder will be deleted without a replacement.</p>
+                                <p class="margin-top-small">It is also possible to only show a certain text if a
+                                    placeholder is available this is
+                                    achievable with the following syntax:</p>
+                                <p>%name pickup started, IP: %ip %password[Password: %password]</p>
+                                <p>This will only display the "Password: %password" part if a password is set.</p>
                             </div>
                         </div>
                     </div>

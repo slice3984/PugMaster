@@ -23,25 +23,16 @@ export default (bot: Bot) => {
     if (process.env.DEBUG) {
         app.disable('view cache');
         app.use('/www/homepage', express.static(path.join(__dirname, 'dist', 'www', 'homepage')));
-        app.use('/www/webinterface', express.static(path.join(__dirname, 'dist', 'www', 'webinterface')));
         new DevPage(server, app, bot);
     } else {
         app.use('/www/homepage', express.static(path.join(__dirname, 'www', 'homepage')));
-        app.use('/www/webinterface', express.static(path.join(__dirname, 'www', 'webinterface')));
     }
-
-    app.get('/webinterface', (req: express.Request, res: express.Response) => {
-        res.render('pages/webinterface', {
-            liveReload: process.env.DEBUG
-        })
-    });
 
     // Routes
     app.get('/', routes.home);
     app.get('/stats', routes.stats);
     app.get('/commands', routes.commands);
     app.get('/help', routes.help);
-    app.get('/login', routes.login);
 
     // Rate limit the API
     app.use('/api/', rateLimit({

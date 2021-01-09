@@ -14,7 +14,6 @@ const config = {
     devtool: "#inline-source-map",
     entry: {
         'homepage': [wwwDir + 'homepage/app.ts', wwwDir + 'homepage/scss/main.scss'],
-        'webinterface': [wwwDir + 'webinterface/app.ts', wwwDir + 'webinterface/scss/main.scss']
     },
     output: {
         filename: './www/[name]/app.js'
@@ -64,7 +63,6 @@ const config = {
         new CopyWebpackPlugin({
             patterns: [
                 { from: wwwDir + 'homepage/img', to: './www/homepage/img' },
-                { from: wwwDir + 'webinterface/img', to: './www/webinterface/img' },
                 { from: viewsDir, to: './views' }
             ]
         }
