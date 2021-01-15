@@ -78,61 +78,58 @@ export default class StatsModel {
 
         if (!identifier) {
             pickup = await db.execute(`
-            SELECT ANY_VALUE(p.current_nick) as current_nick,
-            ANY_VALUE(pc.name) as name,
-            ANY_VALUE(pp.is_captain) as is_captain,
-            ANY_VALUE(pc.is_rated) as is_rated,
-            ANY_VALUE(pp.team) as team,
-            ANY_VALUE(rr.result) as result,
-            ANY_VALUE(ps.started_at) as started_at,
-            ANY_VALUE(ps.id) as id FROM players p
+            SELECT p.current_nick,
+            pc.name,
+            pp.is_captain,
+            pc.is_rated,
+            pp.team,
+            rr.result,
+            ps.started_at,
+            ps.id FROM players p
             JOIN pickup_players pp ON pp.player_id = p.id
             JOIN pickups ps ON pp.pickup_id = ps.id
             JOIN pickup_configs pc ON ps.pickup_config_id = pc.id
-            LEFT JOIN rated_results rr ON pp.pickup_id = rr.pickup_id
+            LEFT JOIN rated_results rr ON pp.pickup_id = rr.pickup_id AND pp.team = rr.team
             WHERE ps.id = (SELECT MAX(id) FROM pickups WHERE guild_id = ?)
-            GROUP BY p.user_id
             `, [guildId]);
         } else {
             if (!identifier.isPlayer) {
                 // By pickup
                 pickup = await db.execute(`
-                SELECT ANY_VALUE(p.current_nick) as current_nick,
-                ANY_VALUE(pc.name) as name,
-                ANY_VALUE(pp.is_captain) as is_captain,
-                ANY_VALUE(pc.is_rated) as is_rated,
-                ANY_VALUE(pp.team) as team,
-                ANY_VALUE(rr.result) as result,
-                ANY_VALUE(ps.started_at) as started_at,
-                ANY_VALUE(ps.id) as id FROM players p
-                JOIN pickup_players pp ON pp.player_id = p.id
-                JOIN pickups ps ON pp.pickup_id = ps.id
-                JOIN pickup_configs pc ON ps.pickup_config_id = pc.id
-                LEFT JOIN rated_results rr ON pp.pickup_id = rr.pickup_id
-                WHERE ps.id = (
-					SELECT MAX(ps.id) FROM pickups ps
+                SELECT p.current_nick,
+                pc.name,
+                pp.is_captain,
+                pc.is_rated,
+                pp.team,
+                rr.result,
+                ps.started_at,
+                ps.id FROM players p
+                    JOIN pickup_players pp ON pp.player_id = p.id
+                    JOIN pickups ps ON pp.pickup_id = ps.id
                     JOIN pickup_configs pc ON ps.pickup_config_id = pc.id
-                    WHERE pc.guild_id = ? AND pc.name = ?
-                )
-                GROUP BY p.user_id
+                    LEFT JOIN rated_results rr ON pp.pickup_id = rr.pickup_id AND pp.team = rr.team
+                    WHERE ps.id = (
+                        SELECT MAX(ps.id) FROM pickups ps
+                        JOIN pickup_configs pc ON ps.pickup_config_id = pc.id
+                        WHERE pc.guild_id = ? AND pc.name = ?
+                    )
             `, [guildId, identifier.value]);
             } else {
                 // By player
                 pickup = await db.execute(`
-                SELECT ANY_VALUE(p.current_nick) as current_nick,
-                ANY_VALUE(pc.name) as name,
-                ANY_VALUE(pp.is_captain) as is_captain,
-                ANY_VALUE(pc.is_rated) as is_rated,
-                ANY_VALUE(pp.team) as team,
-                ANY_VALUE(rr.result) as result,
-                ANY_VALUE(ps.started_at) as started_at,
-                ANY_VALUE(ps.id) as id FROM players p
-                JOIN pickup_players pp ON pp.player_id = p.id
-                JOIN pickups ps ON pp.pickup_id = ps.id
-                JOIN pickup_configs pc ON ps.pickup_config_id = pc.id
-                LEFT JOIN rated_results rr ON pp.pickup_id = rr.pickup_id
-                WHERE ps.id = (SELECT MAX(pickup_id) FROM pickup_players WHERE player_id = ?)
-                GROUP BY p.user_id
+                SELECT p.current_nick,
+                pc.name,
+                pp.is_captain,
+                pc.is_rated,
+                pp.team,
+                rr.result,
+                ps.started_at,
+                ps.id FROM players p
+                    JOIN pickup_players pp ON pp.player_id = p.id
+                    JOIN pickups ps ON pp.pickup_id = ps.id
+                    JOIN pickup_configs pc ON ps.pickup_config_id = pc.id
+                    LEFT JOIN rated_results rr ON pp.pickup_id = rr.pickup_id AND pp.team = rr.team
+                    WHERE ps.id = (SELECT MAX(pickup_id) FROM pickup_players WHERE player_id = ?)
                 `, [identifier.value])
             }
         }
@@ -167,7 +164,7 @@ export default class StatsModel {
                     if (!team) {
                         teams.set(row.team, {
                             name: row.team,
-                            outcome: row.outcome,
+                            outcome: row.result,
                             players: [{ nick: row.current_nick, isCaptain: Boolean(row.is_captain) }]
                         })
                     } else {

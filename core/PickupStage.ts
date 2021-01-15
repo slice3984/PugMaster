@@ -194,7 +194,10 @@ export default class PickupStage {
                 for (const playerId of playersToDm) {
                     const member = config.guild.members.cache.get(playerId);
                     if (member) {
-                        await member.send(dmMessage);
+                        try {
+                            // In case the player blocked the bot
+                            await member.send(dmMessage);
+                        } catch (_err) { }
                     }
                 }
             }

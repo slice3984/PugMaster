@@ -70,13 +70,25 @@ const command: Command = {
 }
 
 const formatOutput = (pickupInfo: PickupInfo, toHighlight?: string | null) => {
-    const formatPlayers = (nicks: string[]) => {
-        return nicks.map(nick => {
-            if (toHighlight && nick === toHighlight) {
-                return `**>**\`${nick}\``;
+    const formatPlayers = (players: { nick: string; isCaptain: boolean }[], onePlayerTeams: boolean) => {
+        players = players.sort((p1, p2) => {
+            return +p2.isCaptain - +p1.isCaptain;
+        });
+
+        return players.map(p => {
+            let playerStr = '';
+            if (toHighlight && p.nick === toHighlight) {
+                playerStr += `**>**\`${p.nick}\``;
             } else {
-                return `\`${nick}\``;
+                playerStr += `\`${p.nick}\``;
             }
+
+            // Ignore duels
+            if (p.isCaptain && !onePlayerTeams) {
+                playerStr += ' (Captain)';
+            }
+
+            return playerStr;
         });
     }
 
@@ -86,16 +98,24 @@ const formatOutput = (pickupInfo: PickupInfo, toHighlight?: string | null) => {
     if (pickupInfo.teams.length > 1) {
         // 1 player per team pickups are considered as duel
         if (pickupInfo.teams[0].players.length === 1) {
-            const nicks = formatPlayers(pickupInfo.teams.flatMap(t => t.players).map(p => p.nick)).join(' **vs** ');
+            const nicks = formatPlayers(pickupInfo.teams.flatMap(t => t.players), true).join(' **vs** ');
             str += `\nPlayers: ${nicks}`;
         } else {
             pickupInfo.teams.forEach(team => {
-                const nicks = formatPlayers(team.players.map(p => p.nick)).join(', ');
-                str += `\n**Team ${team.name}**: ${nicks}`;
+                const nicks = formatPlayers(team.players, false).join(', ');
+                let outcomeString = '';
+                if (team.outcome) {
+                    switch (team.outcome) {
+                        case 'win': outcomeString = ' - WON'; break;
+                        case 'draw': outcomeString = ' - DREW'; break;
+                        case 'loss': outcomeString = ' - LOST';
+                    }
+                }
+                str += `\n**Team ${team.name}${outcomeString}**: ${nicks}`;
             });
         }
     } else {
-        str += `\nPlayers: ${formatPlayers(pickupInfo.teams.flatMap(t => t.players).map(p => p.nick)).join(', ')}`;
+        str += `\nPlayers: ${formatPlayers(pickupInfo.teams.flatMap(t => t.players), false).join(', ')}`;
     }
 
     return str;
