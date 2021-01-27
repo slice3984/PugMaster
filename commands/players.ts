@@ -50,7 +50,7 @@ const command: Command = {
         const afk = [];
         const dnd = [];
 
-        const addedPlayers = await GuildModel.getAllAddedPlayers(BigInt(message.guild.id));
+        const addedPlayers = await GuildModel.getAllAddedPlayers(false, BigInt(message.guild.id));
 
         for (const player of players) {
 

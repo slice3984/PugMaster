@@ -239,7 +239,7 @@ export default class StatsModel {
         const results: any = await db.execute(`
         SELECT current_nick, rating, variance FROM players
         WHERE rating IS NOT NULL AND guild_id = ?
-        ORDER BY rating DESC
+        ORDER BY (rating - variance * 3) DESC
         LIMIT 10    
         `, [guildId]);
 
@@ -253,7 +253,7 @@ export default class StatsModel {
             });
         });
 
-        return ratings;
+        return ratings.sort((r1, r2) => r2.rating - r1.rating);
     }
 
     static async getStats(guildId: bigint, identifier?: string | number) {

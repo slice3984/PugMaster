@@ -1,4 +1,5 @@
 import Discord from 'discord.js';
+import { Rating } from 'ts-trueskill';
 import { ChannelType, PendingPickup } from '../core/types';
 import GuildSettings from '../core/guildSettings';
 import Bot from '../core/bot';
@@ -315,11 +316,21 @@ export default class GuildModel {
         });
     }
 
-    static async getAllAddedPlayers(guildId?: BigInt) {
+    static async getAllAddedPlayers(excludePickingStage: boolean, guildId?: BigInt) {
         if (!guildId) {
-            const players: any = await db.query(`
-            SELECT guild_id, player_id FROM state_pickup_players
-            `);
+            let players: any;
+
+            if (excludePickingStage) {
+                players = await db.query(`
+                SELECT spp.guild_id, spp.player_id, sp.stage FROM state_pickup_players spp
+                JOIN state_pickup sp ON spp.pickup_config_id = sp.pickup_config_id
+                WHERE sp.stage != 'picking_manual'
+                `);
+            } else {
+                players = await db.query(`
+                SELECT guild_id, player_id FROM state_pickup_players
+                `);
+            }
 
             if (!players[0].length) {
                 return [];
@@ -333,10 +344,20 @@ export default class GuildModel {
             });
 
         } else {
-            const players: any = await db.execute(`
-            SELECT player_id FROM state_pickup_players
-            WHERE guild_id = ?
-            `, [guildId]);
+            let players: any;
+
+            if (excludePickingStage) {
+                players = await db.execute(`
+                SELECT spp.guild_id, spp.player_id, sp.stage FROM state_pickup_players spp
+                JOIN state_pickup sp ON spp.pickup_config_id = sp.pickup_config_id
+                WHERE sp.stage != 'picking_manual' AND spp.guild_id = ?
+                `, [guildId]);
+            } else {
+                players = await db.execute(`
+                SELECT player_id FROM state_pickup_players
+                WHERE guild_id = ?
+                `, [guildId]);
+            }
 
             if (!players[0].length) {
                 return []
@@ -473,7 +494,7 @@ export default class GuildModel {
 
     static async getPendingPickup(guildId: bigint, pickupConfigId: number): Promise<PendingPickup> {
         const data: any = await db.execute(`
-        SELECT sp.guild_id, p.current_nick, p.user_id, pc.id, pc.name, pc.player_count, sp.in_stage_since, sp.stage_iteration, sp.stage, st.team, st.is_captain, st.captain_turn
+        SELECT sp.guild_id, p.current_nick, p.user_id, p.rating, p.variance, pc.id, pc.name, pc.player_count, sp.in_stage_since, sp.stage_iteration, sp.stage, st.team, st.is_captain, st.captain_turn
         FROM state_pickup sp
         JOIN state_pickup_players spp ON spp.pickup_config_id = sp.pickup_config_id
         JOIN players p ON p.user_id = spp.player_id AND p.guild_id = spp.guild_id
@@ -491,6 +512,14 @@ export default class GuildModel {
         let amountPlayersAdded = 0;
 
         data[0].forEach(row => {
+            const playerObj = {
+                id: row.user_id.toString(),
+                nick: row.current_nick,
+                isCaptain: row.is_captain ? Boolean(row.is_captain) : false,
+                rating: row.rating ? new Rating(row.rating, row.variance) : new Rating(),
+                captainTurn: row.captain_turn ? Boolean(row.captain_turn) : false
+            };
+
             if (row.stage === 'afk_check') {
                 if (!teams.length) {
                     teams.push({
@@ -498,45 +527,23 @@ export default class GuildModel {
                         players: []
                     });
                 }
-                teams[0].players.push({
-                    id: row.user_id.toString(),
-                    nick: row.current_nick,
-                    isCaptain: row.is_captain ? Boolean(row.is_captain) : false,
-                    captainTurn: row.captain_turn ? Boolean(row.captain_turn) : false
-                });
+                teams[0].players.push(playerObj);
             } else {
                 if (row.team) {
                     const index = teams.findIndex(team => team.name === row.team);
                     if (index < 0) {
                         teams.push({
                             name: row.team,
-                            players: [{
-                                id: row.user_id.toString(),
-                                nick: row.current_nick,
-                                isCaptain: row.is_captain ? Boolean(row.is_captain) : false,
-                                captainTurn: row.captain_turn ? Boolean(row.captain_turn) : false
-                            }]
+                            players: [playerObj]
                         });
 
                         amountPlayersAdded++;
                     } else {
-                        teams[index].players.push({
-                            id: row.user_id.toString(),
-                            nick: row.current_nick,
-                            isCaptain: row.is_captain ? Boolean(row.is_captain) : false,
-                            captainTurn: row.captain_turn ? Boolean(row.captain_turn) : false
-                        });
-
+                        teams[index].players.push(playerObj);
                         amountPlayersAdded++;
                     }
                 } else {
-                    playersLeft.push({
-                        id: row.user_id.toString(),
-                        nick: row.current_nick,
-                        isCaptain: row.is_captain ? Boolean(row.is_captain) : false,
-                        captainTurn: row.captain_turn ? Boolean(row.captain_turn) : false
-                    });
-
+                    playersLeft.push(playerObj);
                     amountPlayersAdded++;
                 }
             }
@@ -611,6 +618,13 @@ export default class GuildModel {
             }
 
             const pickup = guildRef[pickupIndex];
+            const playerObj = {
+                id: row.user_id.toString(),
+                nick: row.current_nick,
+                isCaptain: row.is_captain ? Boolean(row.is_captain) : false,
+                rating: row.rating ? new Rating(row.rating, row.variance) : new Rating(),
+                captainTurn: row.captain_turn ? Boolean(row.captain_turn) : false
+            };
 
             if (row.stage === 'afk_check') {
                 if (!pickup.teams.length) {
@@ -619,12 +633,7 @@ export default class GuildModel {
                         players: []
                     });
                 }
-                pickup.teams[0].players.push({
-                    id: row.user_id.toString(),
-                    nick: row.current_nick,
-                    isCaptain: row.is_captain ? Boolean(row.is_captain) : false,
-                    captainTurn: row.captain_turn ? Boolean(row.captain_turn) : false
-                });
+                pickup.teams[0].players.push(playerObj);
 
                 pickup.amountPlayersAdded++;
             } else {
@@ -633,32 +642,16 @@ export default class GuildModel {
                     if (index < 0) {
                         pickup.teams.push({
                             name: row.team,
-                            players: [{
-                                id: row.user_id.toString(),
-                                nick: row.current_nick,
-                                isCaptain: row.is_captain ? Boolean(row.is_captain) : false,
-                                captainTurn: row.captain_turn ? Boolean(row.captain_turn) : false
-                            }]
+                            players: [playerObj]
                         });
 
                         pickup.amountPlayersAdded++;
                     } else {
-                        pickup.teams[index].players.push({
-                            id: row.user_id.toString(),
-                            nick: row.current_nick,
-                            isCaptain: row.is_captain ? Boolean(row.is_captain) : false,
-                            captainTurn: row.captain_turn ? Boolean(row.captain_turn) : false
-                        });
-
+                        pickup.teams[index].players.push(playerObj);
                         pickup.amountPlayersAdded++;
                     }
                 } else {
-                    pickup.playersLeft.push({
-                        id: row.user_id.toString(),
-                        nick: row.current_nick,
-                        isCaptain: row.is_captain ? Boolean(row.is_captain) : false,
-                        captainTurn: row.captain_turn ? Boolean(row.captain_turn) : false
-                    });
+                    pickup.playersLeft.push(playerObj);
 
                     pickup.amountPlayersAdded++;
                 }

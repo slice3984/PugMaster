@@ -109,12 +109,12 @@ export interface PendingPickup {
             name: string,
             players: [
                 {
-                    id: string, nick: string, isCaptain: boolean, captainTurn: boolean
+                    id: string, nick: string, isCaptain: boolean, captainTurn: boolean, rating: Rating
                 }
             ]
         }
     ];
-    playersLeft: [{ id: string, nick: string, isCaptain: boolean, captainTurn: boolean }] // Only required for manual picking
+    playersLeft: [{ id: string, nick: string, isCaptain: boolean, captainTurn: boolean, rating: Rating }] // Only required for manual picking
 }
 
 export interface GuildInfo {

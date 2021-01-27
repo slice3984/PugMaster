@@ -1,4 +1,5 @@
 import Discord from 'discord.js';
+import { Rating } from 'ts-trueskill';
 import GuildModel from '../../models/guild';
 import PickupModel from '../../models/pickup';
 import StatsModel from '../../models/stats';
@@ -24,7 +25,7 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
 
     const players = pendingPickup.playersLeft;
     const maxCaps = pickupSettings.teamCount;
-    let captains: { id: string; nick: string }[] = [];
+    let captains: { id: string; nick: string; rating?: Rating }[] = [];
 
     const pickupChannel = await Util.getPickupChannel(guild);
 
@@ -46,14 +47,72 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
                 if (playerObj) {
                     if (playerObj.roles && playerObj.roles.cache.has(captainRole)) {
                         captains.push(player);
-                        shuffledPlayers.splice(shuffledPlayers.findIndex(p => p === player), 1);
+                    }
+                }
+            }
+
+            // Get captains with smallest rating difference to each other
+            if (captains.length > maxCaps) {
+                const sortedCaps = captains.sort((c1, c2) => {
+                    const ratingC1 = c1.rating.mu - 3 * c1.rating.sigma;
+                    const ratingC2 = c2.rating.mu - 3 * c2.rating.sigma;
+                    return ratingC2 - ratingC1;
+                });
+
+                let newCaptains = [];
+                for (let i = 0; i < captains.length; i++) {
+                    if (i + maxCaps > sortedCaps.length) {
+                        break;
+                    }
+
+                    if (!newCaptains.length) {
+                        newCaptains = sortedCaps.slice(i, i + maxCaps);
+                        i += maxCaps - 2;
+                    } else {
+                        // Old diff
+                        let oldDiff = 0;
+
+                        newCaptains.forEach((cap, idx) => {
+                            if (idx + 1 >= newCaptains.length) {
+                                return;
+                            }
+
+                            const nextCaptain = newCaptains[idx + 1];
+                            const ratingCurr = cap.rating.mu - 3 * cap.rating.sigma;
+                            const ratingNext = nextCaptain.rating.mu - 3 * nextCaptain.rating.sigma;
+
+                            oldDiff += ratingCurr - ratingNext;
+                        });
+
+                        // New diff
+                        const possibleCaps = sortedCaps.slice(i, i + maxCaps);
+                        let newDiff = 0;
+
+                        possibleCaps.forEach((cap, idx) => {
+                            if (idx + 1 >= possibleCaps.length) {
+                                return;
+                            }
+
+                            const nextCaptain = possibleCaps[idx + 1];
+                            const ratingCurr = cap.rating.mu - 3 * cap.rating.sigma;
+                            const ratingNext = nextCaptain.rating.mu - 3 * nextCaptain.rating.sigma;
+
+                            newDiff += ratingCurr - ratingNext;
+                        });
+
+                        if (oldDiff > newDiff) {
+                            newCaptains = possibleCaps;
+                        }
                     }
                 }
 
-                if (captains.length === maxCaps) {
-                    break;
-                }
+                captains = newCaptains;
             }
+
+            // Remove captains from players
+            captains.forEach(cap => {
+                shuffledPlayers.splice(shuffledPlayers.findIndex(p => p === cap), 1);
+            })
         }
 
         // Go for pickup amount if captains are missing

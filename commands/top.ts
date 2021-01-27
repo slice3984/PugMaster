@@ -47,7 +47,7 @@ const command: Command = {
 
             message.channel.send(
                 `**Top 10 Players - ${isElo ? 'Ratings' : `Played (${option})`}**\n` +
-                `${top.map(player => `\`${player.nick}\` (**${isElo ? `${Util.tsToEloNumber(player.rating)} ± ${Util.tsToEloNumber(player.variance)}` : player.amount}**)`).join(' ')}`);
+                `${top.map((player, index) => `**#${index + 1}** \`${player.nick}\` (**${isElo ? `${Util.tsToEloNumber(player.rating)}` : player.amount}**)`).join(' ')}`);
         }
     }
 }

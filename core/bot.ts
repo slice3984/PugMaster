@@ -167,8 +167,8 @@ export default class Bot {
                 try {
                     await PlayerModel.removeAos(BigInt(guild), ...players);
 
-                    // Filter out players who are not added to any pickup
-                    const addedPlayers = await GuildModel.getAllAddedPlayers(BigInt(guild));
+                    // Filter out players who are not added to any pickup or a pickup in picking stage
+                    const addedPlayers = await GuildModel.getAllAddedPlayers(true, BigInt(guild));
                     const validPlayers = players.filter(player => addedPlayers.includes(player));
 
                     const guildObj = this.client.guilds.cache.get(guild);
