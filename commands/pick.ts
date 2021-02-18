@@ -62,6 +62,9 @@ const command: Command = {
 
             let picks: Discord.GuildMember[] = [];
 
+            // Removes empty args, excessive whitespaces
+            params = params.filter(p => p.length);
+
             for (let i = 0; i < toPick; i++) {
                 if (!params[i]) {
                     break;

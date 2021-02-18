@@ -1,3 +1,4 @@
+import { Rating } from 'ts-trueskill';
 import db, { transaction } from '../core/db';
 import { PickupInfo, PickupInfoAPI, PlayerSearchResult } from '../core/types';
 import Util from '../core/util';
@@ -79,6 +80,9 @@ export default class StatsModel {
         if (!identifier) {
             pickup = await db.execute(`
             SELECT p.current_nick,
+            p.user_id,
+            p.rating,
+            p.variance,
             pc.name,
             pp.is_captain,
             pc.is_rated,
@@ -97,6 +101,9 @@ export default class StatsModel {
                 // By pickup
                 pickup = await db.execute(`
                 SELECT p.current_nick,
+                p.user_id,
+                p.rating,
+                p.variance,
                 pc.name,
                 pp.is_captain,
                 pc.is_rated,
@@ -118,6 +125,9 @@ export default class StatsModel {
                 // By player
                 pickup = await db.execute(`
                 SELECT p.current_nick,
+                p.user_id,
+                p.rating,
+                p.variance,
                 pc.name,
                 pp.is_captain,
                 pc.is_rated,
@@ -146,16 +156,23 @@ export default class StatsModel {
                         isRated = Boolean(row.is_rated)
                 }
 
+                const playerObj = {
+                    nick: row.current_nick,
+                    id: row.user_id.toString(),
+                    rating: row.rating ? new Rating(row.rating, row.variance) : new Rating(),
+                    isCaptain: Boolean(row.is_captain)
+                }
+
                 // No team pickups - Default to team A
                 if (!row.team) {
                     if (!teams.get('A')) {
                         teams.set('A', {
                             name: 'A',
                             outcome: null,
-                            players: [{ nick: row.current_nick, isCaptain: Boolean(row.is_captain) }]
+                            players: [playerObj]
                         });
                     } else {
-                        teams.get('A').players.push({ nick: row.current_nick, isCaptain: Boolean(row.is_captain) });
+                        teams.get('A').players.push(playerObj);
                     }
                 } else {
                     // Teams
@@ -165,10 +182,111 @@ export default class StatsModel {
                         teams.set(row.team, {
                             name: row.team,
                             outcome: row.result,
-                            players: [{ nick: row.current_nick, isCaptain: Boolean(row.is_captain) }]
+                            players: [playerObj]
                         })
                     } else {
-                        team.players.push({ nick: row.current_nick, isCaptain: Boolean(row.is_captain) });
+                        team.players.push(playerObj);
+                    }
+                }
+            });
+
+            return {
+                id,
+                name,
+                startedAt,
+                isRated,
+                teams: Array.from(teams.values()).sort((a, b) => a.name.localeCompare(b.name)) // sort in case of wrong order 
+            }
+        } else {
+            return null;
+        }
+    }
+
+    static async getPickup(guildId: bigint, pickupId?: number): Promise<PickupInfo | null> {
+        let pickup;
+
+        if (!pickupId) {
+            pickup = await db.execute(`
+            SELECT p.current_nick,
+            p.user_id,
+            p.rating,
+            p.variance,
+            pc.name,
+            pp.is_captain,
+            pc.is_rated,
+            pp.team,
+            rr.result,
+            ps.started_at,
+            ps.id FROM players p
+            JOIN pickup_players pp ON pp.player_id = p.id
+            JOIN pickups ps ON pp.pickup_id = ps.id
+            JOIN pickup_configs pc ON ps.pickup_config_id = pc.id
+            LEFT JOIN rated_results rr ON pp.pickup_id = rr.pickup_id AND pp.team = rr.team
+            WHERE ps.id = (SELECT MAX(id) FROM pickups WHERE guild_id = ?)
+            `, [guildId]);
+        } else {
+            pickup = await db.execute(`
+            SELECT p.current_nick,
+            p.user_id,
+            p.rating,
+            p.variance,
+            pc.name,
+            pp.is_captain,
+            pc.is_rated,
+            pp.team,
+            rr.result,
+            ps.started_at,
+            ps.id FROM players p
+            JOIN pickup_players pp ON pp.player_id = p.id
+            JOIN pickups ps ON pp.pickup_id = ps.id
+            JOIN pickup_configs pc ON ps.pickup_config_id = pc.id
+            LEFT JOIN rated_results rr ON pp.pickup_id = rr.pickup_id AND pp.team = rr.team
+            WHERE ps.id = ? AND ps.guild_id = ?
+            `, [pickupId, guildId]);
+        }
+
+        if (pickup[0].length > 0) {
+            let id, name, startedAt, isRated;
+            const teams = new Map();
+
+            pickup[0].forEach((row, index) => {
+                if (!index) {
+                    id = row.id,
+                        name = row.name,
+                        startedAt = row.started_at,
+                        isRated = Boolean(row.is_rated)
+                }
+
+                const playerObj = {
+                    nick: row.current_nick,
+                    id: row.user_id.toString(),
+                    rating: row.rating ? new Rating(row.rating, row.variance) : new Rating(),
+                    isCaptain: Boolean(row.is_captain)
+                }
+
+                // No team pickups - Default to team A
+                if (!row.team) {
+                    if (!teams.get('A')) {
+                        teams.set('A', {
+                            name: 'A',
+                            outcome: null,
+                            players: [playerObj]
+                        });
+                    } else {
+                        teams.get('A').players.push(playerObj);
+                    }
+                } else {
+                    // Teams
+                    const team = teams.get(row.team);
+
+                    if (!team) {
+                        teams.set(row.team, {
+                            name: row.team,
+                            outcome: row.result,
+                            players: [playerObj]
+                        })
+                    } else {
+                        team.players.push(playerObj);
                     }
                 }
             });
@@ -682,13 +800,44 @@ export default class StatsModel {
         WHERE guild_id = ? AND user_id = ?
         `, [guildId, replacementPlayer]);
 
-
         if (!playerToReplaceId[0].length || !replacementPlayerId[0].length) {
             return null;
         }
+
         await db.execute(`
         UPDATE pickup_players SET player_id = ?
         WHERE pickup_id = ? AND player_id = ?
         `, [replacementPlayerId[0][0].id, pickupId, playerToReplaceId[0][0].id]);
+    }
+
+    // Pass ids as strings because bigints can't be serialized
+    static async swapPlayers(guildId: bigint, pickupId: number, firstPlayer: { team: String, id: String }, secondPlayer: { team: String, id: String }) {
+        const playerOne: any = await db.execute(`
+        SELECT id FROM players
+        WHERE guild_id = ? AND user_id = ?
+        `, [guildId, BigInt(firstPlayer.id)]);
+
+        const playerTwo: any = await db.execute(`
+        SELECT id FROM players
+        WHERE guild_id = ? AND user_id = ?
+        `, [guildId, BigInt(secondPlayer.id)]);
+
+        if (!playerOne[0].length || !playerTwo[0].length) {
+            return null;
+        }
+
+        await transaction(db, async (db) => {
+            // First
+            await db.execute(`
+            UPDATE pickup_players SET player_id = ?
+            WHERE pickup_id = ? AND player_id = ? AND team = ?
+            `, [playerTwo[0][0].id, pickupId, playerOne[0][0].id, firstPlayer.team]);
+
+            // Second
+            await db.execute(`
+            UPDATE pickup_players SET player_id = ?
+            WHERE pickup_id = ? AND player_id = ? AND team = ?
+            `, [playerOne[0][0].id, pickupId, playerTwo[0][0].id, secondPlayer.team]);
+        });
     }
 }

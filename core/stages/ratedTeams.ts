@@ -6,7 +6,13 @@ import PickupStage from '../PickupStage';
 export const ratedTeams = async (guild: Discord.Guild, pickupConfigId: number) => {
     const pickup = await PickupModel.getActivePickup(BigInt(guild.id), pickupConfigId);
 
-    const playerRatings = pickup.players.sort((a, b) => b.rating.mu - a.rating.mu);
+    // Take variance into account and subtract it 2 times, sort by highest rating afterwards
+    const playerRatings = pickup.players
+        .map(player => {
+            return { ...player, skill: player.rating.mu - 2 * player.rating.sigma }
+        })
+        .sort((a, b) => b.skill - a.skill);
+
     const teamIds: bigint[][] = [];
     const teamRatings: ts.Rating[][] = [];
 

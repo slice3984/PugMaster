@@ -19,7 +19,7 @@ const command: Command = {
     exec: async (bot, message, params, defaults) => {
         const latestUnratedPickup = await PickupModel.getLatestStoredRateEnabledPickup(BigInt(message.guild.id));
 
-        if (!latestUnratedPickup && latestUnratedPickup.isRated) {
+        if (!latestUnratedPickup || latestUnratedPickup.isRated) {
             return message.reply('no rateable pickup found');
         }
 
@@ -51,7 +51,7 @@ const command: Command = {
         }
 
         await StatsModel.replacePlayer(BigInt(message.guild.id), latestUnratedPickup.pickupId, BigInt(addedPlayer.id), BigInt(subPlayer.id));
-        message.reply(`set ${subPlayer.displayName} as substitute for ${addedPlayer.displayName} for pickup #${latestUnratedPickup.pickupId} - ${latestUnratedPickup.name}`);
+        message.reply(`set ${subPlayer.displayName} as substitute for ${addedPlayer.displayName} for pickup **#${latestUnratedPickup.pickupId}** - **${latestUnratedPickup.name}**`);
     }
 }
 
