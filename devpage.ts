@@ -190,7 +190,11 @@ export default class DevPage {
             teams = avaialbleFakePlayers.splice(0, pickupSettings.playerCount).map(p => BigInt(p.id));
         }
 
-        await StatsModel.storePickup(BigInt(guildId), configId, teams);
+        await StatsModel.storePickup({
+            guild: Bot.getInstance().getClient().guilds.cache.get(guildId),
+            pickupConfigId: configId,
+            teams
+        })
         return `Created a new ${pickupSettings.name} fake pickup`;
     }
 

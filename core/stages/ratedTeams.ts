@@ -1,10 +1,13 @@
 import Discord from 'discord.js';
 import * as ts from 'ts-trueskill';
 import PickupModel from '../../models/pickup';
-import PickupStage from '../PickupStage';
+import { PickupSettings, PickupStageType, PickupStartConfiguration } from '../types';
 
-export const ratedTeams = async (guild: Discord.Guild, pickupConfigId: number) => {
-    const pickup = await PickupModel.getActivePickup(BigInt(guild.id), pickupConfigId);
+export const ratedTeams = async (guild: Discord.Guild, pickupSettings: PickupSettings, startCallback: (error: boolean,
+    stage: PickupStageType,
+    pickupSettings: PickupSettings,
+    config: PickupStartConfiguration) => void) => {
+    const pickup = await PickupModel.getActivePickup(BigInt(guild.id), pickupSettings.id);
 
     // Take variance into account and subtract it 2 times, sort by highest rating afterwards
     const playerRatings = pickup.players
@@ -38,5 +41,11 @@ export const ratedTeams = async (guild: Discord.Guild, pickupConfigId: number) =
     }
 
     const drawProbability = ts.quality(teamRatings);
-    await PickupStage.startPickup({ guild, pickupConfigId, teams: teamIds, drawProbability });
+
+    startCallback(false, 'elo', pickupSettings, {
+        guild,
+        pickupConfigId: pickupSettings.id,
+        teams: teamIds,
+        drawProbability
+    });
 }

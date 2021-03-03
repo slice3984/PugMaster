@@ -7,6 +7,7 @@ import Util from '../core/util';
 import { abortPickingStagePickup } from './stages/manualPicking'
 import PickupStage from './PickupStage';
 import Logger from './logger';
+import { abortMapVoteStagePickup } from './stages/mapVote';
 
 export default class PickupState {
     private constructor() { }
@@ -135,7 +136,7 @@ export default class PickupState {
 
             let pending = pendingMap.get(guildId)
                 .filter(pickup => {
-                    if (pickup.stage === 'picking_manual') {
+                    if (pickup.stage === 'picking_manual' || pickup.stage === 'mapvote') {
                         return false;
                     }
 
@@ -188,17 +189,20 @@ export default class PickupState {
         }
     }
 
-
-
     static async removePlayer(guildId: string, playerId: string, showStatus = true, ...pickupIds: number[]) {
         const bigIntGuildId = BigInt(guildId);
         const bigIntPlayerId = BigInt(playerId);
 
         const isInPickingStage = await PickupModel.isPlayerAddedToPendingPickup(BigInt(guildId), BigInt(playerId), 'picking_manual');
+        const isInMapVoteStage = await PickupModel.isPlayerAddedToPendingPickup(BigInt(guildId), BigInt(playerId), 'mapvote');
 
         // Only possible on server leaves or admin actions
         if (isInPickingStage) {
             await abortPickingStagePickup(guildId, playerId);
+        }
+
+        if (isInMapVoteStage) {
+            await abortMapVoteStagePickup(guildId, playerId);
         }
 
         // TODO: Check if the pickup is pending and abort

@@ -317,6 +317,7 @@ export default class PickupModel {
             teamCount: settings.team_count,
             isDefaultPickup: Boolean(settings.is_default_pickup),
             mapPoolId: settings.mappool_id ? settings.mappool_id : null,
+            mapvote: Boolean(settings.map_vote),
             afkCheck: Boolean(settings.afk_check),
             pickMode: settings.pick_mode,
             rated: Boolean(settings.is_rated),
@@ -388,7 +389,7 @@ export default class PickupModel {
         }
     }
 
-    static async setPending(guildId: bigint, pickupConfigId: number, stage: 'afk_check' | 'picking_manual' | 'fill', connection?: PoolConnection) {
+    static async setPending(guildId: bigint, pickupConfigId: number, stage: 'afk_check' | 'mapvote' | 'picking_manual' | 'fill', connection?: PoolConnection) {
         const conn = connection || db;
 
         await conn.execute(`
@@ -397,7 +398,7 @@ export default class PickupModel {
         `, [stage, guildId, pickupConfigId]);
     }
 
-    static async setPendings(connection: PoolConnection, guildId: bigint, stage: 'afk_check' | 'picking_manual' | 'fill', ...pickupConfigIds) {
+    static async setPendings(connection: PoolConnection, guildId: bigint, stage: 'afk_check' | 'mapvote' | 'picking_manual' | 'fill', ...pickupConfigIds) {
         const conn = connection || db;
 
         await conn.execute(`
@@ -466,14 +467,14 @@ export default class PickupModel {
         `, [guildId, pickupConfigId]);
     }
 
-    static async isPlayerAddedToPendingPickup(guildId: bigint, playerId: bigint, stage: 'fill' | 'afk_check' | 'picking_manual'):
+    static async isPlayerAddedToPendingPickup(guildId: bigint, playerId: bigint, ...stage: ('fill' | 'afk_check' | 'picking_manual' | 'mapvote')[]):
         Promise<boolean> {
         const data: any = await db.execute(`
         SELECT * FROM state_pickup sp
         JOIN state_pickup_players spp ON sp.pickup_config_id = spp.pickup_config_id
-        WHERE sp.stage = ? AND sp.guild_id = ? AND spp.player_id = ?
+        WHERE sp.stage IN (${Array(stage.length).fill('?').join(',')}) AND sp.guild_id = ? AND spp.player_id = ?
         LIMIT 1
-        `, [stage, guildId, playerId]);
+        `, [...stage, guildId, playerId]);
 
         if (!data[0].length) {
             return false;

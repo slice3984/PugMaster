@@ -112,6 +112,7 @@ export default class GuildModel {
                 data.afk_time,
                 data.afk_check_iterations,
                 data.picking_iterations,
+                data.map_vote_iterations,
                 data.max_avg_elo_variance,
                 data.warn_streaks,
                 data.warns_until_ban,

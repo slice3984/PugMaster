@@ -1,4 +1,5 @@
 import Discord from 'discord.js';
+import PickupStage from '../core/PickupStage';
 import { calculateLeftPicks, manualPicking } from '../core/stages/manualPicking';
 import { Command } from '../core/types';
 import Util from '../core/util';
@@ -123,7 +124,7 @@ const command: Command = {
 
                 clearTimeout(guildSettings.pendingPickups.get(pendingPickup.pickupConfigId));
                 guildSettings.pendingPickups.delete(pendingPickup.pickupConfigId);
-                manualPicking(message.guild, pendingPickup.pickupConfigId);
+                manualPicking(message.guild, pendingPickup.pickupConfigId, false, PickupStage.startCallback);
             } else {
                 return message.reply(`picked ${picks[0].displayName}, please pick one more player`);
             }

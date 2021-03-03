@@ -4,14 +4,16 @@ import GuildModel from '../../models/guild';
 import PickupModel from '../../models/pickup';
 import StatsModel from '../../models/stats';
 import Bot from '../bot';
-import GuildSettings from '../guildSettings';
 import Logger from '../logger';
-import PickupStage from '../PickupStage';
 import PickupState from '../pickupState';
-import { PendingPickup } from '../types';
+import { PendingPickup, PickupSettings, PickupStageType, PickupStartConfiguration } from '../types';
 import Util from '../util';
 
-export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number, firstRun = false) => {
+export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number, firstRun: boolean,
+    startCallback: (error: boolean,
+        stage: PickupStageType,
+        pickupSettings: PickupSettings,
+        config: PickupStartConfiguration) => void) => {
     // Abort if the stage changed
     if (!await PickupModel.isInStage(BigInt(guild.id), pickupConfigId, 'picking_manual')) {
         return;
@@ -38,7 +40,6 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
 
         // Go for role
         const captainRole = pickupSettings.captainRole;
-
         if (captainRole) {
             for (const player of shuffledPlayers) {
                 const playerObj = await Util.getUser(guild, player.id) as Discord.GuildMember;
@@ -111,7 +112,7 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
 
             // Remove captains from players
             captains.forEach(cap => {
-                shuffledPlayers.splice(shuffledPlayers.findIndex(p => p === cap), 1);
+                shuffledPlayers.splice(shuffledPlayers.findIndex(p => p.id === cap.id), 1);
             })
         }
 
@@ -172,14 +173,23 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
             );
         }
 
-        guildSettings.pendingPickups.set(pickupConfigId, setTimeout(() => manualPicking(guild, pickupConfigId), guildSettings.iterationTime));
+        guildSettings.pendingPickups.set(pickupConfigId, setTimeout(async () => {
+            try {
+                await manualPicking(guild, pickupConfigId, false, startCallback);
+            } catch (_) {
+                return startCallback(true, 'manual', pickupSettings, {
+                    guild,
+                    pickupConfigId: pendingPickup.pickupConfigId,
+                });
+            }
+        }, guildSettings.iterationTime));
+
     } else {
         const teams = pendingPickup.teams;
 
         let playersInTeams = pickupSettings.playerCount - pendingPickup.playersLeft.length;
 
         const leftPlayers = pendingPickup.playersLeft;
-
 
         const captains = pendingPickup.teams
             .map(team => team.players)
@@ -200,7 +210,14 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
                 .map(team => team.players)
                 .map(team => team.map(t => BigInt(t.id)));
 
-            return await startPickup(guild, guildSettings, pendingPickup, pickupChannel, false, teams, captains);
+            await PickupModel.clearTeams(BigInt(guild.id), pickupSettings.id);
+
+            return startCallback(false, 'manual', pickupSettings, {
+                guild,
+                pickupConfigId: pendingPickup.pickupConfigId,
+                teams,
+                captains: captains.map(c => BigInt(c.id))
+            });
         }
 
         // Check if the captain timed out
@@ -240,49 +257,17 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
 
         const timeout = setTimeout(async () => {
             try {
-                await manualPicking(guild, pickupConfigId);
+                await manualPicking(guild, pickupConfigId, false, startCallback);
             } catch (err) {
                 Logger.logError('manual picking failed in picking timeout', err, false, guild.id, guild.name);
-                return await startPickup(guild, guildSettings, pendingPickup, pickupChannel, true, null, null);
+                return startCallback(true, 'manual', pickupSettings, {
+                    guild,
+                    pickupConfigId: pendingPickup.pickupConfigId,
+                });
             }
         }, guildSettings.iterationTime);
 
         guildSettings.pendingPickups.set(pickupConfigId, timeout);
-    }
-}
-
-const startPickup = async (guild: Discord.Guild, guildSettings: GuildSettings, pendingPickup: PendingPickup, pickupChannel: Discord.TextChannel, noTeams: boolean, teams?: bigint[][], captains?: any[]) => {
-    const startWithoutTeams = async () => {
-        try {
-            if (pickupChannel) {
-                pickupChannel.send(`something went wrong starting picked **pickup ${pendingPickup.name}**, attempting to start without teams`);
-            }
-
-            await PickupModel.clearTeams(BigInt(guild.id), pendingPickup.pickupConfigId);
-            await PickupStage.startPickup({ guild, pickupConfigId: pendingPickup.pickupConfigId });
-        } catch (err) {
-            Logger.logError('starting failed manual picking pickup failed', err, false, guild.id, guild.name);
-            await PickupModel.resetPickup(BigInt(guild.id), pendingPickup.pickupConfigId);
-
-            if (pickupChannel) {
-                pickupChannel.send(`something went wrong starting **pickup ${pendingPickup.name}** without teams, pickup cleared`);
-            }
-        }
-    };
-
-    if (!noTeams) {
-        guildSettings.pendingPickups.delete(pendingPickup.pickupConfigId);
-
-        try {
-            await PickupModel.clearTeams(BigInt(guild.id), pendingPickup.pickupConfigId);
-            await PickupStage.startPickup({ guild, pickupConfigId: pendingPickup.pickupConfigId, teams, captains: captains.map(c => BigInt(c.id)) });
-        } catch (err) {
-            Logger.logError('starting manual picked pickup with teams failed', err, false, guild.id, guild.name);
-            await startWithoutTeams();
-        }
-    } else {
-        // For the exception case in the timeout
-        await startWithoutTeams();
     }
 }
 

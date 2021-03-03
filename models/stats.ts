@@ -1,35 +1,45 @@
 import { Rating } from 'ts-trueskill';
 import db, { transaction } from '../core/db';
-import { PickupInfo, PickupInfoAPI, PlayerSearchResult } from '../core/types';
+import { PickupInfo, PickupInfoAPI, PickupStartConfiguration, PlayerSearchResult } from '../core/types';
 import Util from '../core/util';
 import PickupModel from './pickup';
 
 export default class StatsModel {
     private constructor() { }
 
-    static async storePickup(guildId: bigint, pickupConfigId: number, teams: bigint[] | bigint[][], captains?: bigint[]) {
-        captains = captains || [];
+    static async storePickup(config: PickupStartConfiguration) {
+        let captains = config.captains || [];
         let gotTeams = false;
 
+        const guildId = BigInt(config.guild.id);
+        const pickupConfigId = config.pickupConfigId;
+
         // Check if there are multiple teams
-        if (Array.isArray(teams[0])) {
+        if (Array.isArray(config.teams[0])) {
             gotTeams = true;
         } else {
             const pickupSettings = await PickupModel.getPickupSettings(guildId, pickupConfigId);
             // if the team amount is equal the player count we can assign each player to a team
-            if (teams.length === pickupSettings.teamCount) {
+            if (config.teams.length === pickupSettings.teamCount) {
                 gotTeams = true;
-                captains = (teams as bigint[]).map(p => BigInt(p));  // Every player is also a captain
-                teams = (teams as bigint[]).map(p => [p]);
+                captains = (config.teams as bigint[]).map(p => BigInt(p));  // Every player is also a captain
+                config.teams = (config.teams as bigint[]).map(p => [p]);
             }
         }
 
         await transaction(db, async (db) => {
             // Insert pickup
-            await db.execute(`
-            INSERT INTO pickups (guild_id, pickup_config_id, has_teams)
-            VALUES (?, ?, ?)
-            `, [guildId, pickupConfigId, gotTeams]);
+            if (!config.map) {
+                await db.execute(`
+                INSERT INTO pickups (guild_id, pickup_config_id, has_teams)
+                VALUES (?, ?, ?)
+                `, [guildId, pickupConfigId, gotTeams]);
+            } else {
+                await db.execute(`
+                INSERT INTO pickups (guild_id, pickup_config_id, map, has_teams)
+                VALUES (?, ?, ?, ?)
+                `, [guildId, pickupConfigId, config.map, gotTeams]);
+            }
 
             let idOfPickup = await (await db.execute(`
             SELECT MAX(id) AS id FROM pickups
@@ -39,7 +49,7 @@ export default class StatsModel {
             const players = [];
 
             if (gotTeams) {
-                for (const [index, team] of (teams as BigInt[][]).entries()) {
+                for (const [index, team] of (config.teams as BigInt[][]).entries()) {
                     const teamName = String.fromCharCode(65 + index);
 
                     const playerIds: any = await db.execute(`
@@ -60,8 +70,8 @@ export default class StatsModel {
                 const playerIds: any = await db.execute(`
                 SELECT id, user_id FROM players
                 WHERE guild_id = ?
-                AND user_id IN (${Array(teams.length).fill('?').join(',')})
-                `, [guildId, ...teams]);
+                AND user_id IN (${Array(config.teams.length).fill('?').join(',')})
+                `, [guildId, ...config.teams]);
 
                 playerIds[0].forEach(player => {
                     players.push(`(${idOfPickup}, ${player.id})`);
@@ -839,5 +849,20 @@ export default class StatsModel {
             WHERE pickup_id = ? AND player_id = ? AND team = ?
             `, [playerOne[0][0].id, pickupId, playerTwo[0][0].id, secondPlayer.team]);
         });
+    }
+
+    static async getLastPlayedMaps(pickupConfigId: number, limit: number): Promise<string[]> {
+        const data: any = await db.execute(`
+        SELECT map FROM pickups
+        WHERE pickup_config_id = ? AND map IS NOT NULL
+        ORDER BY id DESC
+        LIMIT ${limit};
+        `, [pickupConfigId])
+
+        if (!data[0].length) {
+            return [];
+        }
+
+        return data[0].map(row => row.map);
     }
 }

@@ -1,18 +1,17 @@
 import Discord from 'discord.js';
 import PickupModel from '../../models/pickup';
 import Bot from '../bot';
-import Logger from '../logger';
-import PickupStage from '../PickupStage';
+import { PickupSettings, PickupStageType, PickupStartConfiguration } from '../types';
 import Util from '../util';
 import { manualPicking } from './manualPicking';
 import { ratedTeams } from './ratedTeams';
 
-export const autopick = async (guild: Discord.Guild, pickupConfigId: number) => {
+export const autopick = async (guild: Discord.Guild, pickupSettings: PickupSettings, startCallback: (error: boolean,
+    stage: PickupStageType,
+    pickupSettings: PickupSettings,
+    config: PickupStartConfiguration) => void) => {
     const maxAvgVariance = Bot.getInstance().getGuild(guild.id).maxAvgVariance;
-    const pickupChannel = await Util.getPickupChannel(guild);
-    const pickupSettings = await PickupModel.getPickupSettings(BigInt(guild.id), pickupConfigId);
-
-    const pickup = await PickupModel.getActivePickup(BigInt(guild.id), pickupConfigId);
+    const pickup = await PickupModel.getActivePickup(BigInt(guild.id), pickupSettings.id);
     const playerRatingVarianceAverage = pickup.players.map(p => p.rating.sigma)
         .reduce((prev, curr) => prev + curr, 0) / pickup.players.length;
 
@@ -20,49 +19,21 @@ export const autopick = async (guild: Discord.Guild, pickupConfigId: number) => 
     if (Util.tsToEloNumber(playerRatingVarianceAverage) > maxAvgVariance) {
         try {
             await PickupModel.setPending(BigInt(guild.id), pickupSettings.id, 'picking_manual');
-            await manualPicking(guild, pickupSettings.id, true);
-        } catch (err) {
-            Logger.logError('manual picking failed in PickupStage', err, false, guild.id, guild.name);
-            // Still attempt to start without teams
-            try {
-                Bot.getInstance().getGuild(guild.id).pendingPickups.delete(pickupSettings.id);
-
-                if (pickupChannel) {
-                    pickupChannel.send(`something went wrong with **pickup ${pickupSettings.name}** in picking phase, attempting to start without teams`);
-                }
-
-                await PickupModel.clearTeams(BigInt(guild.id), pickupSettings.id);
-                await PickupStage.startPickup({ guild, pickupConfigId: pickupSettings.id });
-            } catch (err) {
-                Logger.logError('start attempt after failed picking failed in PickupStage', err, false, guild.id, guild.name);
-                await PickupModel.resetPickup(BigInt(guild.id), pickupSettings.id);
-
-                if (pickupChannel) {
-                    pickupChannel.send(`something went wrong starting **pickup ${pickupSettings.name}** without teams, pickup cleared`);
-                }
-            }
+            await manualPicking(guild, pickupSettings.id, true, startCallback);
+        } catch (_) {
+            return startCallback(true, 'autopick', pickupSettings, {
+                guild,
+                pickupConfigId: pickupSettings.id,
+            });
         }
     } else {
         try {
-            await ratedTeams(guild, pickupSettings.id);
-        } catch (err) {
-            Logger.logError('rated team picking failed in PickupStage', err, false, guild.id, guild.name);
-            try {
-                // Start without teams
-                if (pickupChannel) {
-                    pickupChannel.send(`something went wrong with **pickup ${pickupSettings.name}** in rating based team generation, attempting to start without teams`);
-                }
-
-                await PickupStage.startPickup({ guild, pickupConfigId: pickupSettings.id });
-            } catch (err) {
-                Logger.logError('start attempt after failed rating based team generation failed in PickupStage', err, false, guild.id, guild.name);
-
-                await PickupModel.resetPickup(BigInt(guild.id), pickupSettings.id);
-
-                if (pickupChannel) {
-                    pickupChannel.send(`something went wrong starting **pickup ${pickupSettings.name}** without teams, pickup cleared`);
-                }
-            }
+            await ratedTeams(guild, pickupSettings, startCallback);
+        } catch (_) {
+            return startCallback(true, 'autopick', pickupSettings, {
+                guild,
+                pickupConfigId: pickupSettings.id,
+            });
         }
     }
 }

@@ -128,6 +128,8 @@ export default class MappoolModel {
         SELECT id FROM map_pool_names WHERE guild_id = ? AND name = ?
         `, [guildId, poolName]))[0][0].id;
 
+        const mapsInPool = await this.getMaps(guildId, poolName);
+
         await transaction(db, async (db) => {
             const conn = db as PoolConnection
 
@@ -141,6 +143,14 @@ export default class MappoolModel {
 
             if (toRemove.length) {
                 await MappoolModel.removeMapsFromGlobalPool(conn, guildId, ...toRemove);
+            }
+
+            // Map votes require more than one map
+            if ((mapsInPool.length - maps.length) < 2) {
+                await conn.execute(`
+                UPDATE pickup_configs SET map_vote = 0
+                WHERE guild_id = ? AND mappool_id = ?
+                `, [guildId, poolId]);
             }
         });
     }
@@ -202,11 +212,14 @@ export default class MappoolModel {
 
             const mapsInUse = await MappoolModel.areMapsUsedInPools(guildId, ...maps);
             const unusedMaps = maps.filter(map => !mapsInUse.includes(map));
-            await MappoolModel.removeMapsFromGlobalPool(conn, guildId, ...unusedMaps);
+
+            if (unusedMaps.length) {
+                await MappoolModel.removeMapsFromGlobalPool(conn, guildId, ...unusedMaps);
+            }
 
             // Update pickups
             await conn.execute(`
-            UPDATE pickup_configs SET mappool_id = null
+            UPDATE pickup_configs SET mappool_id = null, map_vote = 0
             WHERE guild_id = ? AND mappool_id IN (${Array(poolIds.length).fill('?').join(',')})
             `, [guildId, ...poolIds]);
         });

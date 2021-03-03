@@ -46,6 +46,7 @@ const command: Command = {
         const generatedTeams = [];
 
         // Use the same team generation used for rating generated teams
+        // TODO: Find some better factor for sigma
         const playerRatings = players.map(player => {
             return { ...player, skill: player.rating.mu - 2 * player.rating.sigma }
         })

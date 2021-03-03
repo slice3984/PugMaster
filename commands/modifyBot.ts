@@ -47,6 +47,7 @@ const command: Command = {
             const afkTime = Util.formatTime(settings.afkTime);
             const afkCheckIterations = settings.afkCheckIterations;
             const pickingIterations = settings.pickingIterations;
+            const mapvoteIterations = settings.mapvoteIterations;
             const maxAvgVariance = settings.maxAvgVariance;
             const warnStreaks = settings.warnStreaks;
             const warnsUntilBan = settings.warnsUntilBan;
@@ -92,6 +93,7 @@ const command: Command = {
                     `Afk time: **${afkTime}**\n` +
                     `Afk check iterations: **${afkCheckIterations}**\n` +
                     `Picking iterations: **${pickingIterations}**\n` +
+                    `Map vote iterations: **${mapvoteIterations}**\n` +
                     `Max average elo varaince: **${maxAvgVariance}\n**` +
                     `Max warn streaks: **${warnStreaks}**\n` +
                     `Warns until ban: **${warnsUntilBan}**\n` +

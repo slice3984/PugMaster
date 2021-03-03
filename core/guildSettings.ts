@@ -9,6 +9,7 @@ import Logger from './logger';
 // Only storing frequently accessed data and sync with db
 export default class GuildSettings {
     pendingPickups = new Map();
+    pickupsInMapVoteStage = new Set();
     lastCommandExecutions: Map<Discord.GuildMember, { count: number; timestamp: number }> = new Map();
     commandCooldowns: Map<string, number> = new Map();
 
@@ -35,6 +36,7 @@ export default class GuildSettings {
         private _afkTime: number,
         private _afkCheckIterations: number,
         private _pickingIterations: number,
+        private _mapvoteIterations: number,
         private _maxAvgVariance: number,
         private _warnStreaks: number,
         private _warnsUntilBan: number,
@@ -130,6 +132,7 @@ export default class GuildSettings {
                 case 'iteration_time': this._iterationTime = +value; break;
                 case 'afk_time': this._afkTime = +value; break;
                 case 'afk_check_iterations': this._afkCheckIterations = +value; break;
+                case 'map_vote_iterations': this._mapvoteIterations = +value; break;
                 case 'picking_iterations': this._pickingIterations = +value; break;
                 case 'max_avg_elo_variance': this._maxAvgVariance = +value; break;
                 case 'warn_streaks': this._warnStreaks = value ? +value : null; break;
@@ -225,6 +228,10 @@ export default class GuildSettings {
     public get afkCheckIterations(): number {
         return this._afkCheckIterations;
     }
+    public get mapvoteIterations(): number {
+        return this._mapvoteIterations;
+    }
+
     public get iterationTime(): number {
         return this._iterationTime;
     }

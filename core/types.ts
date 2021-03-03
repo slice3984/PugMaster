@@ -73,6 +73,7 @@ export interface PickupSettings {
     teamCount: number;
     isDefaultPickup: boolean;
     mapPoolId: number | null;
+    mapvote: boolean;
     afkCheck: boolean;
     pickMode: 'no_teams' | 'manual' | 'random' | 'elo' | 'autopick';
     rated: boolean;
@@ -112,7 +113,7 @@ export interface PendingPickup {
     amountPlayersAdded: number; // Required in case of player removes / auto removes
     pendingSince: Date;
     currentIteration: number;
-    stage: 'afk_check' | 'picking_manual';
+    stage: 'afk_check' | 'picking_manual' | 'mapvote';
     teams: [
         {
             name: string,
@@ -210,6 +211,9 @@ export interface PickupStartConfiguration {
     guild: Discord.Guild,
     pickupConfigId: number,
     teams?: bigint[] | bigint[][];
+    map?: string;
     captains?: bigint[];
     drawProbability?: number;
 }
+
+export type PickupStageType = 'no_teams' | 'manual' | 'random' | 'elo' | 'autopick';

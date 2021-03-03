@@ -5,6 +5,7 @@
 - Command based permission system
 - Customizable dm, start & sub messages
 - AFK check system
+- Map vote system
 - Multiple pick modes
     - No teams
     - Manual discord picking with captain system
@@ -12,7 +13,7 @@
     - Rating or manual auto mode
 - Trueskill rating system
     - Trueskill based player ratings
-    - Ability for captains to reports losses and draws
+    - Ability for captains to report losses and draws
     - Ability to rate, unrate & rerate pickups as admin
 - Ban & warns system
     - Role based whitelist / blacklist system for all pickups or specific pickups
@@ -39,9 +40,9 @@
     - Ejs
 
 ## Building & Dev
-- Includes npm scripts for building and developement
+- Includes npm scripts for building and development
     - build:bot, build:www & build:all for building
-    - dev:bot, dev:www & dev:all for developement
+    - dev:bot, dev:www & dev:all for development
 - Supports debugging in VSCode
 - Dev app reachable at localhost:1337/dev
 

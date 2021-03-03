@@ -27,8 +27,8 @@ const command: Command = {
             const value = params[2];
 
             const dbColumnNames = ['player_count', 'team_count', 'is_default_pickup', 'is_rated', 'afk_check', 'pick_mode', 'whitelist_role',
-                'blacklist_role', 'promotion_role', 'captain_role', 'server_id', 'mappool_id', 'server_id'];
-            const keyNames = ['players', 'teams', 'default', 'rated', 'afkcheck', 'pickmode', 'whitelist', 'blacklist', 'promotion', 'captain', 'server', 'mappool', 'server'];
+                'blacklist_role', 'promotion_role', 'captain_role', 'server_id', 'mappool_id', 'map_vote', 'server_id'];
+            const keyNames = ['players', 'teams', 'default', 'rated', 'afkcheck', 'pickmode', 'whitelist', 'blacklist', 'promotion', 'captain', 'server', 'mappool', 'mapvote', 'server'];
             let dbColumn = keyNames.includes(key) ? dbColumnNames[keyNames.indexOf(key)] : key;
 
             const keyisValid = Validator.Pickup.areValidKeys(key);
@@ -121,6 +121,7 @@ const command: Command = {
                 `Pick mode: **${settings.pickMode}**\n` +
                 `Rated: **${settings.rated ? 'rated' : 'unrated'}**\n` +
                 `Map pool: **${mapPoolName}**\n` +
+                `Map vote: **${settings.mapvote ? 'enabled' : 'disabled'}**\n` +
                 `Server: **${serverName}**\n` +
                 `Whitelist role: **${whitelistRole ? whitelistRole.name : '-'}**\n` +
                 `Blacklist role: **${blacklistRole ? blacklistRole.name : '-'}**\n` +

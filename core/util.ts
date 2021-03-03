@@ -281,18 +281,15 @@ export default class Util {
                     message = message.replace(placeholder, formattedTeams.join('\n'));
                     break;
                 case '%map':
-                    if (!pickupSettings.mapPoolId) {
+                    if (!config.map) {
                         message = message.replace(/\n%map\[.*?\]\n/g, '\n');
                         message = message.replace(/%map\[.*?\]/g, '');
                         message = message.replace(toReplace, '');
                         break;
                     }
 
-                    const poolName = await MappoolModel.getPoolName(BigInt(config.guild.id), pickupSettings.mapPoolId);
-                    const maps = await MappoolModel.getMaps(BigInt(config.guild.id), poolName);
-
                     message = message.replace(/(%map)\[(.*?)\]/g, '$2');
-                    message = message.replace(toReplace, maps[Math.floor(Math.random() * maps.length)]);
+                    message = message.replace(toReplace, config.map);
                     break;
                 case '%ip':
                     if (!pickupSettings.serverId && !guildSettings.defaultServer) {

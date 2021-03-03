@@ -12,7 +12,7 @@ const config = ConfigTool.getConfig();
 export namespace Validator {
     export namespace Pickup {
         export function areValidKeys(...keys) {
-            const validKeys = ['name', 'players', 'teams', 'default', 'mappool', 'afkcheck',
+            const validKeys = ['name', 'players', 'teams', 'default', 'mappool', 'mapvote', 'afkcheck',
                 'pickmode', 'rated', 'whitelist', 'blacklist', 'promotion', 'captain', 'server'];
             const invalidKeys = keys.filter(key => !validKeys.includes(key));
 
@@ -121,6 +121,34 @@ export namespace Validator {
 
                         if (!validPool) {
                             errors.push({ type: 'mappool', errorMessage: 'given map pool not found' });
+                            break;
+                        }
+                        break;
+                    case 'mapvote':
+                        if (!['true', 'false'].includes(value)) {
+                            errors.push({ type: 'mapvote', errorMessage: 'value has to be true or false' });
+                            break;
+                        }
+
+                        if (!pickupSettings) {
+                            pickupSettings = await PickupModel.getPickupSettings(BigInt(guild.id), pickup);
+                        }
+
+                        if ((pickupSettings.mapvote ? 'true' : 'false') === value.toLowerCase()) {
+                            errors.push({ type: 'mappool', errorMessage: `map voting is already ${pickupSettings.mapvote ? 'enabled' : 'disabled'} for pickup ${pickupSettings.name}` });
+                            break;
+                        }
+
+                        if (!pickupSettings.mapPoolId) {
+                            errors.push({ type: 'mappool', errorMessage: 'there has to be a map pool assigned to the pickup with at least two maps' });
+                            break;
+                        }
+
+                        const poolName = await MappoolModel.getPoolName(BigInt(guild.id), pickupSettings.mapPoolId);
+                        const mapPool = await MappoolModel.getMaps(BigInt(guild.id), poolName);
+
+                        if (mapPool.length < 2) {
+                            errors.push({ type: 'mappool', errorMessage: `map pool ${poolName} for pickup ${pickupSettings.name} only contains one map, two or more required for voting` });
                             break;
                         }
                         break;
@@ -331,8 +359,8 @@ export namespace Validator {
     export namespace Guild {
         export function areValidKeys(...keys) {
             const validKeys = ['prefix', 'global_expire', 'report_expire', 'trust_time', 'explicit_trust', 'whitelist', 'blacklist', 'promotion_delay', 'server',
-                'start_message', 'sub_message', 'notify_message', 'iteration_time', 'afk_time', 'afk_check_iterations', 'picking_iterations', 'max_avg_elo_variance', 'warn_streaks',
-                'warns_until_ban', 'warn_streak_expiration', 'warn_expiration', 'warn_bantime', 'warn_bantime_multiplier'];
+                'start_message', 'sub_message', 'notify_message', 'iteration_time', 'afk_time', 'afk_check_iterations', 'picking_iterations', 'map_vote_iterations', 'max_avg_elo_variance',
+                'warn_streaks', 'warns_until_ban', 'warn_streak_expiration', 'warn_expiration', 'warn_bantime', 'warn_bantime_multiplier'];
 
             const invalidKeys = keys.filter(key => !validKeys.includes(key));
 
@@ -546,6 +574,7 @@ export namespace Validator {
                         break;
                     case 'afk_check_iterations':
                     case 'picking_iterations':
+                    case 'map_vote_iterations':
                         if (!/^\d+$/.test(value)) {
                             errors.push({ type: key, errorMessage: 'amount has to be a number' });
                             break;
