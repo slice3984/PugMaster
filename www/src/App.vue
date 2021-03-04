@@ -1,5 +1,5 @@
 <template>
-  <TheHeader />
+  <the-header />
   <router-view />
 </template>
 
@@ -13,6 +13,19 @@ export default defineComponent({
 </script>
 
 <style lang="scss">
+*,
+*::after,
+*::before {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html {
+  font-size: 62.5%;
+  background-color: $background;
+}
+
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;

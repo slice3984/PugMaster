@@ -8,5 +8,14 @@ module.exports = {
   lintOnSave: false,
   devServer: {
     proxy: `http://localhost:${port}`
+  },
+  css: {
+    loaderOptions: {
+      sass: {
+        prependData: `
+          @import "@/scss/_variables.scss";
+          `
+      }
+    }
   }
 }
