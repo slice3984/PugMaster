@@ -4,13 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build:www": "cross-env NODE_ENV=production webpack --config webpack.www.config.js --mode=production",
-    "dev:www": "cross-env NODE_ENV=development webpack --config webpack.www.config.js --watch",
-    "build:bot_old": "cross-env NODE_ENV=production webpack --config webpack.bot.config.js --mode=production",
+    "build:devapp": "cross-env NODE_ENV=production webpack --config webpack.www.config.js --mode=production",
+    "dev:devapp": "cross-env NODE_ENV=development webpack --config webpack.www.config.js --watch",
+    "dev:www": "cd ./www && npm run serve",
+    "build:www": "cd ./www && npm run build",
     "build:bot": "tsc -p ./tsconfig.json",
     "debug:bot": "cross-env TS_NODE_PROJECT=tsconfig.json DEV=true node --inspect=5858 -r ts-node/register ./app.ts",
     "dev:bot": "cross-env DEBUG=true nodemon",
-    "dev:all": "npm-run-all --parallel dev:bot dev:www",
+    "dev:all": "npm-run-all --parallel dev:bot dev:www dev:devapp",
     "build:all": "npm-run-all --parallel build:bot build:www"
   },
   "nodemonConfig": {
