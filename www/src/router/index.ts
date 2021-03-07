@@ -11,6 +11,20 @@ const routes: Array<RouteRecordRaw> = [
     path: '/about',
     name: 'About',
     component: () => import('../views/About.vue')
+  },
+  {
+    path: '/help',
+    props: true,
+    name: 'Help',
+    redirect: '/help/firststeps',
+    component: () => import('../views/help/Help.vue'),
+    children: [
+      {
+        path: ':article',
+        props: true,
+        component: () => import('../views/help/HelpArticleView.vue')
+      }
+    ]
   }
 ]
 

@@ -1,7 +1,7 @@
 <template>
-  <container>
+  <div>
     <Hero />
-  </container>
+  </div>
 </template>
 
 <script lang="ts">
