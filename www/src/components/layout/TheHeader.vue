@@ -4,6 +4,7 @@
     <nav>
       <base-link to="/">Home</base-link>
       <base-link to="/about">About</base-link>
+      <base-link to="/commands">Commands</base-link>
       <base-link to="/help">Help</base-link>
     </nav>
   </header>

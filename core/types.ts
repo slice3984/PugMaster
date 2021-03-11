@@ -167,6 +167,28 @@ export interface PickupInfoAPI {
     }[]
 }
 
+export interface CommandInfo {
+    cmd: string;
+    cooldown?: number;
+    category: 'pickup' | 'info' | 'admin';
+    aliases?: string[];
+    desc: string;
+    args?: {
+        name: string;
+        desc: string;
+        required: boolean;
+    }[];
+    perms: boolean;
+    global: boolean;
+    defaults?: {
+        type: 'string' | 'number' | 'time';
+        name: string;
+        desc: string;
+        value: string | number;
+        possibleValues: number[] | string[] | { from: number; to: number };
+    }[]
+}
+
 export interface RateablePickup {
     pickupId: number;
     pickupConfigId: number;

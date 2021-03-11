@@ -3,13 +3,14 @@
     <ul v-for="section in sections" :key="section.name" class="help-section">
       <li>{{ section.name }}</li>
       <ul>
-        <help-link
+        <nav-link
           v-for="link in section.links"
           :key="link.id"
           :active-link="activeLink"
           :title="link.title"
           :id="link.id"
-        ></help-link>
+          route="help"
+        ></nav-link>
       </ul>
     </ul>
   </div>
@@ -19,10 +20,10 @@
 import { HelpNavSection } from "@/store/types";
 import { defineComponent, ref } from "vue";
 
-import HelpLink from "./HelpLink.vue";
+import NavLink from "../NavLink.vue";
 
 export default defineComponent({
-  components: { HelpLink },
+  components: { NavLink },
   props: {
     helpNavSections: {
       type: Object as () => HelpNavSection[],

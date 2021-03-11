@@ -1,6 +1,6 @@
 <template>
   <li :class="isActive">
-    <base-link :to="`/help/${id}`">{{ title }}</base-link>
+    <base-link :to="`/${route}/${id}`">{{ title }}</base-link>
   </li>
 </template>
 
@@ -9,7 +9,7 @@ import { computed } from "vue";
 import { defineComponent } from "vue";
 
 export default defineComponent({
-  props: ["active-link", "title", "id", "section"],
+  props: ["active-link", "title", "id", "route", "section"],
   setup(props) {
     const isActive = computed(() =>
       props["active-link"] === props.id ? "active-help-point" : null
@@ -19,6 +19,7 @@ export default defineComponent({
       isActive,
       title: props.title,
       id: props.id,
+      rote: props.route,
     };
   },
 });

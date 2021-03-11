@@ -25,6 +25,20 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import('../views/help/HelpArticleView.vue')
       }
     ]
+  },
+  {
+    path: '/commands',
+    name: 'Commands',
+    props: true,
+    redirect: '/commands/acceptsub',
+    component: () => import('../views/commands/Commands.vue'),
+    children: [
+      {
+        path: ':command',
+        props: true,
+        component: () => import('../views/commands/CommandView.vue')
+      }
+    ]
   }
 ]
 
