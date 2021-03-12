@@ -1,6 +1,10 @@
 <template>
   <the-header />
-  <router-view />
+  <router-view v-slot="{ Component }">
+    <transition name="route" mode="out-in">
+      <component :is="Component" />
+    </transition>
+  </router-view>
 </template>
 
 <script lang="ts">
@@ -31,5 +35,23 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: #2c3e50;
+}
+
+.route-enter-from,
+.route-leave-to {
+  opacity: 0;
+}
+
+.route-enter-active {
+  transition: all 200ms ease-out;
+}
+
+.route-leave-active {
+  transition: all 200ms ease-in;
+}
+
+.route-enter-to,
+.route-leave-from {
+  opacity: 1;
 }
 </style>

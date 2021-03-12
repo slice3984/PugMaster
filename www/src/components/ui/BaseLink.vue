@@ -28,7 +28,7 @@ export default defineComponent({
 
 <style lang="scss" scoped>
 a {
-  color: #26001b;
+  color: $blue;
   text-decoration: none;
 
   &.router-link-active {

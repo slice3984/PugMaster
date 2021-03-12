@@ -18,12 +18,12 @@ export default defineComponent({});
 
 <style lang="scss" scoped>
 header {
-  background-color: $light-gray;
+  color: #fff;
+  background-color: $dark;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 2rem;
-  border-bottom: 1px solid $purple;
+  padding: 0 2rem;
 
   & h1 {
     font-size: 2.5rem;
@@ -31,8 +31,12 @@ header {
 }
 
 nav {
+  display: flex;
+
   & a {
-    text-decoration: none;
+    color: #fff;
+    display: block;
+    padding: 1rem 0 !important;
     font-size: 2rem;
 
     &:not(:last-child) {
