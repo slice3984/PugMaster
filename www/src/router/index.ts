@@ -39,6 +39,11 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import('../views/commands/CommandView.vue')
       }
     ]
+  },
+  {
+    path: '/stats',
+    name: 'Stats search',
+    component: () => import('../views/stats/GuildSearch.vue')
   }
 ]
 

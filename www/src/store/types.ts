@@ -13,6 +13,17 @@ export interface CommandState {
     commands: Map<string, CommandInfo>;
 }
 
+export interface StatsState {
+    gotGuildBookmarks: boolean | null;
+    bookmarkedGuilds: GuildBookmark[]
+}
+
+export interface GuildBookmark {
+    id: String;
+    name: String;
+    icon: String
+}
+
 export const rootKey: InjectionKey<Store<RootState>> = Symbol();
 
 export interface CommandCategory {

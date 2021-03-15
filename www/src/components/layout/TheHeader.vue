@@ -3,9 +3,10 @@
     <h1>PickupBot</h1>
     <nav>
       <base-link to="/">Home</base-link>
-      <base-link to="/about">About</base-link>
+      <base-link to="/stats">Stats</base-link>
       <base-link to="/commands">Commands</base-link>
       <base-link to="/help">Help</base-link>
+      <base-link to="/about">About</base-link>
     </nav>
   </header>
 </template>
