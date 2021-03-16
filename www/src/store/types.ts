@@ -15,13 +15,22 @@ export interface CommandState {
 
 export interface StatsState {
     gotGuildBookmarks: boolean | null;
-    bookmarkedGuilds: GuildBookmark[]
+    bookmarkedGuilds: GuildBookmark[];
+    storedGuilds: Map<String, {
+        basicInfo: GuildBasicInfo
+    }>
 }
 
 export interface GuildBookmark {
     id: String;
     name: String;
     icon: String
+}
+
+export interface GuildBasicInfo {
+    id: String;
+    name: String;
+    icon: String;
 }
 
 export const rootKey: InjectionKey<Store<RootState>> = Symbol();

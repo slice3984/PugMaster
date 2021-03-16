@@ -14,7 +14,6 @@ export default defineComponent({
       default: false,
     },
     to: {
-      type: String,
       required: true,
     },
     mode: {
@@ -30,10 +29,6 @@ export default defineComponent({
 a {
   color: $blue;
   text-decoration: none;
-
-  &.router-link-active {
-    font-weight: 600;
-  }
 }
 
 .bold {

@@ -28,6 +28,8 @@
 <script lang="ts">
 import { useRouter } from "vue-router";
 import { computed, defineComponent, ref } from "vue";
+import { useStore } from "vuex";
+import { rootKey } from "@/store/types";
 
 export default defineComponent({
   props: {
@@ -39,6 +41,7 @@ export default defineComponent({
   },
   emits: ["toggle-bookmark"],
   setup(props, ctx) {
+    const store = useStore(rootKey);
     const router = useRouter();
     const guildUrl = `/stats/${props.id}`;
 
@@ -50,6 +53,12 @@ export default defineComponent({
           icon: props.iconUrl,
         });
       } else {
+        store.dispatch("stats/setBasicGuildInfo", {
+          id: props.id,
+          name: props.name,
+          icon: props.iconUrl,
+        });
+
         router.push(guildUrl);
       }
     };

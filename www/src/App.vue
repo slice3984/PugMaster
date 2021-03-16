@@ -54,4 +54,9 @@ html {
 .route-leave-from {
   opacity: 1;
 }
+
+.router-link-active,
+.router-link-exact-active {
+  font-weight: 600;
+}
 </style>

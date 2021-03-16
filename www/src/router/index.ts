@@ -21,6 +21,7 @@ const routes: Array<RouteRecordRaw> = [
     children: [
       {
         path: ':article',
+        name: 'Help',
         props: true,
         component: () => import('../views/help/HelpArticleView.vue')
       }
@@ -35,6 +36,7 @@ const routes: Array<RouteRecordRaw> = [
     children: [
       {
         path: ':command',
+        name: 'Command',
         props: true,
         component: () => import('../views/commands/CommandView.vue')
       }
@@ -42,14 +44,58 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: '/stats',
-    name: 'Stats search',
+    name: 'stats-search',
     component: () => import('../views/stats/GuildSearch.vue')
+  },
+  {
+    path: '/stats/:guildId',
+    name: 'stats-view',
+    props: true,
+    component: () => import('../views/stats/StatsView.vue'),
+    children: [
+      {
+        path: 'overview',
+        name: 'overview',
+        props: true,
+        component: () => import('../views/stats/Overview.vue')
+      },
+      {
+        path: 'history',
+        name: 'history',
+        props: true,
+        component: () => import('../views/stats/PickupHistory.vue')
+      },
+      {
+        path: 'player',
+        name: 'player-search',
+        props: true,
+        component: () => import('../views/stats/PlayerSearch.vue')
+      },
+    ]
   }
 ]
 
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes
-})
+});
+
+router.beforeEach(to => {
+  const routeName = String(to.name);
+  let title = '';
+
+  switch (routeName) {
+    case 'Command': title = `Command: ${to.params.command}`; break;
+    case 'stats-search': title = 'Search'; break;
+    case 'stats-view': title = 'Stats'; break;
+    case 'overview': title = 'Overview'; break;
+    case 'history': title = 'History'; break;
+    case 'player-search': title = 'Player search'; break;
+    default:
+      title = routeName;
+  }
+
+  document.title = title;
+});
 
 export default router

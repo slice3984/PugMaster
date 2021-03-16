@@ -1,12 +1,13 @@
 import { Module } from 'vuex';
 import postApi from '../postApi';
-import { GuildBookmark, RootState, StatsState } from '../types';
+import { GuildBasicInfo, GuildBookmark, RootState, StatsState } from '../types';
 
 export const statsModule: Module<StatsState, RootState> = {
     namespaced: true,
     state: {
         gotGuildBookmarks: null,
-        bookmarkedGuilds: []
+        bookmarkedGuilds: [],
+        storedGuilds: new Map()
     },
     getters: {
         getBookmarkedGuilds(state): GuildBookmark[] {
@@ -14,6 +15,10 @@ export const statsModule: Module<StatsState, RootState> = {
         },
         gotBookmarkedGuilds(state): boolean | null {
             return state.gotGuildBookmarks;
+        },
+        getBasicGuildInfo: (state) => (guildId): GuildBasicInfo => {
+            const guild = state.storedGuilds.get(guildId);
+            return guild ? guild.basicInfo : null;
         }
     },
     mutations: {
@@ -23,6 +28,15 @@ export const statsModule: Module<StatsState, RootState> = {
         SET_GOT_BOOKMARKS_STORED(state, payload) {
             state.gotGuildBookmarks = payload;
         },
+        SET_BASIC_GUILD_INFO(state, payload) {
+            const guild = state.storedGuilds.get(payload.id);
+
+            if (guild) {
+                guild.basicInfo = payload;
+            } else {
+                state.storedGuilds.set(payload.id, { basicInfo: payload });
+            }
+        }
     },
     actions: {
         async fetchGuildBookmarks(context, payload) {
@@ -53,6 +67,16 @@ export const statsModule: Module<StatsState, RootState> = {
             const bookmarks = context.getters.getBookmarkedGuilds.filter(b => b.id !== payload);
             localStorage.setItem('bookmarks', JSON.stringify(bookmarks.map(b => b.id)));
             context.commit('SET_GUILD_BOOKMARKS', bookmarks);
+        },
+        setBasicGuildInfo(context, payload) {
+            context.commit('SET_BASIC_GUILD_INFO', payload);
+        },
+        async fetchBasicGuildInfo(context, payload) {
+            const res = await postApi('info', { guilds: [payload] });
+
+            if (res.guilds.length) {
+                context.dispatch('setBasicGuildInfo', res.guilds[0]);
+            }
         }
     }
 }
