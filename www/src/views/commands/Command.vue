@@ -155,6 +155,7 @@ export default defineComponent({
     text-align: left;
     margin-bottom: 1rem;
     font-size: 1.5rem;
+    color: $gray;
   }
 
   width: 100%;

@@ -27,7 +27,7 @@ export default defineComponent({
 
 <style lang="scss" scoped>
 a {
-  color: $blue;
+  color: $red;
   text-decoration: none;
 }
 

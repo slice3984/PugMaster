@@ -54,7 +54,7 @@
       <div class="github">
         <div class="github__heading">Source</div>
         <div class="github__content">
-          <img src="@/assets/logos/github.png" alt="" />
+          <base-icon width="5rem" height="5rem" icon="github"></base-icon>
           <base-link
             mode="bold"
             link
@@ -126,7 +126,7 @@ export default defineComponent({});
     justify-content: center;
     align-items: center;
 
-    & img {
+    & svg {
       margin-right: 1rem;
     }
   }

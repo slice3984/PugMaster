@@ -58,7 +58,6 @@ export default defineComponent({
           name: props.name,
           icon: props.iconUrl,
         });
-
         router.push(guildUrl);
       }
     };
@@ -128,37 +127,37 @@ export default defineComponent({
     cursor: pointer;
 
     &--active {
-      fill: $gold;
+      fill: $light-gray;
+
+      &:hover {
+        fill: $dark;
+      }
+    }
+
+    &--disabled {
+      fill: $dark;
 
       &:hover {
         fill: $light-gray;
       }
     }
-
-    &--disabled {
-      fill: $light-gray;
-
-      &:hover {
-        fill: $gold;
-      }
-    }
   }
 
   &--search {
-    background-color: $gray;
+    background-color: $blue;
     color: $white;
 
     &:hover {
-      background-color: darken($gray, 10);
+      background-color: lighten($blue, 5);
     }
   }
 
   &--bookmark {
-    background-color: $dark-green;
+    background-color: $blue-2;
     color: $white;
 
     &:hover {
-      background-color: lighten($dark-green, 10);
+      background-color: lighten($blue-2, 10);
     }
   }
 }

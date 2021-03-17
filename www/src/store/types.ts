@@ -17,7 +17,8 @@ export interface StatsState {
     gotGuildBookmarks: boolean | null;
     bookmarkedGuilds: GuildBookmark[];
     storedGuilds: Map<String, {
-        basicInfo: GuildBasicInfo
+        basicInfo: GuildBasicInfo,
+        extendedInfo?: GuildInfoExtended
     }>
 }
 
@@ -70,4 +71,29 @@ export interface CommandInfo {
         value: string | number;
         possibleValues: number[] | string[] | { from: number; to: number };
     }[]
+}
+
+export interface GuildInfoExtended {
+    status: 'success' | 'fail';
+    gotData: boolean;
+    guildIcon?: string | null;
+    guildName?: string;
+    guildId?: string;
+    memberCount?: number;
+    pickupPlayerCount?: number;
+    pickupCount?: number;
+    lastGame?: { name: string; date: Date };
+    pickupsChartData?: {
+        name: string;
+        amount: number;
+    }[];
+    topPlayersChartData?: {
+        nick: string;
+        amount: number;
+    }[];
+    topPlayersRatingsChartData?: {
+        nick: string;
+        amount: number;
+    }[];
+    activityTimesChartData?: Date[];
 }

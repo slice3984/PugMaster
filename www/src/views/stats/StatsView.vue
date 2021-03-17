@@ -23,7 +23,7 @@
       </nav>
     </div>
 
-    <router-view v-slot="{ Component }" :key="fullPath">
+    <router-view v-slot="{ Component }">
       <transition name="route" mode="out-in">
         <component :is="Component" />
       </transition>
@@ -57,10 +57,6 @@ export default defineComponent({
       router.replace({ name: "overview" });
     }
 
-    onUpdated(() => {
-      fullPath.value = router.currentRoute.value.fullPath;
-    });
-
     return {
       basicGuildInfo,
       fullPath,
@@ -73,6 +69,7 @@ export default defineComponent({
 .top-bar {
   display: flex;
   justify-content: space-between;
+  box-shadow: 0px 5px 10px 1px $dark-2;
 
   &__content {
     height: 100%;

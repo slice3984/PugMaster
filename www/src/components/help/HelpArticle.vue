@@ -79,7 +79,7 @@ export default defineComponent({});
     & h1 {
       display: inline-block;
       font-size: 3rem;
-      border-top: 2px solid $purple;
+      border-top: 2px solid $dark;
       margin-bottom: 1rem;
     }
   }

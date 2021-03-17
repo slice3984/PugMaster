@@ -11,13 +11,13 @@
 .command-code {
   display: inline-flex;
   align-items: center;
-  border: 1px solid $dark;
-  background-color: $light-gray;
-  margin: 0.5rem 0;
+  border: 1px solid $blue-2;
+  background-color: $dark;
+  margin: 1rem 0;
   margin-right: 0.5rem;
 
   &__icon {
-    color: $white;
+    color: $red;
     font-size: 2rem;
     background-color: $dark;
     width: 2rem;

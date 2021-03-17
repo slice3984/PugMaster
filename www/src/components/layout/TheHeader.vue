@@ -23,6 +23,7 @@ header {
   align-items: center;
   justify-content: space-between;
   padding: 0 2rem;
+  box-shadow: 0px 5px 10px 1px $dark-2;
 
   & h1 {
     font-size: 2.5rem;

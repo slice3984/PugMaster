@@ -1,6 +1,6 @@
 import { Module } from 'vuex';
 import postApi from '../postApi';
-import { GuildBasicInfo, GuildBookmark, RootState, StatsState } from '../types';
+import { GuildBasicInfo, GuildBookmark, GuildInfoExtended, RootState, StatsState } from '../types';
 
 export const statsModule: Module<StatsState, RootState> = {
     namespaced: true,
@@ -19,6 +19,15 @@ export const statsModule: Module<StatsState, RootState> = {
         getBasicGuildInfo: (state) => (guildId): GuildBasicInfo => {
             const guild = state.storedGuilds.get(guildId);
             return guild ? guild.basicInfo : null;
+        },
+        getExtendedGuildInfo: state => (guildId): GuildInfoExtended => {
+            const guild = state.storedGuilds.get(guildId);
+
+            if (guild) {
+                return guild.extendedInfo ? guild.extendedInfo : null;
+            } else {
+                return null;
+            }
         }
     },
     mutations: {
@@ -36,6 +45,10 @@ export const statsModule: Module<StatsState, RootState> = {
             } else {
                 state.storedGuilds.set(payload.id, { basicInfo: payload });
             }
+        },
+        SET_EXTENDED_GUILD_INFO(state, payload) {
+            const guild = state.storedGuilds.get(payload.guildId);
+            guild.extendedInfo = payload;
         }
     },
     actions: {
@@ -76,6 +89,18 @@ export const statsModule: Module<StatsState, RootState> = {
 
             if (res.guilds.length) {
                 context.dispatch('setBasicGuildInfo', res.guilds[0]);
+            }
+        },
+        async fetchExtendedGuildInfo(context, payload) {
+            const res = await postApi('guildinfo', { id: payload });
+
+            if (res.status === 'success') {
+                context.dispatch('setBasicGuildInfo', {
+                    id: res.guildId,
+                    name: res.guildName,
+                    icon: res.guildIcon
+                });
+                context.commit('SET_EXTENDED_GUILD_INFO', res);
             }
         }
     }

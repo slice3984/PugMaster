@@ -75,6 +75,8 @@ export default defineComponent({
 
 <style lang="scss" scoped>
 .content {
+  margin-top: 2rem;
+
   &__main {
     display: flex;
   }

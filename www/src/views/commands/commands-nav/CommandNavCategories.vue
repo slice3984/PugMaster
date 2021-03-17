@@ -46,6 +46,7 @@ export default defineComponent({
 
   &--active {
     font-weight: 600;
+    color: $red !important;
   }
 
   & ul {
@@ -55,6 +56,7 @@ export default defineComponent({
     & li {
       padding: 0.5rem 1rem;
       text-transform: capitalize;
+      color: darken($white, 10);
       cursor: pointer;
 
       &:hover {

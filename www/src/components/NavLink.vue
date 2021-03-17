@@ -29,6 +29,14 @@ export default defineComponent({
 li {
   cursor: pointer;
 
+  & a {
+    color: darken($white, 10);
+  }
+
+  & .router-link-active {
+    color: $red;
+  }
+
   &:hover {
     text-decoration: underline;
   }
@@ -36,5 +44,6 @@ li {
 
 .active-help-point {
   font-weight: 800;
+  color: $red;
 }
 </style>
