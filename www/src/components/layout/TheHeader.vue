@@ -3,8 +3,11 @@
     <h1>PickupBot</h1>
     <nav>
       <base-link to="/">Home</base-link>
+      <!-- Temp fix: fake id for guild param
+      somehow breaks navigation routing coming from /stats/:guildId and its nested routes
+       -->
       <base-link
-        to="/stats"
+        :to="{ name: 'stats-search', params: { guildId: null } }"
         :class="{ 'router-link-active': $route.path.startsWith('/stats') }"
         >Stats</base-link
       >

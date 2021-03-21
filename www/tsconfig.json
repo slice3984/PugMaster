@@ -2,6 +2,7 @@
   "compilerOptions": {
     "strictPropertyInitialization": false,
     "target": "es5",
+    "downlevelIteration": true,
     "module": "esnext",
     "jsx": "preserve",
     "importHelpers": true,

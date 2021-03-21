@@ -14,7 +14,6 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: '/help',
-    props: true,
     name: 'Help',
     redirect: '/help/firststeps',
     component: () => import('../views/help/Help.vue'),
@@ -30,7 +29,6 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/commands',
     name: 'Commands',
-    props: true,
     redirect: '/commands/acceptsub',
     component: () => import('../views/commands/Commands.vue'),
     children: [
@@ -81,6 +79,12 @@ const router = createRouter({
 });
 
 router.beforeEach(to => {
+  // Temp fix: null id for guildId param
+  // Breaks navigation when navigting from /stats/:guildId and its nested routes
+  if (!['stats-view', 'stats-search', 'overview', 'history', 'player-search'].includes(to.name.toString())) {
+    to.params = { ...to.params, guildId: null };
+  }
+
   const routeName = String(to.name);
   let title = '';
 

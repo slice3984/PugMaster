@@ -89,7 +89,7 @@ export default defineComponent({
 <style lang="scss" scoped>
 .overview-info-card {
   color: $white;
-  width: 23rem;
+  width: 25rem;
 
   & > :not(:last-child):not(:first-child) {
     border-bottom: 1px solid rgba($white, 0.05);
