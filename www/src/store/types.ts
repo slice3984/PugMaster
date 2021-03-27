@@ -22,6 +22,24 @@ export interface StatsState {
     }>
 }
 
+export interface PickupsState {
+    guilds: Map<String, Map<Number, PickupInfo>>
+}
+
+export interface PickupInfo {
+    id: number;
+    isRated: boolean;
+    teams: {
+        name: string;
+        outcome: "win" | "draw" | "loss" | null;
+        players: {
+            id: string;
+            rating: number;
+            nick: string;
+        }[];
+    }[];
+}
+
 export interface GuildBookmark {
     id: String;
     name: String;

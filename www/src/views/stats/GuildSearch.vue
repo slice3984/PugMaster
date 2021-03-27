@@ -1,6 +1,11 @@
 <template>
   <div class="stats-search">
-    <base-toast-message :type="toastType" :show="toastDisplayed">
+    <base-toast-message
+      v-if="isMounted"
+      :type="toastType"
+      :show="toastDisplayed"
+      relativeTo=".stats-search"
+    >
       <template #title>
         {{ toastTitle }}
       </template>
@@ -71,7 +76,7 @@ import postApi from "@/store/postApi";
 import { GuildBookmark, rootKey } from "@/store/types";
 import { debounce } from "@/util";
 import { useStore } from "vuex";
-import { computed, defineComponent, ref, watch } from "vue";
+import { computed, defineComponent, onMounted, ref, watch } from "vue";
 import { useToast } from "@/composables/useToast";
 import GuildInfoCard from "@/components/stats/GuildInfoCard.vue";
 
@@ -90,6 +95,7 @@ export default defineComponent({
     const results = ref([]);
     const resultsLeft = ref(0);
     const noResults = ref(false);
+    const isMounted = ref(false);
 
     // Load bookmarks
     const store = useStore(rootKey);
@@ -158,6 +164,10 @@ export default defineComponent({
     const isBookmarked = (guildId) =>
       bookmarks.value.find((b) => b.id === guildId) ? true : false;
 
+    onMounted(() => {
+      isMounted.value = true;
+    });
+
     watch(
       searchInput,
       debounce(async (newValue, oldValue) => {
@@ -200,6 +210,7 @@ export default defineComponent({
       toastDisplayed,
       toastTitle,
       toastContent,
+      isMounted,
     };
   },
 });
@@ -208,6 +219,7 @@ export default defineComponent({
 
 <style lang="scss" scoped>
 .stats-search {
+  position: relative;
   height: calc(90vh - 4.5rem);
   display: flex;
   flex-flow: column;

@@ -58,8 +58,8 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import('../views/stats/Overview.vue')
       },
       {
-        path: 'history',
-        name: 'history',
+        path: 'pickups/:pickupId?',
+        name: 'pickups',
         props: true,
         component: () => import('../views/stats/PickupHistory.vue')
       },
@@ -81,7 +81,7 @@ const router = createRouter({
 router.beforeEach(to => {
   // Temp fix: null id for guildId param
   // Breaks navigation when navigting from /stats/:guildId and its nested routes
-  if (!['stats-view', 'stats-search', 'overview', 'history', 'player-search'].includes(to.name.toString())) {
+  if (!['stats-view', 'stats-search', 'overview', 'pickups', 'player-search'].includes(to.name.toString())) {
     to.params = { ...to.params, guildId: null };
   }
 

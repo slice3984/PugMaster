@@ -14,7 +14,7 @@
             <base-link :to="{ name: 'overview' }">Overview</base-link>
           </li>
           <li>
-            <base-link :to="{ name: 'history' }">Pickup history</base-link>
+            <base-link :to="{ name: 'pickups' }">Pickup history</base-link>
           </li>
           <li>
             <base-link :to="{ name: 'player-search' }">Player stats</base-link>

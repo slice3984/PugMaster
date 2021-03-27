@@ -1,5 +1,5 @@
 <template>
-  <teleport to="body">
+  <teleport :to="relativeTo">
     <transition name="appear">
       <div v-if="show" class="toast-message" :class="`toast-message--${type}`">
         <div class="toast-message__icon">
@@ -32,6 +32,11 @@ export default defineComponent({
       type: Boolean,
       required: true,
     },
+    relativeTo: {
+      type: String,
+      required: false,
+      default: "body",
+    },
   },
   setup(props) {
     const iconType = computed(() => {
@@ -58,7 +63,7 @@ export default defineComponent({
   background-color: $dark;
   display: flex;
   align-items: center;
-  top: 5rem;
+  top: 1rem;
   right: 1rem;
   box-shadow: 5px 5px 2px 0px rgba(0, 0, 0, 0.1);
   font-family: "Roboto", sans-serif;

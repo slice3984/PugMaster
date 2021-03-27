@@ -156,6 +156,7 @@ export interface PickupInfoAPI {
     foundPickup: boolean;
     id: number;
     isRated: boolean;
+    map: String;
     teams: {
         name: string;
         outcome: 'win' | 'draw' | 'loss' | null,

@@ -2,6 +2,7 @@ import { createStore } from 'vuex'
 import { helpModule } from './modules/help';
 import { commandModule } from './modules/command';
 import { statsModule } from './modules/stats';
+import { pickupsModule } from './modules/pickups';
 import { RootState } from './types';
 
 export default createStore<RootState>({
@@ -16,6 +17,7 @@ export default createStore<RootState>({
   modules: {
     'help': helpModule,
     'command': commandModule,
-    'stats': statsModule
+    'stats': statsModule,
+    'pickups': pickupsModule
   }
 })

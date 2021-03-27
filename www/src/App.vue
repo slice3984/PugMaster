@@ -37,6 +37,32 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: $white;
+
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  ::-webkit-scrollbar-button {
+    width: 0;
+    height: 0;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: $blue;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: $blue-2;
+  }
+  ::-webkit-scrollbar-thumb:active {
+    background: $blue-2;
+  }
+  ::-webkit-scrollbar-track {
+    background: $dark;
+    border-radius: 50px;
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
 }
 
 .route-enter-from,
