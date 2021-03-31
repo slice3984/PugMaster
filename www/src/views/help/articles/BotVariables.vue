@@ -270,7 +270,11 @@
         </p>
         <p>
           Variables which are used for the
-          <base-link to="#" mode="bold">to be replaced</base-link>
+          <base-link
+            :to="{ name: 'Command', params: { command: 'modify_bot' } }"
+            mode="bold"
+            >modify_bot</base-link
+          >
           command
         </p>
       </template>

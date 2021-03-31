@@ -75,7 +75,8 @@
           </span>
         </h2>
         <div class="pickup-item__players">
-          <div
+          <router-link
+            :to="{ name: 'player-view', params: { playerId: player.id } }"
             class="pickup-item__player"
             v-for="player of team.players"
             :key="player.id"
@@ -89,7 +90,7 @@
               icon="link"
               fill="#fff"
             ></base-icon>
-          </div>
+          </router-link>
         </div>
       </div>
       <div class="pickup-item__data">
@@ -367,6 +368,7 @@ export default defineComponent({
     display: inline-flex;
     padding: 0.5rem 2rem;
     margin-bottom: 1rem;
+    color: $white;
     background-color: $dark;
     cursor: pointer;
 
@@ -390,5 +392,9 @@ export default defineComponent({
       font-weight: 600;
     }
   }
+}
+
+a {
+  text-decoration: none;
 }
 </style>

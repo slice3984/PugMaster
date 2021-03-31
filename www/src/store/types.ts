@@ -26,6 +26,42 @@ export interface PickupsState {
     guilds: Map<String, Map<Number, PickupInfo>>
 }
 
+export interface PlayersState {
+    guilds: Map<String, {
+        guildPickups: {
+            name: String;
+            amount: Number;
+        }[],
+        players: Map<String, PlayerStats>
+    }>
+}
+
+export interface PlayerStats {
+    id: String;
+    name: String;
+    previousNames: String[];
+    rating: {
+        rating: number;
+        variance: number;
+    },
+    pickupAmount: number;
+    playedPickups: {
+        name: String;
+        amount: number;
+    }[],
+    lastPickupTimes: {
+        name: String;
+        date: String;
+    }[],
+    lastPickups: {
+        id: number;
+        name: String;
+        start: String;
+        isRated: Boolean,
+        players: number
+    }[]
+}
+
 export interface PickupInfo {
     id: number;
     isRated: boolean;

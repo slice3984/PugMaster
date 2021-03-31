@@ -17,7 +17,13 @@
             <base-link :to="{ name: 'pickups' }">Pickup history</base-link>
           </li>
           <li>
-            <base-link :to="{ name: 'player-search' }">Player stats</base-link>
+            <base-link
+              :to="{ name: 'player-search' }"
+              :class="{
+                'router-link-active': $route.path.includes('/player'),
+              }"
+              >Player stats</base-link
+            >
           </li>
         </ul>
       </nav>

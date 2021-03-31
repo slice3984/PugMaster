@@ -160,7 +160,11 @@
         </p>
         <p>
           Variables which are used for the
-          <base-link to="#" mode="bold">to be replaced</base-link>
+          <base-link
+            :to="{ name: 'Command', params: { command: 'modify_pickup' } }"
+            mode="bold"
+            >modify_pickup</base-link
+          >
           command
         </p>
       </template>

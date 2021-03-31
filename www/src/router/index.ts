@@ -69,6 +69,12 @@ const routes: Array<RouteRecordRaw> = [
         props: true,
         component: () => import('../views/stats/PlayerSearch.vue')
       },
+      {
+        path: 'player/:playerId',
+        name: 'player-view',
+        props: true,
+        component: () => import('../views/stats/PlayerView.vue')
+      }
     ]
   }
 ]
@@ -81,7 +87,7 @@ const router = createRouter({
 router.beforeEach(to => {
   // Temp fix: null id for guildId param
   // Breaks navigation when navigting from /stats/:guildId and its nested routes
-  if (!['stats-view', 'stats-search', 'overview', 'pickups', 'player-search'].includes(to.name.toString())) {
+  if (!['stats-view', 'stats-search', 'overview', 'pickups', 'player-search', 'player-view'].includes(to.name.toString())) {
     to.params = { ...to.params, guildId: null };
   }
 
@@ -95,6 +101,7 @@ router.beforeEach(to => {
     case 'overview': title = 'Overview'; break;
     case 'history': title = 'History'; break;
     case 'player-search': title = 'Player search'; break;
+    case 'player-view': title = "Player stats"; break;
     default:
       title = routeName;
   }
