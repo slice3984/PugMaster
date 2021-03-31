@@ -6,6 +6,8 @@ import pickup from './pickup';
 import playedPickups from './playedPickups';
 import playerSearch from './playerSearch';
 import player from './player';
+import command from './command';
+import commandInfo from './commandInfo';
 
 const router = Router();
 router.use(search);
@@ -15,5 +17,7 @@ router.use(pickup);
 router.use(playedPickups);
 router.use(playerSearch);
 router.use(player);
+router.use(command);
+router.use(commandInfo);
 
 export default router;

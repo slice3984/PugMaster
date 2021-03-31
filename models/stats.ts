@@ -550,7 +550,7 @@ export default class StatsModel {
 
     static async getPickupInfo(guildId: bigint, pickupId: number): Promise<PickupInfoAPI | { foundPickup: boolean }> {
         const data: any = await db.execute(`
-        SELECT p.id, p.is_rated, pp.team, ps.rating, ps.current_nick, ps.user_id, rr.result FROM pickups p
+        SELECT p.id, p.is_rated, pp.team, p.map, ps.rating, ps.current_nick, ps.user_id, rr.result FROM pickups p
         JOIN pickup_players pp ON p.id = pp.pickup_id
         JOIN players ps ON pp.player_id = ps.id
         LEFT JOIN rated_results rr ON rr.pickup_id = p.id AND rr.team = pp.team
@@ -559,6 +559,7 @@ export default class StatsModel {
 
         let puId: number;
         let isRated: boolean;
+        let map: String;
 
         const teams = new Map();
 
@@ -572,6 +573,7 @@ export default class StatsModel {
             if (!index) {
                 puId = row.id;
                 isRated = Boolean(row.is_rated);
+                map = row.map;
             }
 
             if (!row.team) {
@@ -619,6 +621,7 @@ export default class StatsModel {
             foundPickup: true,
             id: puId,
             isRated,
+            map,
             teams: Array.from(teams.values())
         } as unknown as PickupInfoAPI;
 

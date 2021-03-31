@@ -5,35 +5,19 @@ import rateLimit from 'express-rate-limit';
 import DevPage from './devpage';
 import Bot from './core/bot';
 import ConfigTool from './core/configTool';
-import routes from './routes/website/index';
 import apiRoutes from './routes/api/index';
 const app = express();
 const server = http.createServer(app);
 
+const history = require('connect-history-api-fallback');
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
 app.set('trust proxy', 1);
 
 const port = ConfigTool.getConfig().webserver.port;
 
 export default (bot: Bot) => {
-    if (process.env.DEBUG) {
-        app.disable('view cache');
-        app.use('/www/homepage', express.static(path.join(__dirname, 'dist', 'www', 'homepage')));
-        new DevPage(server, app, bot);
-    } else {
-        app.use('/www/homepage', express.static(path.join(__dirname, 'www', 'homepage')));
-    }
-
-    // Routes
-    app.get('/', routes.home);
-    app.get('/stats', routes.stats);
-    app.get('/commands', routes.commands);
-    app.get('/help', routes.help);
-
     // Rate limit the API
     app.use('/api/', rateLimit({
         windowMs: 15 * 60 * 1000,
@@ -45,8 +29,25 @@ export default (bot: Bot) => {
         headers: true,
     }));
 
+    app.use(express.static(path.join(__dirname, 'www')));
+
+    app.get('*', (req: express.Request, res: express.Response) => {
+        res.sendFile(path.join(__dirname, 'www'));
+    });
+
+    if (process.env.DEBUG) {
+        new DevPage(server, app, bot);
+    }
+
     // API
     app.use('/api/', apiRoutes);
+
+    app.use(history({
+        disableDotRule: true,
+        verbose: false
+    }));
+
+    app.use(express.static(path.join(__dirname, 'www')));
 
     server.listen(port);
     console.log(`Started webserver on port ${port}`)
