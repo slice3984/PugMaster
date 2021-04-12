@@ -10,6 +10,7 @@ import Logger from './logger';
 export default class GuildSettings {
     pendingPickups = new Map();
     pickupsInMapVoteStage = new Set();
+    captainSelectionUpdateCbs: Map<number, (userId: string, abort?: boolean) => string | void> = new Map();
     lastCommandExecutions: Map<Discord.GuildMember, { count: number; timestamp: number }> = new Map();
     commandCooldowns: Map<string, number> = new Map();
 
@@ -37,6 +38,7 @@ export default class GuildSettings {
         private _afkCheckIterations: number,
         private _pickingIterations: number,
         private _mapvoteIterations: number,
+        private _captainSelectionIterations: number,
         private _maxAvgVariance: number,
         private _warnStreaks: number,
         private _warnsUntilBan: number,
@@ -53,7 +55,7 @@ export default class GuildSettings {
 
             if (prop.value === 'none') {
                 if (['prefix', 'report_expire', 'warn_streaks', 'iteration_time', 'afk_time', 'afk_check_iterations', 'picking_iterations',
-                    'max_avg_elo_variance', 'warn_streak_expiration', 'warn_expiration', 'warn_bantime', 'warn_bantime_multiplier', 'warns_until_ban'].includes(prop.key)) {
+                    'max_avg_elo_variance', 'warn_streak_expiration', 'warn_expiration', 'warn_bantime', 'warn_bantime_multiplier', 'warns_until_ban', 'captain_selection_iterations'].includes(prop.key)) {
                     errors.push({ type: 'none', errorMessage: `you can't disable property ${prop.key}` });
                 } else {
                     continue;
@@ -134,6 +136,7 @@ export default class GuildSettings {
                 case 'afk_check_iterations': this._afkCheckIterations = +value; break;
                 case 'map_vote_iterations': this._mapvoteIterations = +value; break;
                 case 'picking_iterations': this._pickingIterations = +value; break;
+                case 'captain_selection_iterations': this._captainSelectionIterations = +value; break;
                 case 'max_avg_elo_variance': this._maxAvgVariance = +value; break;
                 case 'warn_streaks': this._warnStreaks = value ? +value : null; break;
                 case 'warns_until_ban': this._warnsUntilBan = value ? +value : null; break;
@@ -230,6 +233,10 @@ export default class GuildSettings {
     }
     public get mapvoteIterations(): number {
         return this._mapvoteIterations;
+    }
+
+    public get captainSelectionIterations(): number {
+        return this._captainSelectionIterations;
     }
 
     public get iterationTime(): number {

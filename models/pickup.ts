@@ -1,5 +1,5 @@
 import * as ts from 'ts-trueskill';
-import { PickupSettings, RateablePickup } from '../core/types';
+import { ActivePickup, PickupSettings, RateablePickup } from '../core/types';
 import db from '../core/db';
 import { transaction } from '../core/db';
 import { PoolConnection } from 'mysql2/promise';
@@ -36,7 +36,7 @@ export default class PickupModel {
     }
 
     static async getActivePickup(guildId: bigint, nameOrConfigId: number | string):
-        Promise<{ name: string, players: { id: string | null, nick: string, rating: ts.Rating | null }[]; maxPlayers: number; teams: number; configId: number }> {
+        Promise<ActivePickup> {
         let result;
 
         if (typeof nameOrConfigId === 'number') {
@@ -293,6 +293,20 @@ export default class PickupModel {
         return;
     }
 
+    static async updatePlayerAddTimes(guildId: bigint, ...playerIds) {
+        let playerValues = [];
+
+        playerIds.forEach(id => {
+            playerValues.push(`(${guildId}, ${id}, CURRENT_TIMESTAMP)`);
+        });
+
+        await db.execute(`
+        INSERT INTO state_guild_player (guild_id, player_id, last_add)
+        VALUES ${playerValues.join(', ')}
+        ON DUPLICATE KEY UPDATE last_add = CURRENT_TIMESTAMP
+        `);
+    }
+
     static async getPickupSettings(guildId: BigInt, pickup: number | string): Promise<PickupSettings> {
         let settings;
 
@@ -319,6 +333,7 @@ export default class PickupModel {
             mapPoolId: settings.mappool_id ? settings.mappool_id : null,
             mapvote: Boolean(settings.map_vote),
             afkCheck: Boolean(settings.afk_check),
+            captainSelection: settings.captain_selection,
             pickMode: settings.pick_mode,
             rated: Boolean(settings.is_rated),
             whitelistRole: settings.whitelist_role ? settings.whitelist_role.toString() : null,
@@ -389,7 +404,7 @@ export default class PickupModel {
         }
     }
 
-    static async setPending(guildId: bigint, pickupConfigId: number, stage: 'afk_check' | 'mapvote' | 'picking_manual' | 'fill', connection?: PoolConnection) {
+    static async setPending(guildId: bigint, pickupConfigId: number, stage: 'afk_check' | 'mapvote' | 'captain_selection' | 'picking_manual' | 'fill', connection?: PoolConnection) {
         const conn = connection || db;
 
         await conn.execute(`
@@ -467,7 +482,7 @@ export default class PickupModel {
         `, [guildId, pickupConfigId]);
     }
 
-    static async isPlayerAddedToPendingPickup(guildId: bigint, playerId: bigint, ...stage: ('fill' | 'afk_check' | 'picking_manual' | 'mapvote')[]):
+    static async isPlayerAddedToPendingPickup(guildId: bigint, playerId: bigint, ...stage: ('fill' | 'afk_check' | 'picking_manual' | 'mapvote' | 'captain_selection')[]):
         Promise<boolean> {
         const data: any = await db.execute(`
         SELECT * FROM state_pickup sp

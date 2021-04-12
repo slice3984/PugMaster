@@ -48,6 +48,7 @@ const command: Command = {
             const afkCheckIterations = settings.afkCheckIterations;
             const pickingIterations = settings.pickingIterations;
             const mapvoteIterations = settings.mapvoteIterations;
+            const captainSelectionIterations = settings.captainSelectionIterations;
             const maxAvgVariance = settings.maxAvgVariance;
             const warnStreaks = settings.warnStreaks;
             const warnsUntilBan = settings.warnsUntilBan;
@@ -94,6 +95,7 @@ const command: Command = {
                     `Afk check iterations: **${afkCheckIterations}**\n` +
                     `Picking iterations: **${pickingIterations}**\n` +
                     `Map vote iterations: **${mapvoteIterations}**\n` +
+                    `Captain selection iterations: **${captainSelectionIterations}**\n` +
                     `Max average elo varaince: **${maxAvgVariance}\n**` +
                     `Max warn streaks: **${warnStreaks}**\n` +
                     `Warns until ban: **${warnsUntilBan}**\n` +

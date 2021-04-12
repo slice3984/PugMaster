@@ -39,7 +39,7 @@ const command: Command = {
 
             // Clear value if possible
             if (value === 'none') {
-                if (['name', 'players', 'teams', 'default', 'rated', 'afkcheck', 'pickmode'].includes(key)) {
+                if (['name', 'players', 'teams', 'default', 'rated', 'afkcheck', 'pickmode', 'captain_selection'].includes(key)) {
                     return message.reply('you can\'t disable this property');
                 }
 
@@ -118,6 +118,7 @@ const command: Command = {
                 `Players/Teams: **${settings.playerCount}** / **${settings.teamCount}**\n` +
                 `Default Pickup: **${settings.isDefaultPickup ? 'yes' : 'no'}**\n` +
                 `AFK check: **${settings.afkCheck ? 'enabled' : 'disabled'}**\n` +
+                `Captain selection: **${settings.captainSelection}**\n` +
                 `Pick mode: **${settings.pickMode}**\n` +
                 `Rated: **${settings.rated ? 'rated' : 'unrated'}**\n` +
                 `Map pool: **${mapPoolName}**\n` +

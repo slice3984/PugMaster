@@ -187,6 +187,16 @@
                 <td>1 to 5</td>
               </tr>
               <tr>
+                <td>captain_selection_iterations</td>
+                <td>Iterations until manual captain selection is doen</td>
+                <td>
+                  <div class="help-article__type help-article__type--number">
+                    Number
+                  </div>
+                </td>
+                <td>1 to 5</td>
+              </tr>
+              <tr>
                 <td>max_avg_elo_variance</td>
                 <td>
                   Max average elo variance for the autopick mode to use elo

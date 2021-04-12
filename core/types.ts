@@ -75,6 +75,7 @@ export interface PickupSettings {
     mapPoolId: number | null;
     mapvote: boolean;
     afkCheck: boolean;
+    captainSelection: 'manual' | 'auto',
     pickMode: 'no_teams' | 'manual' | 'random' | 'elo' | 'autopick';
     rated: boolean;
     whitelistRole: string | null;
@@ -113,7 +114,7 @@ export interface PendingPickup {
     amountPlayersAdded: number; // Required in case of player removes / auto removes
     pendingSince: Date;
     currentIteration: number;
-    stage: 'afk_check' | 'picking_manual' | 'mapvote';
+    stage: 'afk_check' | 'picking_manual' | 'mapvote' | 'captain_selection';
     teams: [
         {
             name: string,
@@ -125,6 +126,17 @@ export interface PendingPickup {
         }
     ];
     playersLeft: [{ id: string, nick: string, isCaptain: boolean, captainTurn: boolean, rating: Rating }] // Only required for manual picking
+}
+
+export interface ActivePickup {
+    name: string,
+    players: {
+        id: string | null,
+        nick: string, rating: Rating | null
+    }[];
+    maxPlayers: number;
+    teams: number;
+    configId: number
 }
 
 export interface GuildInfo {

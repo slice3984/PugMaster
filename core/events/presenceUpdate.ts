@@ -10,7 +10,7 @@ module.exports = async (bot: Bot, oldPresence: Discord.Presence, newPresence: Di
         const isAdded = await PickupModel.isPlayerAdded(BigInt(newPresence.guild.id), BigInt(newPresence.member.id));
         if (isAdded.length > 0) {
             // Ignore offline status when in picking stage
-            const isInPickingStage = await PickupModel.isPlayerAddedToPendingPickup(BigInt(newPresence.guild.id), BigInt(newPresence.member.id), 'picking_manual', 'mapvote');
+            const isInPickingStage = await PickupModel.isPlayerAddedToPendingPickup(BigInt(newPresence.guild.id), BigInt(newPresence.member.id), 'picking_manual', 'mapvote', 'captain_selection');
 
             if (isInPickingStage) {
                 return;

@@ -8,6 +8,7 @@ import Logger from '../logger';
 import PickupState from '../pickupState';
 import { PendingPickup, PickupSettings, PickupStageType, PickupStartConfiguration } from '../types';
 import Util from '../util';
+import captainSelectionStage from './captainSelection';
 
 export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number, firstRun: boolean,
     startCallback: (error: boolean,
@@ -33,87 +34,164 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
 
     if (firstRun) {
         PickupState.removePlayersExclude(guild.id, [pickup.configId], pickup.players.map(p => p.id));
-
         // Choose captains, prioritize players with a captain role if available
         // Randomize order to make it fair
         const shuffledPlayers = Util.shuffleArray(players);
 
-        // Go for role
-        const captainRole = pickupSettings.captainRole;
-        if (captainRole) {
-            for (const player of shuffledPlayers) {
-                const playerObj = await Util.getUser(guild, player.id) as Discord.GuildMember;
+        if (pickupSettings.captainSelection === 'manual') {
+            const pickedCaptains = await captainSelectionStage(guild, pendingPickup) as [] | boolean;
 
-                // TODO: Check if members & roles are fetched correct now
-                if (playerObj) {
-                    if (playerObj.roles && playerObj.roles.cache.has(captainRole)) {
-                        captains.push(player);
-                    }
+            // In case when the pickup got aborted
+            if (pickedCaptains === false) {
+                return;
+            }
+
+            if ((pickedCaptains as []).length) {
+                (pickedCaptains as []).forEach(id => {
+                    const player = shuffledPlayers.find(p => p.id === id);
+                    captains.push({ id: player.id, nick: player.nick, rating: player.rating });
+                })
+
+                captains.forEach(cap => {
+                    shuffledPlayers.splice(shuffledPlayers.findIndex(p => p.id === cap.id), 1);
+                })
+            }
+
+            // In case of captain selection the stage changed, revert to manual picking
+            await PickupModel.setPending(BigInt(guild.id), pickupSettings.id, 'picking_manual');
+        }
+
+        const playerGotCaptainRole = async (playerId) => {
+            const playerObj = await Util.getUser(guild, playerId) as Discord.GuildMember;
+
+            if (playerObj) {
+                if (playerObj.roles && playerObj.roles.cache.has(captainRole)) {
+                    return true;
+                } else {
+                    return false;
                 }
             }
 
-            // Get captains with smallest rating difference to each other
-            if (captains.length > maxCaps) {
-                const sortedCaps = captains.sort((c1, c2) => {
-                    const ratingC1 = c1.rating.mu - 3 * c1.rating.sigma;
-                    const ratingC2 = c2.rating.mu - 3 * c2.rating.sigma;
-                    return ratingC2 - ratingC1;
-                });
+            return false;
+        }
 
-                let newCaptains = [];
-                for (let i = 0; i < captains.length; i++) {
-                    if (i + maxCaps > sortedCaps.length) {
-                        break;
+        // Go for role
+        const captainRole = pickupSettings.captainRole;
+        if (captainRole && captains.length < maxCaps) {
+            // If there is already at least one captain, find close ones
+            if (captains.length) {
+                const leftAvailableCaptains = [];
+
+                for (const player of shuffledPlayers) {
+                    if (await playerGotCaptainRole(player.id)) {
+                        leftAvailableCaptains.push(player);
                     }
+                }
 
-                    if (!newCaptains.length) {
-                        newCaptains = sortedCaps.slice(i, i + maxCaps);
-                        i += maxCaps - 2;
-                    } else {
-                        // Old diff
-                        let oldDiff = 0;
+                if (leftAvailableCaptains.length) {
+                    while (leftAvailableCaptains.length && captains.length < maxCaps) {
+                        let diff = Number.MAX_SAFE_INTEGER;
+                        let cap = null;
 
-                        newCaptains.forEach((cap, idx) => {
-                            if (idx + 1 >= newCaptains.length) {
-                                return;
+                        leftAvailableCaptains.forEach((c, idx) => {
+                            const lastAddedCap = captains[captains.length - 1];
+                            const skillLastCap = lastAddedCap.rating.mu - 3 * lastAddedCap.rating.sigma;
+                            const skillPossibleCap = c.rating.mu - 3 * c.rating.sigma;
+                            const currDiff = Math.abs(skillLastCap - skillPossibleCap);
+
+                            if (currDiff < diff) {
+                                cap = c;
+                                diff = currDiff;
                             }
-
-                            const nextCaptain = newCaptains[idx + 1];
-                            const ratingCurr = cap.rating.mu - 3 * cap.rating.sigma;
-                            const ratingNext = nextCaptain.rating.mu - 3 * nextCaptain.rating.sigma;
-
-                            oldDiff += ratingCurr - ratingNext;
                         });
 
-                        // New diff
-                        const possibleCaps = sortedCaps.slice(i, i + maxCaps);
-                        let newDiff = 0;
-
-                        possibleCaps.forEach((cap, idx) => {
-                            if (idx + 1 >= possibleCaps.length) {
-                                return;
-                            }
-
-                            const nextCaptain = possibleCaps[idx + 1];
-                            const ratingCurr = cap.rating.mu - 3 * cap.rating.sigma;
-                            const ratingNext = nextCaptain.rating.mu - 3 * nextCaptain.rating.sigma;
-
-                            newDiff += ratingCurr - ratingNext;
+                        captains.push({
+                            id: cap.id,
+                            nick: cap.nick,
+                            rating: cap.rating
                         });
 
-                        if (oldDiff > newDiff) {
-                            newCaptains = possibleCaps;
+                        leftAvailableCaptains.splice(leftAvailableCaptains.findIndex(c => c === cap, 1));
+                        diff = Number.MAX_SAFE_INTEGER;
+                        cap = null;
+                    }
+                }
+            } else {
+                for (const player of shuffledPlayers) {
+                    const playerObj = await Util.getUser(guild, player.id) as Discord.GuildMember;
+
+                    // TODO: Check if members & roles are fetched correct now
+                    if (playerObj) {
+                        if (playerObj.roles && playerObj.roles.cache.has(captainRole)) {
+                            captains.push(player);
                         }
                     }
                 }
 
-                captains = newCaptains;
+                // Get captains with smallest rating difference to each other
+                if (captains.length > maxCaps) {
+                    const sortedCaps = captains.sort((c1, c2) => {
+                        const ratingC1 = c1.rating.mu - 3 * c1.rating.sigma;
+                        const ratingC2 = c2.rating.mu - 3 * c2.rating.sigma;
+                        return ratingC2 - ratingC1;
+                    });
+
+                    let newCaptains = [];
+                    for (let i = 0; i < captains.length; i++) {
+                        if (i + maxCaps > sortedCaps.length) {
+                            break;
+                        }
+
+                        if (!newCaptains.length) {
+                            newCaptains = sortedCaps.slice(i, i + maxCaps);
+                            i += maxCaps - 2;
+                        } else {
+                            // Old diff
+                            let oldDiff = 0;
+
+                            newCaptains.forEach((cap, idx) => {
+                                if (idx + 1 >= newCaptains.length) {
+                                    return;
+                                }
+
+                                const nextCaptain = newCaptains[idx + 1];
+                                const ratingCurr = cap.rating.mu - 3 * cap.rating.sigma;
+                                const ratingNext = nextCaptain.rating.mu - 3 * nextCaptain.rating.sigma;
+
+                                oldDiff += ratingCurr - ratingNext;
+                            });
+
+                            // New diff
+                            const possibleCaps = sortedCaps.slice(i, i + maxCaps);
+                            let newDiff = 0;
+
+                            possibleCaps.forEach((cap, idx) => {
+                                if (idx + 1 >= possibleCaps.length) {
+                                    return;
+                                }
+
+                                const nextCaptain = possibleCaps[idx + 1];
+                                const ratingCurr = cap.rating.mu - 3 * cap.rating.sigma;
+                                const ratingNext = nextCaptain.rating.mu - 3 * nextCaptain.rating.sigma;
+
+                                newDiff += ratingCurr - ratingNext;
+                            });
+
+                            if (oldDiff > newDiff) {
+                                newCaptains = possibleCaps;
+                            }
+                        }
+                    }
+
+                    captains = newCaptains;
+                }
+
+                // Remove captains from players
+                captains.forEach(cap => {
+                    shuffledPlayers.splice(shuffledPlayers.findIndex(p => p.id === cap.id), 1);
+                })
             }
 
-            // Remove captains from players
-            captains.forEach(cap => {
-                shuffledPlayers.splice(shuffledPlayers.findIndex(p => p.id === cap.id), 1);
-            })
         }
 
         // Go for pickup amount if captains are missing
@@ -230,6 +308,16 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
                 );
             }
 
+            const allPlayers = [];
+
+            // Players already in team
+            allPlayers.push(...pendingPickup.teams.flatMap(t => t.players).map(p => p.id));
+
+            // Left players
+            allPlayers.push(...pendingPickup.playersLeft.map(p => p.id));
+
+            await PickupModel.updatePlayerAddTimes(BigInt(guild.id), ...allPlayers);
+
             await PickupModel.abortPendingPickingPickup(BigInt(guild.id), pickupConfigId, BigInt(currentCaptain.id));
             await PickupState.showPickupStatus(guild);
             return;
@@ -275,6 +363,7 @@ export const abortPickingStagePickup = async (guildId: string, playerId: string)
     const bot = Bot.getInstance();
     const guild = bot.getClient().guilds.cache.get(guildId);
     const guildSettings = bot.getGuild(guildId);
+    const allPlayers = [];
     const pickupChannel = await Util.getPickupChannel(guild);
 
     let pendingPickup: PendingPickup | null;
@@ -297,6 +386,15 @@ export const abortPickingStagePickup = async (guildId: string, playerId: string)
         pendingPickup = pending;
 
         guildSettings.pendingPickups.delete(pending.pickupConfigId);
+
+        // Players already in team
+        allPlayers.push(...pendingPickup.teams.flatMap(t => t.players).map(p => p.id));
+
+        // Left players
+        allPlayers.push(...pendingPickup.playersLeft.map(p => p.id));
+
+        await PickupModel.updatePlayerAddTimes(BigInt(guild.id), ...allPlayers);
+
         await PickupModel.abortPendingPickingPickup(BigInt(guild.id), pending.pickupConfigId, BigInt(playerId));
 
         if (pickupChannel) {

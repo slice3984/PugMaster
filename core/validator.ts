@@ -12,7 +12,7 @@ const config = ConfigTool.getConfig();
 export namespace Validator {
     export namespace Pickup {
         export function areValidKeys(...keys) {
-            const validKeys = ['name', 'players', 'teams', 'default', 'mappool', 'mapvote', 'afkcheck',
+            const validKeys = ['name', 'players', 'teams', 'default', 'mappool', 'mapvote', 'afkcheck', 'captain_selection',
                 'pickmode', 'rated', 'whitelist', 'blacklist', 'promotion', 'captain', 'server'];
             const invalidKeys = keys.filter(key => !validKeys.includes(key));
 
@@ -155,6 +155,12 @@ export namespace Validator {
                     case 'afkcheck':
                         if (!['true', 'false'].includes(value)) {
                             errors.push({ type: 'afkcheck', errorMessage: 'value has to be true or false' });
+                            break;
+                        }
+                        break;
+                    case 'captain_selection':
+                        if (!['manual', 'auto'].includes(value)) {
+                            errors.push({ type: 'captain_selection', errorMessage: 'value has to be manual or auto' });
                             break;
                         }
                         break;
@@ -360,7 +366,7 @@ export namespace Validator {
         export function areValidKeys(...keys) {
             const validKeys = ['prefix', 'global_expire', 'report_expire', 'trust_time', 'explicit_trust', 'whitelist', 'blacklist', 'promotion_delay', 'server',
                 'start_message', 'sub_message', 'notify_message', 'iteration_time', 'afk_time', 'afk_check_iterations', 'picking_iterations', 'map_vote_iterations', 'max_avg_elo_variance',
-                'warn_streaks', 'warns_until_ban', 'warn_streak_expiration', 'warn_expiration', 'warn_bantime', 'warn_bantime_multiplier'];
+                'warn_streaks', 'warns_until_ban', 'warn_streak_expiration', 'warn_expiration', 'warn_bantime', 'warn_bantime_multiplier', 'captain_selection_iterations'];
 
             const invalidKeys = keys.filter(key => !validKeys.includes(key));
 
@@ -575,6 +581,7 @@ export namespace Validator {
                     case 'afk_check_iterations':
                     case 'picking_iterations':
                     case 'map_vote_iterations':
+                    case 'captain_selection_iterations':
                         if (!/^\d+$/.test(value)) {
                             errors.push({ type: key, errorMessage: 'amount has to be a number' });
                             break;

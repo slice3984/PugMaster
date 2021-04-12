@@ -83,6 +83,19 @@
                 <td>true or false</td>
               </tr>
               <tr>
+                <td>captain_selection</td>
+                <td>
+                  Specifies the mode to select captains in manual picking
+                  pickups
+                </td>
+                <td>
+                  <div class="help-article__type help-article__type--string">
+                    String
+                  </div>
+                </td>
+                <td>Has to be auto or manual</td>
+              </tr>
+              <tr>
                 <td>pickmode</td>
                 <td>Specifies the pick mode for the pickup</td>
                 <td>

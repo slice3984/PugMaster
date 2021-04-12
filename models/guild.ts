@@ -113,6 +113,7 @@ export default class GuildModel {
                 data.afk_check_iterations,
                 data.picking_iterations,
                 data.map_vote_iterations,
+                data.captain_selection_iterations,
                 data.max_avg_elo_variance,
                 data.warn_streaks,
                 data.warns_until_ban,
@@ -317,15 +318,15 @@ export default class GuildModel {
         });
     }
 
-    static async getAllAddedPlayers(excludePickingStage: boolean, guildId?: BigInt) {
+    static async getAllAddedPlayers(excludePendingStage: boolean, guildId?: BigInt) {
         if (!guildId) {
             let players: any;
 
-            if (excludePickingStage) {
+            if (excludePendingStage) {
                 players = await db.query(`
                 SELECT spp.guild_id, spp.player_id, sp.stage FROM state_pickup_players spp
                 JOIN state_pickup sp ON spp.pickup_config_id = sp.pickup_config_id
-                WHERE sp.stage != 'picking_manual'
+                WHERE sp.stage NOT IN ('picking_manual', 'mapvote', 'captain_selection')
                 `);
             } else {
                 players = await db.query(`
@@ -347,11 +348,11 @@ export default class GuildModel {
         } else {
             let players: any;
 
-            if (excludePickingStage) {
+            if (excludePendingStage) {
                 players = await db.execute(`
                 SELECT spp.guild_id, spp.player_id, sp.stage FROM state_pickup_players spp
                 JOIN state_pickup sp ON spp.pickup_config_id = sp.pickup_config_id
-                WHERE sp.stage != 'picking_manual' AND spp.guild_id = ?
+                WHERE sp.stage NOT IN ('picking_manual', 'mapvote', 'captain_selection') AND spp.guild_id = ?
                 `, [guildId]);
             } else {
                 players = await db.execute(`
