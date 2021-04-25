@@ -54,7 +54,7 @@ const command: Command = {
             return message.reply('you already rated this pickup');
         }
 
-        const amountFollowingPickups = await RatingModel.getAmountOfFollowingPickups(BigInt(message.guild.id), latestUnratedPickup.pickupId);
+        const amountFollowingPickups = await RatingModel.getAmountOfFollowingPickups(BigInt(message.guild.id), latestUnratedPickup.pickupConfigId, latestUnratedPickup.pickupId);
 
         if (amountFollowingPickups > Rating.RERATE_AMOUNT_LIMIT) {
             return message.reply(`the given pickup is too far in the past, it is only possible to report outcomes for pickups less than ${Rating.RERATE_AMOUNT_LIMIT} rated pickups in the past`);

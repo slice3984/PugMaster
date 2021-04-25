@@ -55,10 +55,9 @@ export default (async (req: express.Request, res: express.Response) => {
     const playerNicks = await StatsModel.getPlayerNickHistory(BigInt(guildId), parsedId);
     const playedPickupCounts = await StatsModel.getPlayedPickupsForPlayer(BigInt(guildId), parsedId);
     const lastPlayerPickups = await StatsModel.getLastPlayerPickups(BigInt(guildId), parsedId, 10);
-
     const id = playerInfo.id;
     const name = playerInfo.name;
-    const rating = { rating: Util.tsToEloNumber(playerInfo.rating), variance: Util.tsToEloNumber(playerInfo.variance) };
+    const ratings = playerInfo.ratings.map(r => ({ ...r, rating: Util.tsToEloNumber(r.rating), variance: Util.tsToEloNumber(r.variance) }));
     const pickupAmount = playedPickupCounts.reduce((prev, curr) => prev += curr.amount, 0);
     const playedPickups = playedPickupCounts.map(pickup => {
         return { name: pickup.name, amount: pickup.amount }
@@ -72,7 +71,7 @@ export default (async (req: express.Request, res: express.Response) => {
         id,
         name,
         previousNames: playerNicks,
-        rating,
+        ratings,
         pickupAmount,
         playedPickups,
         lastPickupTimes,
@@ -86,7 +85,7 @@ interface PlayerInfo {
     id: string;
     name: string;
     previousNames: string[];
-    rating: { rating: number; variance: number };
+    ratings: { name: string; rating: number; variance: number }[];
     pickupAmount: number;
     playedPickups: { name: string; amount: number }[];
     lastPickupTimes: { name: string; date: Date }[];

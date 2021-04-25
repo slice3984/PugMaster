@@ -180,8 +180,6 @@ export const createTables = () => new Promise(async (res, _req) => {
       notifications TINYINT NOT NULL DEFAULT 1,
       trusted TINYINT NULL,
       current_nick VARCHAR(32) NOT NULL,
-      rating DOUBLE NULL DEFAULT NULL,
-      variance DOUBLE NULL DEFAULT NULL,
       PRIMARY KEY (id),
       INDEX guild_id_idx (guild_id ASC) VISIBLE,
       CONSTRAINT fk_players
@@ -246,6 +244,26 @@ export const createTables = () => new Promise(async (res, _req) => {
         ON UPDATE CASCADE)
         ENGINE = InnoDB;    
         `,
+    `
+    CREATE TABLE IF NOT EXISTS player_ratings (
+      player_id INT NOT NULL,
+      pickup_config_id INT NOT NULL,
+      rating DOUBLE NOT NULL,
+      variance DOUBLE NOT NULL,
+      INDEX fk_player_ratings_pickup_config_id_idx (pickup_config_id ASC) VISIBLE,
+      UNIQUE INDEX rating_UNIQUE (player_id, pickup_config_id) VISIBLE,
+      CONSTRAINT fk_player_ratings_pickup_config_id
+        FOREIGN KEY (pickup_config_id)
+        REFERENCES pickup_configs (id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+      CONSTRAINT fk_player_ratings_player_id
+        FOREIGN KEY (player_id)
+        REFERENCES players (id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE)
+    ENGINE = InnoDB;
+    `,
     `
     CREATE TABLE IF NOT EXISTS maps (
       id INT NOT NULL AUTO_INCREMENT,

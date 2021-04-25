@@ -41,16 +41,18 @@ export default class PickupModel {
 
         if (typeof nameOrConfigId === 'number') {
             result = await db.execute(`
-            SELECT c.id, c.name, s.player_id, c.player_count, c.team_count, p.current_nick, p.rating, p.variance FROM pickup_configs c
+			SELECT c.id, c.name, s.player_id, c.player_count, c.team_count, p.current_nick, pr.rating, pr.variance FROM pickup_configs c
             LEFT JOIN state_pickup_players s ON s.pickup_config_id = c.id
             LEFT JOIN players p on p.user_id = s.player_id AND p.guild_id = s.guild_id
+            LEFT JOIN player_ratings pr ON pr.player_id = p.id AND c.id = pr.pickup_config_id
             WHERE c.guild_id = ? AND c.id = ?;
             `, [guildId, nameOrConfigId]);
         } else {
             result = await db.execute(`
-            SELECT c.id, c.name, s.player_id, c.player_count, c.team_count, p.current_nick, p.rating, p.variance FROM pickup_configs c
+			SELECT c.id, c.name, s.player_id, c.player_count, c.team_count, p.current_nick, pr.rating, pr.variance FROM pickup_configs c
             LEFT JOIN state_pickup_players s ON s.pickup_config_id = c.id
             LEFT JOIN players p on p.user_id = s.player_id AND p.guild_id = s.guild_id
+            LEFT JOIN player_ratings pr ON pr.player_id = p.id AND c.id = pr.pickup_config_id
             WHERE c.guild_id = ? AND c.name = ?;
             `, [guildId, nameOrConfigId]);
         }
@@ -322,6 +324,10 @@ export default class PickupModel {
             `, [guildId, pickup]);
         }
 
+        if (!settings[0].length) {
+            return null;
+        }
+
         settings = settings[0][0];
 
         return {
@@ -560,11 +566,12 @@ export default class PickupModel {
         if (playerId) {
             if (puId) {
                 data = await db.execute(`
-                SELECT pc.id AS pickupConfigId, pc.name, ps.id AS pickupId, ps.started_at, pp.team, p.user_id, p.rating, p.current_nick, pp.is_captain, rr.result FROM pickup_configs pc
+                SELECT pc.id AS pickupConfigId, pc.name, ps.id AS pickupId, ps.started_at, pp.team, p.user_id, pr.rating, p.current_nick, pp.is_captain, rr.result FROM pickup_configs pc
                 JOIN pickups ps ON ps.pickup_config_id = pc.id
                 JOIN pickup_players pp ON ps.id = pp.pickup_id
                 LEFT JOIN rated_results rr ON rr.pickup_id = ps.id AND rr.team = pp.team
                 JOIN players p ON p.id = pp.player_id
+                LEFT JOIN player_ratings pr ON pr.player_id = p.id AND pr.pickup_config_id = pc.id
                 WHERE pc.guild_id = ? AND pc.is_rated = 1
                 AND ps.id = (SELECT MAX(p.id) FROM pickups p
                             JOIN pickup_configs pc ON pc.id = p.pickup_config_id
@@ -574,11 +581,12 @@ export default class PickupModel {
                 `, [guildId, guildId, playerId, puId]);
             } else {
                 data = await db.execute(`
-                SELECT pc.id AS pickupConfigId, pc.name, ps.id AS pickupId, ps.started_at, pp.team, p.user_id, p.rating, p.current_nick, pp.is_captain, rr.result FROM pickup_configs pc
+                SELECT pc.id AS pickupConfigId, pc.name, ps.id AS pickupId, ps.started_at, pp.team, p.user_id, pr.rating, p.current_nick, pp.is_captain, rr.result FROM pickup_configs pc
                 JOIN pickups ps ON ps.pickup_config_id = pc.id
                 JOIN pickup_players pp ON ps.id = pp.pickup_id
                 LEFT JOIN rated_results rr ON rr.pickup_id = ps.id AND rr.team = pp.team
                 JOIN players p ON p.id = pp.player_id
+                LEFT JOIN player_ratings pr ON pr.player_id = p.id AND pr.pickup_config_id = pc.id
                 WHERE pc.guild_id = ? AND pc.is_rated = 1
                 AND ps.id = (SELECT MAX(p.id) FROM pickups p
                             JOIN pickup_configs pc ON pc.id = p.pickup_config_id
@@ -589,11 +597,12 @@ export default class PickupModel {
             }
         } else {
             data = await db.execute(`
-            SELECT pc.id AS pickupConfigId, pc.name, ps.id AS pickupId, ps.started_at, pp.team, p.user_id, p.rating, p.current_nick, pp.is_captain, rr.result FROM pickup_configs pc
+            SELECT pc.id AS pickupConfigId, pc.name, ps.id AS pickupId, ps.started_at, pp.team, p.user_id, pr.rating, p.current_nick, pp.is_captain, rr.result FROM pickup_configs pc
             JOIN pickups ps ON ps.pickup_config_id = pc.id
             JOIN pickup_players pp ON ps.id = pp.pickup_id
             LEFT JOIN rated_results rr ON rr.pickup_id = ps.id AND rr.team = pp.team
             JOIN players p ON p.id = pp.player_id
+            LEFT JOIN player_ratings pr ON pr.player_id = p.id AND pr.pickup_config_id = pc.id
             WHERE pc.guild_id = ? AND pc.is_rated = 1
             AND ps.id = (SELECT MAX(p.id) FROM pickups p
                         JOIN pickup_configs pc ON pc.id = p.pickup_config_id
@@ -652,11 +661,12 @@ export default class PickupModel {
 
     static async getStoredRateEnabledPickup(guildId: bigint, puId: number): Promise<RateablePickup | null> {
         const data: any = await db.execute(`
-        SELECT pc.id AS pickupConfigId, pc.name, ps.id AS pickupId, ps.started_at, pp.team, p.user_id, p.rating, p.current_nick, pp.is_captain, rr.result FROM pickup_configs pc
+		SELECT pc.id AS pickupConfigId, pc.name, ps.id AS pickupId, ps.started_at, pp.team, p.user_id, pr.rating, p.current_nick, pp.is_captain, rr.result FROM pickup_configs pc
         JOIN pickups ps ON ps.pickup_config_id = pc.id
         JOIN pickup_players pp ON ps.id = pp.pickup_id
         LEFT JOIN rated_results rr ON rr.pickup_id = ps.id AND rr.team = pp.team
         JOIN players p ON p.id = pp.player_id
+        LEFT JOIN player_ratings pr ON pr.player_id = p.id
         WHERE pc.guild_id = ? AND ps.id = ? AND pc.is_rated = 1
         `, [guildId, puId]);
 
@@ -763,11 +773,12 @@ export default class PickupModel {
 
     static async getLatestRatedPickup(guildId: bigint): Promise<RateablePickup | null> {
         const data: any = await db.execute(`
-        SELECT pc.id AS pickupConfigId, pc.name, ps.id AS pickupId, ps.started_at, pp.team, p.user_id, p.rating, p.current_nick, pp.is_captain, rr.result FROM pickup_configs pc
+        SELECT pc.id AS pickupConfigId, pc.name, ps.id AS pickupId, ps.started_at, pp.team, p.user_id, pr.rating, p.current_nick, pp.is_captain, rr.result FROM pickup_configs pc
         JOIN pickups ps ON ps.pickup_config_id = pc.id
         JOIN pickup_players pp ON ps.id = pp.pickup_id
         LEFT JOIN rated_results rr ON rr.pickup_id = ps.id AND rr.team = pp.team
         JOIN players p ON p.id = pp.player_id
+        LEFT JOIN player_ratings pr ON pr.player_id = p.id AND pr.pickup_config_id = pc.id
         WHERE pc.guild_id = ? AND pc.is_rated = 1
         AND ps.id = (SELECT MAX(p.id) FROM pickups p
                     JOIN pickup_configs pc ON pc.id = p.pickup_config_id

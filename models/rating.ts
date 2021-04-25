@@ -6,7 +6,7 @@ import { RatingPickup } from '../core/types';
 export default class RatingModel {
     private constructor() { }
 
-    static async rate(guildId: bigint, pickupId: number, outcomes: { team: string; result: 'win' | 'draw' | 'loss' }[],
+    static async rate(guildId: bigint, pickupId: number, pickupConfigId: number, outcomes: { team: string; result: 'win' | 'draw' | 'loss' }[],
         pickupRatings: { pickupId: number, players: { id: bigint, mu: number, sigma: number }[] }[]) {
         const outcomesToInsert = [];
         outcomes.forEach(outcome => outcomesToInsert.push(pickupId, outcome.team, outcome.result));
@@ -35,13 +35,29 @@ export default class RatingModel {
             .flatMap(pickup => pickup.players.flat())
             .forEach(player => ratingsMap.set(player.id, { mu: player.mu, sigma: player.sigma }));
 
-        // Generate qeueries
-        for (const [playerId, playerRating] of ratingsMap) {
-            playersQueries +=
-                `UPDATE players SET rating = ${playerRating.mu}, variance = ${playerRating.sigma}` +
-                `WHERE guild_id = ${guildId} AND user_id = ${playerId};`;
-        }
+        const playerDiscordIds = Array.from(new Set(pickupRatings.flatMap(p => p.players.map(p => p.id))));
 
+        // To update the player ratings table we need to use the player ids
+        const playerIdsData: any = await db.execute(`
+        SELECT id, user_id FROM players
+        WHERE guild_id = ? AND user_id IN (${Array(playerDiscordIds.length).fill('?').join(',')})
+        `, [guildId, ...playerDiscordIds]);
+
+        const playerIds = new Map();
+
+        playerIdsData[0].forEach(row => {
+            playerIds.set(row.user_id.toString(), row.id);
+        });
+
+        // Generate queries
+        for (const [playerId, playerRating] of ratingsMap) {
+            const id = playerIds.get(playerId.toString());
+
+            playersQueries +=
+                `INSERT INTO player_ratings ` +
+                `VALUES (${id}, ${pickupConfigId}, ${playerRating.mu}, ${playerRating.sigma}) ` +
+                `ON DUPLICATE KEY UPDATE rating = ${playerRating.mu}, variance = ${playerRating.sigma};`;
+        }
 
         await transaction(db, async (db) => {
             // Delete possible existing ratings just in case
@@ -70,55 +86,53 @@ export default class RatingModel {
         });
     }
 
-    static async unrate(guildId: BigInt, pickupId: number,
+    static async unrate(guildId: BigInt, pickupId: number, pickupConfigId: number,
         pickupRatings: { pickupId: number, players: { id: bigint, mu: number, sigma: number }[] }[],
-        playerRatings?: { id: bigint, mu: number | null, sigma: number | null }[]) {
+        playerRatings: { id: bigint, mu: number | null, sigma: number | null }[]) {
         // Generate pickup players update queries
         let pickupPlayerQueries = '';
 
-        if (!playerRatings) {
-            pickupRatings.forEach(pickup => {
-                const pickupId = pickup.pickupId;
+        // Pickup players table, update history
+        pickupRatings.forEach(pickup => {
+            const pickupId = pickup.pickupId;
 
-                pickup.players.forEach(p => {
-                    pickupPlayerQueries +=
-                        `UPDATE pickup_players pp
-                     JOIN players p ON pp.player_id = p.id
-                     SET pp.rating = ${p.mu}, pp.variance = ${p.sigma} ` +
-                        `WHERE p.guild_id = ${guildId} AND pp.pickup_id = ${pickupId} AND p.user_id = ${p.id};`;
-                });
+            pickup.players.forEach(p => {
+                pickupPlayerQueries +=
+                    `UPDATE pickup_players pp
+                 JOIN players p ON pp.player_id = p.id
+                 SET pp.rating = ${p.mu}, pp.variance = ${p.sigma} ` +
+                    `WHERE p.guild_id = ${guildId} AND pp.pickup_id = ${pickupId} AND p.user_id = ${p.id};`;
             });
-        }
-        // Generate players update queries
-        const ratingsMap: Map<bigint, { mu: number; sigma: number }> = new Map();
+        });
+
+        let playerDiscordIds = playerRatings.map(p => p.id);;
+
+        const playerIdsData: any = await db.execute(`
+        SELECT id, user_id FROM players
+        WHERE guild_id = ? AND user_id IN (${Array(playerDiscordIds.length).fill('?').join(',')})
+        `, [guildId, ...playerDiscordIds]);
+
+        const playerIds = new Map();
+
+        playerIdsData[0].forEach(row => {
+            playerIds.set(row.user_id.toString(), row.id);
+        });
+
         let playersQueries = '';
 
-        if (!playerRatings) {
-            // Sort from oldest to newest to always store the newest skill ratings
-            pickupRatings.sort((p1, p2) => p1.pickupId - p2.pickupId)
-                .flatMap(pickup => pickup.players.flat())
-                .forEach(player => ratingsMap.set(player.id, { mu: player.mu, sigma: player.sigma }));
+        playerRatings.forEach(playerRating => {
+            const id = playerIds.get(playerRating.id.toString());
 
-            // Generate qeueries
-            for (const [playerId, playerRating] of ratingsMap) {
+            if (!playerRating.mu) {
                 playersQueries +=
-                    `UPDATE players SET rating = ${playerRating.mu}, variance = ${playerRating.sigma} ` +
-                    `WHERE guild_id = ${guildId} AND user_id = ${playerId};`;
+                    `DELETE FROM player_ratings WHERE player_id = ${id} AND pickup_config_id = ${pickupConfigId};`;
+            } else {
+                playersQueries +=
+                    `INSERT INTO player_ratings ` +
+                    `VALUES (${id}, ${pickupConfigId}, ${playerRating.mu}, ${playerRating.sigma}) ` +
+                    `ON DUPLICATE KEY UPDATE rating = ${playerRating.mu}, variance = ${playerRating.sigma};`;
             }
-        } else {
-            // Latest pickup is being unrated, get previous rating values
-            playerRatings.forEach(playerRating => {
-                if (!playerRating.mu) {
-                    playersQueries +=
-                        `UPDATE players SET rating = null, variance = null ` +
-                        `WHERE guild_id = ${guildId} AND user_id = ${playerRating.id};`;
-                } else {
-                    playersQueries +=
-                        `UPDATE players SET rating = ${playerRating.mu}, variance = ${playerRating.sigma} ` +
-                        `WHERE guild_id = ${guildId} AND user_id = ${playerRating.id};`;
-                }
-            });
-        }
+        });
 
         await transaction(db, async (db) => {
             // Delete ratings
@@ -140,16 +154,16 @@ export default class RatingModel {
             `, [pickupId]);
 
             // Update pickup_players & player ratings
-            await db.query((playerRatings ? '' : pickupPlayerQueries) + playersQueries);
+            await db.query(pickupPlayerQueries + playersQueries);
         });
     }
 
-    static async getAmountOfFollowingPickups(guildId: bigint, from: number): Promise<number> {
+    static async getAmountOfFollowingPickups(guildId: bigint, pickupConfigId: number, from: number): Promise<number> {
         const data: any = await db.execute(`
         SELECT COUNT(DISTINCT p.id) as cnt FROM pickups p
         JOIN rated_results rr ON p.id = rr.pickup_id
-        WHERE p.guild_id = ? AND p.id > ?
-        `, [guildId, from])
+        WHERE p.guild_id = ? AND p.id > ? AND p.pickup_config_id = ?
+        `, [guildId, from, pickupConfigId])
 
         if (!data[0].length) {
             return null;
@@ -158,7 +172,7 @@ export default class RatingModel {
         return data[0][0].cnt;
     }
 
-    static async getLatestRatedPickups(guildId: bigint, max: number): Promise<RatingPickup[]> {
+    static async getLatestRatedPickups(guildId: bigint, pickupConfigId: number, max: number): Promise<RatingPickup[]> {
         const data: any = await db.execute(`
         SELECT * FROM (SELECT 
 			pp.pickup_id,
@@ -170,9 +184,11 @@ export default class RatingModel {
             DENSE_RANK() OVER (ORDER BY ps.id DESC) as num_pickup FROM pickup_players pp
         JOIN pickups ps ON pp.pickup_id = ps.id AND ps.guild_id = ?
         JOIN players p ON pp.player_id = p.id AND p.guild_id = ?
-        JOIN rated_results rr ON rr.pickup_id = pp.pickup_id AND rr.team = pp.team) res
+        JOIN rated_results rr ON rr.pickup_id = pp.pickup_id AND rr.team = pp.team
+        JOIN pickup_configs pc ON pc.id = ps.pickup_config_id
+        WHERE pc.id = ?) res
         WHERE res.num_pickup <= ${max}
-        `, [guildId, guildId]);
+        `, [guildId, guildId, pickupConfigId]);
 
         if (!data[0].length) {
             return null;
@@ -209,17 +225,18 @@ export default class RatingModel {
         return Array.from(pickupsMap.values());
     }
 
-    static async getPreviousNewestRatings(guildId: bigint, fromPickupId: number, ...playerIds: bigint[]): Promise<{ id: string, mu: number, sigma: number }[]> {
+    static async getPreviousNewestRatings(guildId: bigint, fromPickupId: number, pickupConfigId: number, ...playerIds: bigint[]): Promise<{ id: string, mu: number, sigma: number }[]> {
         const data: any = await db.execute(`
         SELECT * FROM (SELECT
             p.user_id,
             pp.rating,
             pp.variance,
+            ps.pickup_config_id,
             ROW_NUMBER() OVER (
                 PARTITION BY p.user_id ORDER BY pp.pickup_id DESC) AS partitionRow FROM pickup_players pp
         JOIN players p ON p.id = pp.player_id AND p.guild_id = ?
         JOIN pickups ps ON ps.id = pp.pickup_id AND ps.guild_id = ?
-        WHERE pp.pickup_id < ? AND p.user_id IN (${Array(playerIds.length).fill('?').join(',')}) AND pp.rating IS NOT NULL) res
+        WHERE pp.pickup_id < ? AND p.user_id IN (${Array(playerIds.length).fill('?').join(',')}) AND pp.rating IS NOT NULL AND ps.pickup_config_id = ${pickupConfigId}) res
         WHERE res.partitionRow = 1
         `, [guildId, guildId, fromPickupId, ...playerIds]);
 

@@ -2,6 +2,11 @@ import * as ts from 'ts-trueskill';
 import RatingModel from "../models/rating";
 import { RatingPickup, RateablePickup, RatingTeam } from "./types";
 
+interface UpdateData {
+    pickups: PlayerRating[],
+    playerRatings: { id: bigint, mu: number, sigma: number }[]
+}
+
 interface PlayerRating {
     pickupId: number;
     players: { id: bigint, mu: number, sigma: number }[]
@@ -15,19 +20,36 @@ export default class Rating {
         guildId: string,
         pickupToRate: RateablePickup,
         amountFollowingPickups: number,
-        unrate: boolean): Promise<PlayerRating[]> {
-        const playerRatings: PlayerRating[] = [];
+        unrate: boolean): Promise<UpdateData> {
+        const updateData: UpdateData = {
+            pickups: [],
+            playerRatings: []
+        };
+
         let pickupRatings: RatingPickup[] = [];
 
-        const playerIds = pickupToRate.teams.flatMap(p => p.players.map(p2 => p2.id));
+        let playerIds: any = new Set();
+
+        // Player ids of the given pickup
+        pickupToRate.teams
+            .flatMap(p => p.players.map(p2 => p2.id))
+            .forEach(playerIds.add, playerIds);
 
         // Newer pickups have to be rerated, get pickups following after this one
         if (amountFollowingPickups > 0) {
-            pickupRatings = await RatingModel.getLatestRatedPickups(BigInt(guildId), amountFollowingPickups);
+            pickupRatings = await RatingModel.getLatestRatedPickups(BigInt(guildId), pickupToRate.pickupConfigId, amountFollowingPickups);
+
+            // We also need the ids of players who played in following pickups to update their rating correct
+            pickupRatings.forEach(pickup => {
+                pickup.teams.flatMap(p => p.players.map(p2 => p2.id))
+                    .forEach(playerIds.add, playerIds);
+            })
         }
 
+        playerIds = Array.from(playerIds);
+
         // Get newest ratings before this pickup, required for the rerating of following pickups
-        const skills = await RatingModel.getPreviousNewestRatings(BigInt(guildId), pickupToRate.pickupId, ...playerIds.map(id => BigInt(id)));
+        const skills = await RatingModel.getPreviousNewestRatings(BigInt(guildId), pickupToRate.pickupId, pickupToRate.pickupConfigId, ...playerIds.map(id => BigInt(id)));
 
         // No need to generate a new rating pickup object in case of unrating
         if (!unrate) {
@@ -61,6 +83,10 @@ export default class Rating {
         pickupRatings = pickupRatings.sort((p1, p2) => p1.pickupId - p2.pickupId);
 
         const calculatedRatings: Map<string, ts.Rating> = new Map();
+
+        skills.forEach(rating => {
+            calculatedRatings.set(rating.id, new ts.Rating(rating.mu, rating.sigma));
+        });
 
         pickupRatings.forEach(pickupRating => {
             // Make sure to always use the newest ratings
@@ -107,23 +133,45 @@ export default class Rating {
             });
 
             // player ratings
-            playerRatings.push({
+            updateData.pickups.push({
                 pickupId: pickupRating.pickupId,
                 players: playerObjs
             });
         });
 
-        return playerRatings;
+        const playerRatings: { id: bigint, mu: number, sigma: number }[] = [];
+
+        // Add possible missing players without ratings
+        playerIds.forEach(id => {
+            const rating = calculatedRatings.get(id);
+
+            if (!rating) {
+                playerRatings.push({
+                    id,
+                    mu: null,
+                    sigma: null
+                })
+            } else {
+                playerRatings.push({
+                    id,
+                    mu: rating.mu,
+                    sigma: rating.sigma
+                })
+            }
+        });
+
+        updateData.playerRatings = playerRatings;
+        return updateData;
     }
 
     static async rateMatch(guildId: string, pickupToRate: RateablePickup) {
-        const amountFollowingPickups = await RatingModel.getAmountOfFollowingPickups(BigInt(guildId), pickupToRate.pickupId);
+        const amountFollowingPickups = await RatingModel.getAmountOfFollowingPickups(BigInt(guildId), pickupToRate.pickupConfigId, pickupToRate.pickupId);
 
         if (amountFollowingPickups > Rating.RERATE_AMOUNT_LIMIT) {
             return false;
         }
 
-        const playerRatings = await this.generateRatings(guildId, pickupToRate, amountFollowingPickups, false);
+        const updateData = await this.generateRatings(guildId, pickupToRate, amountFollowingPickups, false);
 
         const outcomes = pickupToRate.teams.map(t => {
             return {
@@ -132,13 +180,13 @@ export default class Rating {
             }
         });
 
-        await RatingModel.rate(BigInt(guildId), pickupToRate.pickupId, outcomes, playerRatings);
+        await RatingModel.rate(BigInt(guildId), pickupToRate.pickupId, pickupToRate.pickupConfigId, outcomes, updateData.pickups);
         return true;
     }
 
     static async unrateMatch(guildId: string, pickupToUnrate: RateablePickup): Promise<boolean> {
         // If the latest rated pickup is the one being unrated there is no need to generate new ratings
-        const amountFollowingPickups = await RatingModel.getAmountOfFollowingPickups(BigInt(guildId), pickupToUnrate.pickupId);
+        const amountFollowingPickups = await RatingModel.getAmountOfFollowingPickups(BigInt(guildId), pickupToUnrate.pickupConfigId, pickupToUnrate.pickupId);
 
         if (amountFollowingPickups > Rating.RERATE_AMOUNT_LIMIT) {
             return false;
@@ -148,7 +196,7 @@ export default class Rating {
             const playerRatings: { id: bigint, mu: number | null, sigma: number | null }[] = [];
 
             const playerIds = pickupToUnrate.teams.flatMap(p => p.players.map(p2 => BigInt(p2.id)));
-            const previousKnownRatings = await RatingModel.getPreviousNewestRatings(BigInt(guildId), pickupToUnrate.pickupId, ...playerIds);
+            const previousKnownRatings = await RatingModel.getPreviousNewestRatings(BigInt(guildId), pickupToUnrate.pickupId, pickupToUnrate.pickupConfigId, ...playerIds);
 
             playerIds.forEach(id => {
                 const prevRating = previousKnownRatings.find(rating => BigInt(rating.id) === id);
@@ -159,10 +207,10 @@ export default class Rating {
                 });
             });
 
-            await RatingModel.unrate(BigInt(guildId), pickupToUnrate.pickupId, [], playerRatings);
+            await RatingModel.unrate(BigInt(guildId), pickupToUnrate.pickupId, pickupToUnrate.pickupConfigId, [], playerRatings);
         } else {
-            const playerRatings = await this.generateRatings(guildId, pickupToUnrate, amountFollowingPickups, true);
-            await RatingModel.unrate(BigInt(guildId), pickupToUnrate.pickupId, playerRatings);
+            const updateData = await this.generateRatings(guildId, pickupToUnrate, amountFollowingPickups, true);
+            await RatingModel.unrate(BigInt(guildId), pickupToUnrate.pickupId, pickupToUnrate.pickupConfigId, updateData.pickups, updateData.playerRatings);
         }
 
         return true;

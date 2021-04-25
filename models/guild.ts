@@ -496,12 +496,13 @@ export default class GuildModel {
 
     static async getPendingPickup(guildId: bigint, pickupConfigId: number): Promise<PendingPickup> {
         const data: any = await db.execute(`
-        SELECT sp.guild_id, p.current_nick, p.user_id, p.rating, p.variance, pc.id, pc.name, pc.player_count, sp.in_stage_since, sp.stage_iteration, sp.stage, st.team, st.is_captain, st.captain_turn
+        SELECT sp.guild_id, p.current_nick, p.user_id, pr.rating, pr.variance, pc.id, pc.name, pc.player_count, sp.in_stage_since, sp.stage_iteration, sp.stage, st.team, st.is_captain, st.captain_turn
         FROM state_pickup sp
         JOIN state_pickup_players spp ON spp.pickup_config_id = sp.pickup_config_id
         JOIN players p ON p.user_id = spp.player_id AND p.guild_id = spp.guild_id
         JOIN pickup_configs pc ON sp.pickup_config_id = pc.id
         LEFT JOIN state_teams st ON (sp.pickup_config_id = st.pickup_config_id AND spp.player_id = st.player_id)
+        LEFT JOIN player_ratings pr ON pr.player_id = p.id AND pc.id = pr.pickup_config_id
         WHERE sp.stage != 'fill' AND sp.guild_id = ? AND pc.id = ?
         `, [guildId, pickupConfigId]);
 

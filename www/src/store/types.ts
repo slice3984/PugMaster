@@ -40,10 +40,7 @@ export interface PlayerStats {
     id: String;
     name: String;
     previousNames: String[];
-    rating: {
-        rating: number;
-        variance: number;
-    },
+    ratings: { name: string; rating: number; variance: number }[];
     pickupAmount: number;
     playedPickups: {
         name: String;
@@ -70,7 +67,6 @@ export interface PickupInfo {
         outcome: "win" | "draw" | "loss" | null;
         players: {
             id: string;
-            rating: number;
             nick: string;
         }[];
     }[];
@@ -146,8 +142,12 @@ export interface GuildInfoExtended {
         amount: number;
     }[];
     topPlayersRatingsChartData?: {
-        nick: string;
-        amount: number;
+        pickup: string;
+        players: {
+            nick: string;
+            rating: number;
+            variance: number
+        }[]
     }[];
     activityTimesChartData?: Date[];
 }

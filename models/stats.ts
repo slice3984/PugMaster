@@ -1,7 +1,6 @@
 import { Rating } from 'ts-trueskill';
 import db, { transaction } from '../core/db';
 import { PickupInfo, PickupInfoAPI, PickupStartConfiguration, PlayerSearchResult } from '../core/types';
-import Util from '../core/util';
 import PickupModel from './pickup';
 
 export default class StatsModel {
@@ -91,11 +90,11 @@ export default class StatsModel {
             pickup = await db.execute(`
             SELECT p.current_nick,
             p.user_id,
-            p.rating,
-            p.variance,
             pc.name,
             pp.is_captain,
             pc.is_rated,
+            pr.rating,
+            pr.variance,
             pp.team,
             rr.result,
             ps.started_at,
@@ -103,6 +102,7 @@ export default class StatsModel {
             JOIN pickup_players pp ON pp.player_id = p.id
             JOIN pickups ps ON pp.pickup_id = ps.id
             JOIN pickup_configs pc ON ps.pickup_config_id = pc.id
+            LEFT JOIN player_ratings pr ON pr.pickup_config_id = ps.pickup_config_id AND p.id = pr.player_id
             LEFT JOIN rated_results rr ON pp.pickup_id = rr.pickup_id AND pp.team = rr.team
             WHERE ps.id = (SELECT MAX(id) FROM pickups WHERE guild_id = ?)
             `, [guildId]);
@@ -112,11 +112,11 @@ export default class StatsModel {
                 pickup = await db.execute(`
                 SELECT p.current_nick,
                 p.user_id,
-                p.rating,
-                p.variance,
                 pc.name,
                 pp.is_captain,
                 pc.is_rated,
+                pr.rating,
+				pr.variance,
                 pp.team,
                 rr.result,
                 ps.started_at,
@@ -124,6 +124,7 @@ export default class StatsModel {
                     JOIN pickup_players pp ON pp.player_id = p.id
                     JOIN pickups ps ON pp.pickup_id = ps.id
                     JOIN pickup_configs pc ON ps.pickup_config_id = pc.id
+                    LEFT JOIN player_ratings pr ON pr.pickup_config_id = ps.pickup_config_id AND p.id = pr.player_id
                     LEFT JOIN rated_results rr ON pp.pickup_id = rr.pickup_id AND pp.team = rr.team
                     WHERE ps.id = (
                         SELECT MAX(ps.id) FROM pickups ps
@@ -136,11 +137,11 @@ export default class StatsModel {
                 pickup = await db.execute(`
                 SELECT p.current_nick,
                 p.user_id,
-                p.rating,
-                p.variance,
                 pc.name,
                 pp.is_captain,
                 pc.is_rated,
+                pr.rating,
+				pr.variance,
                 pp.team,
                 rr.result,
                 ps.started_at,
@@ -148,6 +149,7 @@ export default class StatsModel {
                     JOIN pickup_players pp ON pp.player_id = p.id
                     JOIN pickups ps ON pp.pickup_id = ps.id
                     JOIN pickup_configs pc ON ps.pickup_config_id = pc.id
+                    LEFT JOIN player_ratings pr ON pr.pickup_config_id = ps.pickup_config_id AND p.id = pr.player_id
                     LEFT JOIN rated_results rr ON pp.pickup_id = rr.pickup_id AND pp.team = rr.team
                     WHERE ps.id = (SELECT MAX(pickup_id) FROM pickup_players WHERE player_id = ?)
                 `, [identifier.value])
@@ -219,8 +221,8 @@ export default class StatsModel {
             pickup = await db.execute(`
             SELECT p.current_nick,
             p.user_id,
-            p.rating,
-            p.variance,
+			pr.rating,
+			pr.variance,
             pc.name,
             pp.is_captain,
             pc.is_rated,
@@ -231,6 +233,7 @@ export default class StatsModel {
             JOIN pickup_players pp ON pp.player_id = p.id
             JOIN pickups ps ON pp.pickup_id = ps.id
             JOIN pickup_configs pc ON ps.pickup_config_id = pc.id
+            LEFT JOIN player_ratings pr ON pr.pickup_config_id = ps.pickup_config_id AND p.id = pr.player_id
             LEFT JOIN rated_results rr ON pp.pickup_id = rr.pickup_id AND pp.team = rr.team
             WHERE ps.id = (SELECT MAX(id) FROM pickups WHERE guild_id = ?)
             `, [guildId]);
@@ -238,8 +241,8 @@ export default class StatsModel {
             pickup = await db.execute(`
             SELECT p.current_nick,
             p.user_id,
-            p.rating,
-            p.variance,
+			pr.rating,
+			pr.variance,
             pc.name,
             pp.is_captain,
             pc.is_rated,
@@ -250,6 +253,7 @@ export default class StatsModel {
             JOIN pickup_players pp ON pp.player_id = p.id
             JOIN pickups ps ON pp.pickup_id = ps.id
             JOIN pickup_configs pc ON ps.pickup_config_id = pc.id
+            LEFT JOIN player_ratings pr ON pr.pickup_config_id = ps.pickup_config_id AND p.id = pr.player_id
             LEFT JOIN rated_results rr ON pp.pickup_id = rr.pickup_id AND pp.team = rr.team
             WHERE ps.id = ? AND ps.guild_id = ?
             `, [pickupId, guildId]);
@@ -363,25 +367,374 @@ export default class StatsModel {
         return top;
     }
 
-    static async getTopRatings(guildId: bigint): Promise<{ nick: string, rating: number, variance: number }[]> {
+    static async getLeaderboardRatings(pickupConfigId: number, page: number):
+        Promise<{
+            pickupConfigId: number;
+            pickup: string;
+            ratings: { rank: number, nick: string; rating: number, variance: number, wins: number, losses: number, draws: number }[]
+        }> {
+        page = page - 1;
         const results: any = await db.execute(`
-        SELECT current_nick, rating, variance FROM players
-        WHERE rating IS NOT NULL AND guild_id = ?
-        ORDER BY (rating - variance * 3) DESC
-        LIMIT 10    
-        `, [guildId]);
+            SELECT
+                ROW_NUMBER() OVER (PARTITION BY pc.id ORDER BY pr.rating - pr.variance * 3 DESC) AS global_rank,
+                pc.id,
+                pc.name,
+                rc.lastgame,
+                p.current_nick,
+                pr.rating,
+                pr.variance,
+                rc.win,
+                rc.loss,
+                rc.draw 
+            FROM
+                player_ratings pr 
+                JOIN
+                pickup_configs pc 
+                ON pc.id = pr.pickup_config_id 
+                JOIN
+                players p 
+                ON p.id = pr.player_id 
+                JOIN
+                (
+                    SELECT
+                        res.player_id,
+                        sum(res.win) AS win,
+                        sum(res.loss) AS loss,
+                        sum(res.draw) AS draw,
+                        MAX(res.started_at) as lastgame
+                    FROM
+                        (
+                            SELECT
+                            pp.player_id,
+                            p.started_at,
+                            CASE
+                                rr.result 
+                                WHEN
+                                    'win' 
+                                THEN
+                                    1 
+                                ELSE
+                                    0 
+                            END
+                            AS win, 
+                            CASE
+                                rr.result 
+                                WHEN
+                                    'loss' 
+                                THEN
+                                    1 
+                                ELSE
+                                    0 
+                            END
+                            AS loss, 
+                            CASE
+                                rr.result 
+                                WHEN
+                                    'draw' 
+                                THEN
+                                    1 
+                                ELSE
+                                    0 
+                            END
+                            AS draw 
+                            FROM
+                            pickups p 
+                            JOIN
+                                pickup_players pp 
+                                ON p.id = pp.pickup_id 
+                            JOIN
+                                rated_results rr 
+                                ON rr.team = pp.team 
+                                AND rr.pickup_id = pp.pickup_id 
+                            WHERE
+                            p.pickup_config_id = ?
+                            AND pp.rating IS NOT NULL 
+                        )
+                        res 
+                    GROUP BY
+                        res.player_id 
+                )
+                rc 
+                ON p.id = rc.player_id 
+            WHERE
+                pc.id = ?
+                AND ((NOW() - INTERVAL 14 DAY) < rc.lastgame)
+            ORDER BY
+                global_rank ASC
+                LIMIT 10 OFFSET ${page * 10}
+            `, [pickupConfigId, pickupConfigId]);
+
+        const ratings = {
+            pickupConfigId: null,
+            pickup: null,
+            ratings: []
+        };
+
+        if (!results[0].length) {
+            return null;
+        }
+
+        results[0].forEach((row, idx) => {
+            if (!idx) {
+                ratings.pickupConfigId = row.id;
+                ratings.pickup = row.name;
+            }
+
+            ratings.ratings.push({
+                rank: row.global_rank,
+                nick: row.current_nick,
+                rating: row.rating,
+                variance: row.variance,
+                wins: row.win,
+                losses: row.loss,
+                draws: row.draw
+            })
+        });
+
+        return ratings;
+    }
+
+    static async getPlayerRatings(guildId: bigint, playerId: bigint):
+        Promise<{
+            pickupCount: number;
+            nick: string;
+            ratings: {
+                pickup: string;
+                rating: number;
+                variance: number,
+                wins: number,
+                losses: number,
+                draws: number,
+                globalRank: number | null
+            }[]
+        }> {
+        const results: any = await db.execute(`
+        SELECT
+        p.pickup_config_id,
+        pp.player_id,
+        SUM(
+        CASE
+           rr.result 
+           WHEN
+              'win' 
+           THEN
+              1 
+           ELSE
+              0 
+        END
+     ) as win, SUM(
+        CASE
+           rr.result 
+           WHEN
+              'loss' 
+           THEN
+              1 
+           ELSE
+              0 
+        END
+     ) as loss, SUM(
+        CASE
+           rr.result 
+           WHEN
+              'draw' 
+           THEN
+              1 
+           ELSE
+              0 
+        END
+     ) as draw, COUNT(*) AS pickups, ps.current_nick, pc.name, pr.rating, pr.variance, rankings.global_rank 
+     FROM
+        pickups p 
+        JOIN
+           pickup_players pp 
+           ON pp.pickup_id = p.id 
+        JOIN
+           rated_results rr 
+           ON rr.team = pp.team 
+           AND rr.pickup_id = pp.pickup_id 
+        JOIN
+           players ps 
+           ON ps.id = pp.player_id 
+        JOIN
+           pickup_configs pc 
+           ON pc.id = p.pickup_config_id 
+        JOIN
+           player_ratings pr 
+           ON pr.player_id = pp.player_id 
+           AND pr.pickup_config_id = p.pickup_config_id 
+        LEFT JOIN
+           (
+              SELECT
+                 p.pickup_config_id,
+                 pp.player_id,
+                 ROW_NUMBER() OVER (PARTITION BY p.pickup_config_id 
+              ORDER BY
+                 pr.rating - pr.variance * 3 DESC) AS global_rank 
+              FROM
+                 pickups p 
+                 JOIN
+                    pickup_players pp 
+                    ON p.id = pp.pickup_id 
+                 JOIN
+                    player_ratings pr 
+                    ON pr.player_id = pp.player_id 
+                    AND pr.pickup_config_id = p.pickup_config_id 
+              WHERE
+                 p.is_rated = 1 
+                 AND 
+                 (
+     (NOW() - INTERVAL 14 DAY) < p.started_at
+                 )
+                 AND p.guild_id = ? 
+              GROUP BY
+                 p.pickup_config_id,
+                 pp.player_id 
+           )
+           rankings 
+           ON p.pickup_config_id = rankings.pickup_config_id 
+           AND pp.player_id = rankings.player_id 
+     WHERE
+        p.guild_id = ? 
+        AND p.is_rated = 1 
+        AND ps.user_id = ? 
+     GROUP BY
+        p.pickup_config_id,
+        pp.player_id 
+     ORDER BY
+        pickups DESC;
+        `, [guildId, guildId, playerId]);
+
+        const ratings = {
+            pickupCount: 0,
+            nick: null,
+            ratings: []
+        };
+
+        if (!results[0].length) {
+            return null;
+        }
+
+        results[0].forEach((row, idx) => {
+            if (!idx) {
+                ratings.nick = row.current_nick;
+            }
+
+            ratings.pickupCount += row.pickups;
+
+            ratings.ratings.push({
+                pickup: row.name,
+                rating: row.rating,
+                variance: row.variance,
+                wins: row.win,
+                losses: row.loss,
+                draws: row.draw,
+                globalRank: row.global_rank
+            });
+        });
+
+        return ratings;
+    }
+
+    static async getTopRatings(guildId: bigint):
+        Promise<{ pickup: string; players: { nick: string; rating: number; variance: number }[] }[]> {
+        const results: any = await db.execute(`
+        SELECT
+            * 
+        FROM
+            (
+            SELECT
+                pc.id,
+                pc.guild_id,
+                pc.name,
+                pr.rating,
+                pr.variance,
+                p.current_nick,
+                amounts.count_pickups,
+                lg.lastgame,
+                ROW_NUMBER() OVER (PARTITION BY pr.pickup_config_id 
+            ORDER BY
+                pr.rating - pr.variance * 3 DESC) AS pickup_row 
+            FROM
+                pickup_configs pc 
+                JOIN
+                    player_ratings pr 
+                    ON pr.pickup_config_id = pc.id 
+                JOIN
+                    players p 
+                    ON p.id = pr.player_id 
+                LEFT JOIN
+                    (
+                        SELECT
+                        ROUND((COUNT(*) / pc.team_count)) AS count_pickups,
+                        pc.name,
+                        pc.id 
+                        FROM
+                        rated_results rr 
+                        JOIN
+                            pickups p 
+                            ON p.id = rr.pickup_id 
+                        JOIN
+                            pickup_configs pc 
+                            ON pc.id = p.pickup_config_id 
+                        WHERE
+                        pc.guild_id = ? 
+                        GROUP BY
+                        pc.id 
+                    )
+                    amounts 
+                    ON amounts.id = pc.id 
+                JOIN
+                    (
+                        SELECT
+                        MAX(ps.started_at) as lastgame,
+                        pp.player_id,
+                        ps.pickup_config_id 
+                        FROM
+                        pickups ps 
+                        JOIN
+                            pickup_players pp 
+                            ON ps.id = pp.pickup_id 
+                        WHERE
+                        ps.guild_id = ? 
+                        GROUP BY
+                        pp.player_id,
+                        ps.pickup_config_id 
+                    )
+                    lg 
+                    ON lg.player_id = p.id 
+                    AND lg.pickup_config_id = pc.id 
+            WHERE ((NOW() - INTERVAL 14 DAY) < lg.lastgame)
+            )
+            res 
+        WHERE
+            res.guild_id = ? 
+            AND res.pickup_row < 11 
+        ORDER BY
+            res.count_pickups DESC,
+            res.rating DESC;
+        `, [guildId, guildId, guildId]);
 
         const ratings = [];
 
         results[0].forEach(row => {
-            ratings.push({
+            let pickup = ratings.find(p => p.pickup === row.name);
+
+            if (!pickup) {
+                ratings.push({
+                    pickup: row.name,
+                    players: []
+                })
+
+                pickup = ratings.find(p => p.pickup === row.name);
+            }
+
+            pickup.players.push({
                 nick: row.current_nick,
                 rating: row.rating,
                 variance: row.variance
             });
         });
-
-        return ratings.sort((r1, r2) => r2.rating - r1.rating);
+        return ratings;
     }
 
     static async getStats(guildId: bigint, identifier?: string | number) {
@@ -550,7 +903,7 @@ export default class StatsModel {
 
     static async getPickupInfo(guildId: bigint, pickupId: number): Promise<PickupInfoAPI | { foundPickup: boolean }> {
         const data: any = await db.execute(`
-        SELECT p.id, p.is_rated, pp.team, p.map, ps.rating, ps.current_nick, ps.user_id, rr.result FROM pickups p
+        SELECT p.id, p.is_rated, pp.team, p.map, ps.current_nick, ps.user_id, rr.result FROM pickups p
         JOIN pickup_players pp ON p.id = pp.pickup_id
         JOIN players ps ON pp.player_id = ps.id
         LEFT JOIN rated_results rr ON rr.pickup_id = p.id AND rr.team = pp.team
@@ -583,12 +936,11 @@ export default class StatsModel {
                     teams.set('A', {
                         name: 'A',
                         outcome: null,
-                        players: [{ id: row.user_id.toString(), rating: Util.tsToEloNumber(row.rating), nick: row.current_nick }]
+                        players: [{ id: row.user_id.toString(), nick: row.current_nick }]
                     });
                 } else {
                     team.players.push({
                         id: row.user_id.toString(),
-                        rating: Util.tsToEloNumber(row.rating),
                         nick: row.current_nick
                     });
                 }
@@ -602,7 +954,6 @@ export default class StatsModel {
                         players: [
                             {
                                 id: row.user_id.toString(),
-                                rating: Util.tsToEloNumber(row.rating),
                                 nick: row.current_nick
                             }
                         ]
@@ -610,7 +961,6 @@ export default class StatsModel {
                 } else {
                     team.players.push({
                         id: row.user_id.toString(),
-                        rating: Util.tsToEloNumber(row.rating),
                         nick: row.current_nick
                     })
                 }
@@ -646,8 +996,8 @@ export default class StatsModel {
         // Didn't find a better not overcomplicated query, returns 3x the same user in the worst case
         // always keep the first result of a user and discard the rest
         const data: any = await db.execute(`
-        SELECT * FROM (SELECT p.guild_id, p.user_id, p.rating, p.id as id, p.current_nick as current, pn.nick as old, pn.updated_at FROM players p
-            LEFT JOIN player_nicks pn ON p.id = pn.player_id WHERE p.guild_id = ?) as t
+        SELECT * FROM (SELECT p.guild_id, p.user_id, p.id as id, p.current_nick as current, pn.nick as old, pn.updated_at FROM players p
+        LEFT JOIN player_nicks pn ON p.id = pn.player_id WHERE p.guild_id = ?) as t
         WHERE t.user_id = ? 
         OR t.current LIKE ?
         OR t.old LIKE ?
@@ -676,7 +1026,6 @@ export default class StatsModel {
                 id: row.user_id,
                 currentNick: row.current,
                 knownAs: row.old,
-                rating: Util.tsToEloNumber(row.rating)
             });
 
             currentId = row.user_id;
@@ -689,7 +1038,6 @@ export default class StatsModel {
                     id: row.user_id,
                     currentNick: row.current,
                     knownAs: row.old,
-                    rating: Util.tsToEloNumber(row.rating)
                 }
             });
 
@@ -724,7 +1072,7 @@ export default class StatsModel {
 
     static async getPlayerNickHistory(guildId: bigint, playerId: bigint): Promise<string[]> {
         const data: any = await db.execute(`
-        SELECT p.rating, p.current_nick, pn.nick, pn.updated_at FROM players p
+        SELECT p.current_nick, pn.nick, pn.updated_at FROM players p
         LEFT JOIN player_nicks pn ON pn.player_id = p.id
         WHERE p.guild_id = ? AND p.user_id = ?
         ORDER BY pn.updated_at;
@@ -760,21 +1108,42 @@ export default class StatsModel {
         });
     }
 
-    static async getPlayerInfo(guildId: bigint, playerId: bigint): Promise<{ id: string; name: string; rating: number | null; variance: number | null } | null> {
+    static async getPlayerInfo(guildId: bigint, playerId: bigint): Promise<{ id: string; name: string; ratings: { name: string; rating: number; variance: number }[] } | null> {
         const data: any = await db.execute(`
-        SELECT user_id, current_nick, rating, variance FROM players
-        WHERE guild_id = ? AND user_id = ?
+		SELECT p.user_id, p.current_nick, pr.rating, pr.variance, pc.name  FROM players p
+        LEFT JOIN player_ratings pr ON p.id = pr.player_id
+		LEFT JOIN pickup_configs pc ON pc.id = pr.pickup_config_id AND pc.is_rated = 1
+        WHERE p.guild_id = ? AND p.user_id = ?
         `, [guildId, playerId]);
 
         if (!data[0].length) {
             return;
         }
 
+        let id;
+        let name;
+        let ratings = [];
+
+        data[0].forEach(row => {
+            if (!id) {
+                id = row.user_id.toString();
+                name = row.current_nick
+            }
+
+            // There can be ratings for afterwards disabled rated pickups, exclude them
+            if (row.name) {
+                ratings.push({
+                    name: row.name,
+                    rating: row.rating,
+                    variance: row.variance
+                });
+            }
+        });
+
         return {
-            id: data[0][0].user_id.toString(),
-            name: data[0][0].current_nick,
-            rating: data[0][0].rating,
-            variance: data[0][0].variance
+            id,
+            name,
+            ratings
         };
     }
 

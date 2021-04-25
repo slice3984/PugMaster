@@ -11,13 +11,6 @@
         <div>{{ playerInfo.pickupAmount }}</div>
       </div>
       <div class="player-info__group">
-        <div>Rating</div>
-        <div v-if="playerInfo.rating.rating > 0">
-          {{ playerInfo.rating.rating }} ± {{ playerInfo.rating.variance }}
-        </div>
-        <div v-else>-</div>
-      </div>
-      <div class="player-info__group">
         <div>Also played as</div>
         <div>
           <ul>
@@ -27,7 +20,7 @@
           </ul>
         </div>
       </div>
-      <div class="player-info__lastgames">
+      <div class="player-info__block">
         <h2>Last game times</h2>
         <div
           class="player-info__group"
@@ -36,6 +29,17 @@
         >
           <div>{{ pickup.name }}</div>
           <div>{{ toLocalDate(pickup.date) }}</div>
+        </div>
+      </div>
+      <div class="player-info__block" v-if="playerInfo.ratings.length">
+        <h2>Ratings</h2>
+        <div
+          class="player-info__group"
+          v-for="rating of playerInfo.ratings"
+          :key="rating.name"
+        >
+          <div>{{ rating.name }}</div>
+          <div>{{ rating.rating }} ± {{ rating.variance }}</div>
         </div>
       </div>
     </div>
@@ -102,7 +106,7 @@ export default defineComponent({
     }
   }
 
-  &__lastgames {
+  &__block {
     h2 {
       margin-bottom: 1rem;
     }

@@ -8,7 +8,7 @@ const command: Command = {
     shortDesc: 'Shows top 10 players based on amount of played pickups or elo ratings',
     desc: 'Shows top 10 players based on amount of played pickups or elo ratings',
     args: [
-        { name: '[day/week/month/year/elo]', desc: 'Period of players with most pickups as: day, week, month, year or elo to see elo rankings', required: false }
+        { name: '[day/week/month/year]', desc: 'Period of players with most pickups as: day, week, month, or year', required: false }
     ],
     global: false,
     perms: false,
@@ -27,27 +27,19 @@ const command: Command = {
         } else {
             const option = params[0].toLowerCase();
 
-            if (!['day', 'week', 'month', 'year', 'elo'].includes(option)) {
-                return message.reply('Did you mean day, week, month, year or elo?');
+            if (!['day', 'week', 'month', 'year'].includes(option)) {
+                return message.reply('Did you mean day, week, month or year?');
             }
 
-            let top;
-            let isElo = false;
-
-            if (option === 'elo') {
-                isElo = true;
-                top = await StatsModel.getTopRatings(BigInt(message.guild.id));
-            } else {
-                top = await StatsModel.getTopPickupAmount(BigInt(message.guild.id), option, 10);
-            }
+            const top = await StatsModel.getTopPickupAmount(BigInt(message.guild.id), option, 10);
 
             if (!top.length) {
-                return message.reply(`no ${isElo ? 'ratings' : 'pickups'} found`);
+                return message.reply(`no pickups found`);
             }
 
             message.channel.send(
-                `**Top 10 Players - ${isElo ? 'Ratings' : `Played (${option})`}**\n` +
-                `${top.map((player, index) => `**#${index + 1}** \`${player.nick}\` (**${isElo ? `${Util.tsToEloNumber(player.rating)}` : player.amount}**)`).join(' ')}`);
+                `**Top 10 Players - Played**\n` +
+                `${top.map((player, index) => `**#${index + 1}** \`${player.nick}\` (**${player.amount}**)`).join(' ')}`);
         }
     }
 }

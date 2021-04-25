@@ -7,10 +7,18 @@
         >Amount</base-button
       >
       <base-button
+        v-if="ratingData.length"
         :active="activeData === 'rating'"
         @click="handleChartUpdate('rating')"
         >Rating</base-button
       >
+      <div class="select-wrapper" v-if="ratingData.length">
+        <select v-model="selectedRatings">
+          <option v-for="rating in ratingData" :key="rating.pickup">
+            {{ rating.pickup }}
+          </option>
+        </select>
+      </div>
     </div>
     <apexchart
       type="bar"
@@ -23,12 +31,21 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from "vue";
+import { defineComponent, ref, watch } from "vue";
 import VueApexCharts from "vue3-apexcharts";
 
-type BarChartData = {
+type AmountData = {
   nick: string;
   amount: number;
+};
+
+type RatingData = {
+  pickup: string;
+  players: {
+    nick: string;
+    rating: number;
+    variance: number;
+  }[];
 };
 
 export default defineComponent({
@@ -36,16 +53,18 @@ export default defineComponent({
 
   props: {
     amountData: {
-      type: Object as () => BarChartData[],
+      type: Object as () => AmountData[],
       required: true,
     },
     ratingData: {
-      type: Object as () => BarChartData[],
+      type: Object as () => RatingData[],
       required: true,
     },
   },
   setup(props) {
     const activeData = ref(null);
+    const selectedRatings = ref(null);
+    let currentRatings;
 
     let series = ref([
       {
@@ -53,6 +72,33 @@ export default defineComponent({
         data: [],
       },
     ]);
+
+    const updateRatings = (pickup: string) => {
+      activeData.value = "rating";
+      const ratings = props.ratingData.find((data) => data.pickup === pickup);
+
+      currentRatings = {
+        nicks: ratings.players.map((p) => p.nick),
+        amounts: ratings.players.map((p) => p.rating),
+      };
+    };
+
+    if (props.ratingData.length) {
+      selectedRatings.value = props.ratingData[0].pickup;
+      updateRatings(selectedRatings.value);
+    }
+
+    watch(selectedRatings, (curr, _) => {
+      // @ts-ignore
+      updateRatings(curr);
+
+      updateChart(
+        "Top 10 Players - Rating",
+        "Rating",
+        currentRatings.nicks,
+        currentRatings.amounts
+      );
+    });
 
     const colors = [
       "rgb(255, 8, 54)",
@@ -192,8 +238,8 @@ export default defineComponent({
           updateChart(
             "Top 10 Players - Rating",
             "Rating",
-            props.ratingData.map((d) => d.nick),
-            props.ratingData.map((d) => d.amount)
+            currentRatings.nicks,
+            currentRatings.amounts
           );
       }
 
@@ -208,6 +254,7 @@ export default defineComponent({
       chartOptions,
       activeData,
       handleChartUpdate,
+      selectedRatings,
     };
   },
 });
@@ -223,5 +270,35 @@ export default defineComponent({
   position: absolute;
   top: 0;
   right: 0;
+}
+
+.select-wrapper {
+  margin-left: 0.5rem;
+  display: inline-block;
+  position: relative;
+  width: 12rem;
+
+  &::before {
+    content: "⌄";
+    font-size: 2rem;
+    position: absolute;
+    right: 5px;
+    bottom: 7px;
+    color: #fff;
+    pointer-events: none;
+  }
+}
+
+select {
+  appearance: none;
+  border: none;
+  width: 100%;
+  padding-left: 1rem;
+  padding: 0.6rem;
+  color: $white;
+  background-color: $blue;
+  box-shadow: 2px 2px 5px 1px rgba($dark, 0.3);
+  border-radius: 3px;
+  outline: none;
 }
 </style>

@@ -53,14 +53,12 @@ const command: Command = {
             }
 
             const stats = await StatsModel.getStats(BigInt(message.guild.id), players.players[0].id);
-            const info = await StatsModel.getPlayerInfo(BigInt(message.guild.id), BigInt(players.players[0].userId));
 
             if (!stats.length) {
                 return message.reply('no pickup records found for this player');
             }
 
             const msg = `Stats for **${stats[0].nick}**\n` +
-                `**Elo:** ${info.rating ? `${Util.tsToEloNumber(info.rating)} ± ${Util.tsToEloNumber(info.variance)}` : '-'}\n` +
                 `**Pickups:** ${stats.map(pickup => `\`${pickup.name}\` (**${pickup.amount}**)`).join(' ')}`;
 
             message.channel.send(msg);

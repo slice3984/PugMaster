@@ -158,8 +158,13 @@ export interface GuildInfo {
         amount: number;
     }[];
     topPlayersRatingsChartData?: {
-        nick: string;
-        amount: number;
+        pickup: string;
+        players:
+        {
+            nick: string;
+            rating: number;
+            variance: number
+        }[]
     }[];
     activityTimesChartData?: Date[];
 }
@@ -174,7 +179,6 @@ export interface PickupInfoAPI {
         outcome: 'win' | 'draw' | 'loss' | null,
         players: {
             id: string;
-            rating: number;
             nick: string;
         }[]
     }[]
@@ -224,7 +228,6 @@ export interface PlayerSearchResult {
     id: string;
     currentNick: string;
     knownAs: string | null;
-    rating: number | null;
 }
 
 export interface GuildMemberExtended extends Discord.GuildMember {

@@ -14,7 +14,7 @@ export default class DevModel {
         // Fake users got a id < 100000000000001000
         const results: any = await db.execute(`
         SELECT p.user_id, p.current_nick FROM players p
-        WHERE p.user_id < 100000000000001000 AND p.guild_id = ?
+        WHERE p.user_id < 1000 AND p.guild_id = ?
         `, [guildId]);
 
         const users: FakeUser[] = [];
@@ -32,14 +32,12 @@ export default class DevModel {
     static async generateFakeUser(guildId: bigint): Promise<{ id: string; name: string }> {
         // Get available id
         const maxFakePlayerId = await db.execute(`
-        SELECT CASE WHEN MAX(p.user_id) IS NULL THEN 100000000000000001 ELSE MAX(p.user_id) + 1 END AS id FROM players p
-        WHERE p.guild_id = ? AND p.user_id < 100000000000001000
+        SELECT CASE WHEN MAX(p.user_id) IS NULL THEN 1 ELSE MAX(p.user_id) + 1 END AS id FROM players p
+        WHERE p.guild_id = ? AND p.user_id < 1000
         `, [guildId]);
 
         const id = maxFakePlayerId[0][0].id.toString();
-        const displayId = id.replace('100000000000000', '');
-
-        const fakeNick = `Fake ${displayId}`;
+        const fakeNick = `Fake ${id}`;
 
         // Insert fake player
         await PlayerModel.storeOrUpdatePlayer(guildId, BigInt(id), fakeNick);
@@ -53,7 +51,7 @@ export default class DevModel {
     static async removeFakeUser(guildId: bigint) {
         const idData = await db.execute(`
         SELECT MAX(p.user_id) as id FROM players p
-        WHERE p.guild_id = ? AND p.user_id < 100000000000001000;
+        WHERE p.guild_id = ? AND p.user_id < 1000;
         `, [guildId]);
 
         await db.execute(`
