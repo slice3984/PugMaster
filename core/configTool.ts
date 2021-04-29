@@ -40,6 +40,12 @@ export default class ConfigTool {
         "FLOOD_PROTECTION_MAX_COMMANDS": "4",
         "FLOOD_TIMEOUT_TIME": "10000"
     },
+    "emojis": {
+        "success": "",
+        "info": "",
+        warn: "",
+        error: ""
+    },
     "webserver": {
         "port": "1337",
         "domain": "example.com"

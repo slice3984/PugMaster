@@ -1,3 +1,4 @@
+import Discord from 'discord.js';
 import { Command } from '../core/types';
 import PickupModel from '../models/pickup';
 
@@ -15,7 +16,15 @@ const command: Command = {
             return message.reply('no pickups stored');
         }
 
-        message.channel.send(`Pickups: ${pickups.map(pickup => `**${pickup.name}** [ **${pickup.added}** / **${pickup.max}** ]`).join(' ')}`);
+        const pickupCardEmbed = new Discord.MessageEmbed()
+            .setColor('#126e82')
+            .setTitle('Available pickups')
+            .addFields(
+                { name: 'Pickup', value: pickups.map(pickup => pickup.name).join('\n'), inline: true },
+                { name: 'Players', value: pickups.map(pickup => `${pickup.added} / ${pickup.max}`).join('\n'), inline: true }
+            )
+
+        message.channel.send(pickupCardEmbed);
     }
 }
 

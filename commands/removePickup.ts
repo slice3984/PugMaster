@@ -2,6 +2,7 @@ import { Command } from '../core/types';
 import PickupModel from '../models/pickup';
 import GuildModel from '../models/guild';
 import PickupState from '../core/pickupState';
+import Util from '../core/util';
 
 const command: Command = {
     cmd: 'remove_pickups',
@@ -19,7 +20,7 @@ const command: Command = {
         let validPickups = await PickupModel.areValidPickups(BigInt(message.guild.id), ...pickups);
 
         if (!validPickups.length) {
-            return message.reply('no valid pickups provided');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, no valid pickups provided`));
         }
 
         const activePickups = Array.from(await (await (await PickupModel.getActivePickups(BigInt(message.guild.id))).values()));
@@ -50,7 +51,7 @@ const command: Command = {
 
         await PickupModel.removePickups(BigInt(message.guild.id), ...validPickups.map(pickup => pickup.id));
 
-        await message.reply(`successfully removed ${validPickups.length} pickup${validPickups.length > 1 ? 's' : ''} (${validPickups.map(pickup => pickup.name).join(' ')})`);
+        await message.channel.send(Util.formatMessage('success', `Removed **${validPickups.length}** pickup${validPickups.length > 1 ? 's' : ''} (${validPickups.map(pickup => `**${pickup.name}**`).join(' ')})`));
 
         if (filteredPickups.length) {
             await PickupState.showPickupStatus(message.guild);

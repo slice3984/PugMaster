@@ -1,6 +1,7 @@
 import { Command } from '../core/types';
 import MappoolModel from '../models/mappool';
 import { Validator } from '../core/validator';
+import Util from '../core/util';
 
 const command: Command = {
     cmd: 'mappool',
@@ -17,10 +18,10 @@ const command: Command = {
         if (params.length === 0) {
             const pools = await MappoolModel.getPools(BigInt(message.guild.id));
             if (pools.length === 0) {
-                return message.reply('no map pools stored');
+                return message.channel.send(Util.formatMessage('info', 'No map pools stored'));
             } else {
-                const maps = pools.map(pool => pool.name);
-                return message.reply(`stored map pools: ${maps.join(', ')}`);
+                const mappools = pools.map(pool => `**${pool.name}**`);
+                return message.channel.send(Util.formatMessage('info', `Stored map pools: ${mappools.join(', ')}`));
             }
         } else {
             const name = params[0].toLowerCase();
@@ -31,7 +32,7 @@ const command: Command = {
             }
 
             const maps = await MappoolModel.getMaps(BigInt(message.guild.id), name);
-            message.reply(`map pool ${name} contains the following maps: ${maps.join(', ')}`);
+            message.channel.send(Util.formatMessage('info', `Map pool **${name}** contains the following maps: ${maps.map(map => `**${map}**`).join(', ')}`));
         }
     }
 }

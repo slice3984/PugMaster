@@ -23,48 +23,48 @@ const command: Command = {
         if (!params.length) {
             const expireDate = await PlayerModel.getExpires(BigInt(message.guild.id), BigInt(message.member.id));
             if (!expireDate) {
-                return message.reply('no expire set');
+                return message.channel.send(Util.formatMessage('info', `${message.author}, no expire set`));
             }
 
             const expiresIn = (expireDate[0].getTime() - new Date().getTime());
-            return message.reply(`${Util.formatTime(expiresIn)} left until removal`);
+            return message.channel.send(Util.formatMessage('info', `${message.author}, **${Util.formatTime(expiresIn)}** left until removal`));
         }
 
         if (params[0].toLowerCase() === 'none') {
             const expireDate = await PlayerModel.getExpires(BigInt(message.guild.id), BigInt(message.member.id));
 
             if (!expireDate) {
-                return message.reply('you did not set any expire');
+                return message.channel.send(Util.formatMessage('error', `${message.author}, you did not set any expire`));
             }
 
             await PlayerModel.removeExpires(BigInt(message.guild.id), message.member.id);
-            return message.reply('your expire got removed');
+            return message.channel.send(Util.formatMessage('success', `${message.author}, your expire got removed`));
         }
 
         const isAddedToAnyPickup = await PickupModel.isPlayerAdded(BigInt(message.guild.id), BigInt(message.member.id));
 
         if (isAddedToAnyPickup.length === 0) {
-            return message.reply('you are not added to any pickup');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, you are not added to any pickup, no expire set`));
         }
 
         const isInPickingStage = await PickupModel.isPlayerAddedToPendingPickup(BigInt(message.guild.id), BigInt(message.member.id), 'picking_manual');
 
         if (isInPickingStage) {
-            return message.reply('you are not allowed to use expire when added to a pickup in picking stage');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, you are not allowed to use expire when added to a pickup in picking stage`));
         }
 
         const validTime = Util.validateTimeString(params.join(' '), defaults[0], (60 * 1000));
 
         if (validTime === 'exceeded') {
-            return message.reply(`max expire time is ${Util.formatTime(defaults[0])}`);
+            return message.channel.send(Util.formatMessage('error', `${message.author}, max expire time is **${Util.formatTime(defaults[0])}**`));
         } else if (validTime === 'subceeded') {
-            return message.reply(`min expire time is 1 minute`);
+            return message.channel.send(Util.formatMessage('error', `${message.author}, min expire time is **1 minute**`));
         } else if (validTime === 'invalid') {
-            return message.reply('invalid time amounts given');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, invalid time amounts given`));
         }
 
         await PlayerModel.setExpire(BigInt(message.guild.id), BigInt(message.member.id), validTime);
-        message.reply(`you will be removed from all pickups in ${Util.formatTime(validTime)}`);
+        message.channel.send(Util.formatMessage('success', `${message.author}, you will be removed from all pickups in **${Util.formatTime(validTime)}**`));
     }
 }
 

@@ -21,7 +21,7 @@ const command: Command = {
             const pickup = await StatsModel.getLastGame(BigInt(message.guild.id));
 
             if (!pickup) {
-                return message.channel.send(`no pickups stored`);
+                return message.channel.send(Util.formatMessage('info', 'No pickups stored'));
             }
 
             message.channel.send(formatOutput(pickup));
@@ -36,7 +36,7 @@ const command: Command = {
                 pickup = await StatsModel.getLastGame(BigInt(message.guild.id), { isPlayer: false, value: identifier.toLowerCase() });
 
                 if (!pickup) {
-                    return message.reply('no pickup stored');
+                    return message.channel.send(Util.formatMessage('info', `No pickup stored for **${identifier.toLowerCase()}**`));
                 }
                 message.channel.send(formatOutput(pickup));
             } else {
@@ -44,15 +44,15 @@ const command: Command = {
                 const nicks = await PlayerModel.getPlayer(BigInt(message.guild.id), identifier);
 
                 if (!nicks) {
-                    return message.reply('given player not stored');
+                    return message.channel.send(Util.formatMessage('info', `Player **${identifier}** not found`));
                 }
 
                 if (nicks.players.length > 1) {
                     if (nicks.oldNick) {
-                        return message.reply(`no player found with such name as current name, found multiple names in the name history, try calling the command with the player id again`);
+                        return message.channel.send(Util.formatMessage('info', 'No player found with such name as current name, found multiple names in the name history, try calling the command with the player id again'));
 
                     } else {
-                        return message.reply(`found multiple players using the given name, try calling the command with the player id again`);
+                        return message.channel.send(Util.formatMessage('info', 'Found multiple players using the given name, try calling the command with the player id again'));
                     }
                 }
 
@@ -60,7 +60,7 @@ const command: Command = {
 
                 if (!pickup) {
                     const nick = nicks.oldNick ? `${nicks.players[0].currentNick} (Old name: ${nicks.players[0].oldNick})` : nicks.players[0].currentNick;
-                    return message.reply(`${nick} played no pickups`);
+                    return message.channel.send(Util.formatMessage('info', `No pickups found for **${nick}**`));
                 }
 
                 return message.channel.send(formatOutput(pickup, nicks.players[0].currentNick));

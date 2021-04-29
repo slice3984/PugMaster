@@ -1,6 +1,7 @@
 import { Command } from '../core/types';
 import PlayerModel from '../models/player';
 import PickupModel from '../models/pickup';
+import Util from '../core/util';
 
 const command: Command = {
     cmd: 'who',
@@ -27,7 +28,7 @@ const command: Command = {
                 .sort((a, b) => b.players.length - a.players.length);
 
             if (pickups.length === 0) {
-                return message.channel.send('No active pickups');
+                return message.channel.send(Util.formatMessage('info', 'No active pickups'));
             }
 
             let msg = '';
@@ -59,7 +60,7 @@ const command: Command = {
                 .filter(pickup => pickup.name === pickupName);
 
             if (!pickup.length) {
-                return message.reply(`no results for ${pickupName}`);
+                return message.channel.send(Util.formatMessage('info', `${message.author}, no results for **${pickupName}**`));
             }
 
             message.channel.send(genPickupInfo(pickup[0]));

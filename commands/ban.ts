@@ -32,7 +32,7 @@ const command: Command = {
         const player = await Util.getUser(message.guild, playerIdentifier, true);
 
         if (!player) {
-            return message.reply(`given player not found`);
+            return message.channel.send(Util.formatMessage('error', `${message.author}, given player not found`));
         }
 
         if (player instanceof GuildMember) {
@@ -48,29 +48,29 @@ const command: Command = {
 
             if (reason) {
                 if (reason.length > 128) {
-                    return message.reply('max reason length is 128 chars');
+                    return message.channel.send(Util.formatMessage('error', `${message.author}, max reason length is 128 chars`));
                 }
             }
 
             if (isBannedAlready) {
                 // no date stored, perm ban
                 if (!isBannedAlready.ends_at) {
-                    return message.reply(`${isBannedAlready.player} is already permbanned`);
+                    return message.channel.send(Util.formatMessage('info', `${message.author}, **${isBannedAlready.player}** is already permbanned`));
                 } else {
                     PlayerModel.unbanPlayer(BigInt(message.guild.id), +isBannedAlready.id);
                     const timeDif = isBannedAlready.ends_at.getTime() - new Date().getTime();
 
-                    const issuer = defaults[0] === 'true' ? ', issuer: ' + isBannedAlready.issuer : '';
-                    msg += `${isBannedAlready.player}'s old ban revoked. Time left: ${Util.formatTime(timeDif)}${issuer}\n`;
+                    const issuer = defaults[0] === 'true' ? ', issuer: ' + `**${isBannedAlready.issuer}**` : '';
+                    msg += `**${isBannedAlready.player}**'s old ban revoked. Time left: **${Util.formatTime(timeDif)}**${issuer}\n`;
                 }
             }
 
             await PlayerModel.banPlayer(BigInt(message.guild.id), BigInt(message.member.id), BigInt(player.id), 0, false, params.slice(2).join(' ') || null);
 
             if (player instanceof GuildMember) {
-                msg += `${player.displayName} got permanently banned ${params.slice(2).join(' ') ? 'Reason: ' + params.slice(2).join(' ') : ''}`;
+                msg += `**${player.displayName}** got permanently banned ${params.slice(2).join(' ') ? 'Reason: ' + `**${params.slice(2).join(' ')}**` : ''}`;
             } else {
-                msg += `${player.username} got permanently banned ${params.slice(2).join(' ') ? 'Reason: ' + params.slice(2).join(' ') : ''}`;
+                msg += `**${player.username}** got permanently banned ${params.slice(2).join(' ') ? 'Reason: ' + `**${params.slice(2).join(' ')}**` : ''}`;
             }
 
             if (defaults[1] === 'true') {
@@ -79,11 +79,11 @@ const command: Command = {
                 if (isListenChannel) {
                     const puChannel = await Util.getPickupChannel(message.guild);
                     if (puChannel) {
-                        puChannel.send(msg);
+                        puChannel.send(Util.formatMessage('success', msg));
                     }
                 }
             }
-            await message.channel.send(msg);
+            await message.channel.send(Util.formatMessage('success', msg));
             await PickupState.removePlayer(message.guild.id, player.id);
         } else {
             const regex = /^\s*(?<time>(?:\d+[mhdw]\s+)*\d+[mhdw])\s*(?<reason>.*?)$/g;
@@ -93,14 +93,14 @@ const command: Command = {
             const reason = match ? match.groups.reason : null;
 
             if (!timeStr) {
-                return message.reply('invalid time amount given');
+                return message.channel.send(Util.formatMessage('error', `${message.author}, invalid time amount given`));
             }
 
             const ms = Util.timeStringToTime(timeStr) * 60000;
 
             // 1h
             if (ms < (1000 * 60 * 60)) {
-                return message.reply('min ban time is 1 hour');
+                return message.channel.send(Util.formatMessage('error', `${message.author}, min ban time is **1 hour**`));
             }
 
             let msg = '';
@@ -109,23 +109,23 @@ const command: Command = {
 
             if (isBannedAlready) {
                 PlayerModel.unbanPlayer(BigInt(message.guild.id), +isBannedAlready.id);
-                const issuer = defaults[0] === 'true' ? ', issuer: ' + isBannedAlready.issuer : '';
+                const issuer = defaults[0] === 'true' ? ', issuer: ' + `**${isBannedAlready.issuer}**` : '';
 
                 // no date stored, perm ban
                 if (!isBannedAlready.ends_at) {
-                    msg += `${isBannedAlready.player}'s old ban revoked. Time left: Permban${issuer}\n`;
+                    msg += `**${isBannedAlready.player}**'s old ban revoked. Time left: **Permban**${issuer}\n`;
                 } else {
                     const timeDif = isBannedAlready.ends_at.getTime() - new Date().getTime();
-                    msg += `${isBannedAlready.player}'s old ban revoked. Time left: ${Util.formatTime(timeDif)}${issuer}\n`;
+                    msg += `**${isBannedAlready.player}**'s old ban revoked. Time left: **${Util.formatTime(timeDif)}**${issuer}\n`;
                 }
             }
 
             if (player instanceof GuildMember) {
                 await PlayerModel.banPlayer(BigInt(message.guild.id), BigInt(message.member.id), BigInt(player.id), ms, false, reason || '');
-                msg += `${player.displayName} got banned for ${Util.formatTime(ms)}${reason ? ' Reason: ' + reason : ''}`;
+                msg += `**${player.displayName}** got banned for **${Util.formatTime(ms)}**${reason ? ' - Reason: ' + `**${reason}**` : ''}`;
             } else {
                 await PlayerModel.banPlayer(BigInt(message.guild.id), BigInt(message.member.id), BigInt(player.id), ms, false, reason || '');
-                msg += `${player.username} got banned for ${Util.formatTime(ms)}${reason ? ' Reason: ' + reason : ''}`;
+                msg += `**${player.username}** got banned for **${Util.formatTime(ms)}**${reason ? ' - Reason: ' + `**${reason}**` : ''}`;
             }
 
             if (defaults[1] === 'true') {
@@ -134,12 +134,12 @@ const command: Command = {
                 if (isListenChannel) {
                     const puChannel = await Util.getPickupChannel(message.guild);
                     if (puChannel) {
-                        puChannel.send(msg);
+                        puChannel.send(Util.formatMessage('success', msg));
                     }
                 }
             }
 
-            await message.channel.send(msg);
+            await message.channel.send(Util.formatMessage('success', msg));
             await PickupState.removePlayer(message.guild.id, player.id);
         }
     }

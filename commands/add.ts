@@ -26,7 +26,7 @@ const command: Command = {
                 const playedBefore = await PickupModel.playedBefore(BigInt(message.guild.id), BigInt(message.author.id));
 
                 if (!playedBefore) {
-                    return message.reply('no previous pickup game found for you, you need to be trusted to add');
+                    return message.channel.send(Util.formatMessage('warn', `${message.author}, no previous pickup game found for you, you need to be trusted to add`));
                 }
             }
         }
@@ -40,7 +40,7 @@ const command: Command = {
                 const alreadyTrusted = await PlayerModel.arePlayersTrusted(BigInt(message.guild.id), message.member.id);
 
                 if (alreadyTrusted.length === 0) {
-                    return message.reply(`you joined this server recently, please wait ${Util.formatTime(Math.abs(timeLeft))}`);
+                    return message.channel.send(Util.formatMessage('warn', `${message.author}, you joined this server recently, please wait ${Util.formatTime(Math.abs(timeLeft))}`));
                 }
             }
         }
@@ -50,9 +50,9 @@ const command: Command = {
         if (isBanned) {
             if (isBanned.ends_at) {
                 const timeDif = isBanned.ends_at.getTime() - new Date().getTime();
-                return message.reply(`you are banned, time left: ${Util.formatTime(timeDif)} ${isBanned.reason ? 'reason: ' + isBanned.reason : ''}`);
+                return message.channel.send(Util.formatMessage('error', `${message.author}, you are banned, time left: ${Util.formatTime(timeDif)} ${isBanned.reason ? ', reason: ' + isBanned.reason : ''}`));
             } else {
-                return message.reply(`you are permbanned${isBanned.reason ? ', reason: ' + isBanned.reason : ''}`);
+                return message.channel.send(Util.formatMessage('error', `${message.author}, you are permbanned${isBanned.reason ? ', reason: ' + isBanned.reason : ''}`));
             }
         }
 
@@ -97,7 +97,7 @@ const command: Command = {
         const isInPickingStage = await PickupModel.isPlayerAddedToPendingPickup(BigInt(message.guild.id), BigInt(message.member.id), 'picking_manual', 'mapvote', 'captain_selection');
 
         if (isInPickingStage) {
-            return message.reply('you are not allowed to add to pickups when added to a pickup in pending stage');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, you are not allowed to add to pickups when added to a pickup in pending stage`));
         }
 
         if (params.length === 0) {
@@ -123,7 +123,7 @@ const command: Command = {
                 const invalidPickupNames = [...activeAndDefaultPickups].filter(pickup => invalidPickups.includes(pickup.configId))
                     .map(pickup => pickup.name);
 
-                message.reply(`you are not allowed to add to ${invalidPickupNames.join(', ')} (Whitelist / Blacklist)`);
+                message.channel.send(Util.formatMessage('error', `${message.author}, you are not allowed to add to ${invalidPickupNames.join(', ')} (Whitelist / Blacklist)`));
             }
 
             if (validPickups.length === 0) {
@@ -136,7 +136,7 @@ const command: Command = {
             const existingPickups = await PickupModel.areValidPickups(BigInt(message.guild.id), ...params);
 
             if (existingPickups.length === 0) {
-                return message.reply(`Pickup${params.length > 1 ? 's' : ''} not found`);
+                return;
             }
 
             const activeAndDefaultPickups = Array.from(await (await PickupModel.getActivePickups(BigInt(message.guild.id), true)).values());
@@ -168,7 +168,7 @@ const command: Command = {
                 const invalidPickupNames = validPickups.filter(pickup => invalidPickups.includes(pickup.id))
                     .map(pickup => pickup.name);
 
-                message.reply(`you are not allowed to add to ${invalidPickupNames.join(', ')} (Whitelist / Blacklist)`);
+                message.channel.send(Util.formatMessage('error', `${message.author}, you are not allowed to add to ${invalidPickupNames.join(', ')} (Whitelist / Blacklist)`));
             }
 
             validPickups = validPickups.filter(pickup => !invalidPickups.includes(pickup.id));

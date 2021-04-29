@@ -1,4 +1,5 @@
 import Discord from 'discord.js';
+import ConfigTool from '../core/configTool';
 import { Command } from '../core/types';
 import PermissionModel from '../models/permission';
 
@@ -11,6 +12,8 @@ const command: Command = {
     global: true,
     perms: false,
     exec: async (bot, message, params) => {
+        const config = ConfigTool.getConfig();
+
         // All permissions granted as admin
         const isAdmin = message.member.hasPermission(Discord.Permissions.FLAGS.ADMINISTRATOR);
         const disabledCommands = bot.getGuild(message.guild.id).disabledCommands;
@@ -29,17 +32,23 @@ const command: Command = {
             const needsPermissions = bot.getCommand(command).perms;
             if (needsPermissions) {
                 if (isAdmin || availablePermissions.includes(command)) {
-                    grantedCommands.push(`${command}*`);
+                    grantedCommands.push(`**${command}***`);
                 }
             } else {
-                grantedCommands.push(command);
+                grantedCommands.push(`**${command}**`);
             }
         }
 
-        message.reply(
-            `available commands you can execute (\\*commands which require permissions)\n` +
-            grantedCommands.map(command => `\`${command}\``).join(', ')
-        );
+        const botAvatarUrl = message.guild.client.user.avatarURL();
+
+        const commandsCardEmbed = new Discord.MessageEmbed()
+            .setColor('#126e82')
+            .setTitle(`${message.member.displayName} - Commands you can execute`)
+            .setDescription(`Command reference: ${config.webserver.domain}/commands`)
+            .addField('\u200B', grantedCommands.join(', '))
+            .setFooter('*Commands which require permissions', botAvatarUrl)
+
+        message.channel.send(commandsCardEmbed);
     }
 }
 

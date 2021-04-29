@@ -25,7 +25,7 @@ const command: Command = {
 
         // Can be null if used for the first time
         if (timeUntilNextPromote && timeUntilNextPromote > 0) {
-            return message.reply(`you can't promote too often, please wait ${Util.formatTime(timeUntilNextPromote)}`);
+            return message.channel.send(Util.formatMessage('error', `${message.author}, you can't promote too often, please wait **${Util.formatTime(timeUntilNextPromote)}**`));
         }
 
         const lastGame = await StatsModel.getLastGame(BigInt(message.guild.id));
@@ -38,16 +38,16 @@ const command: Command = {
             role = message.guild.roles.cache.get(pickupSettings.promotionRole.toString());
 
             if (!role) {
-                return message.reply(`set promotion role for pickup ${lastGame.name} not found`);
+                return message.channel.send(Util.formatMessage('error', `Stored promotion role for pickup **${lastGame.name}** not found`));
             }
         } else {
-            return message.reply('no promotion role set for this pickup, can\'t call for a sub');
+            return message.channel.send(Util.formatMessage('error', 'No promotion role set for this pickup, not able to call a sub'));
         }
 
         const agoSince = new Date().getTime() - lastGame.startedAt.getTime();
 
         if (agoSince > defaults[0]) {
-            return message.reply(`can't call a sub for ${lastGame.name}, pickup played too long ago`);
+            return message.channel.send(Util.formatMessage('error', `${message.author}, can't call a sub for **${lastGame.name}**, pickup played too long ago`));
         }
 
         guildSettings.updateLastPromote();

@@ -1,3 +1,4 @@
+import Discord from 'discord.js';
 import { Command } from '../core/types';
 import GuildModel from '../models/guild';
 import Util from '../core/util';
@@ -17,17 +18,17 @@ const command: Command = {
     perms: false,
     exec: async (bot, message, params, defaults) => {
         const guildSettings = bot.getGuild(message.guild.id);
+        const displayIssuers = defaults[0] === 'true';
+
+        const warnedPlayers = [];
+        const issuers = [];
+        const times = [];
+        const reasons = [];
 
         const warns = await GuildModel.getWarns(BigInt(message.guild.id), 11);
 
         if (!warns.length) {
-            return message.reply('no warns found');
-        }
-
-        const formattedWarns = ['Warned players (Limit 10)'];
-
-        if (warns.length === 11) {
-            formattedWarns.push(`...earlier warns`);
+            return message.channel.send(Util.formatMessage('info', `${message.author}, no warns found`));
         }
 
         warns.forEach((warn, index) => {
@@ -36,7 +37,7 @@ const command: Command = {
             }
 
             const timeDif = (warn.warned_at.getTime() + guildSettings.warnExpiration) - new Date().getTime();
-            const issuer = defaults[0] === 'true' ? ' Issuer: ' + warn.issuer : '';
+            const issuer = warn.issuer;
 
             let reason = warn.reason;
 
@@ -44,12 +45,39 @@ const command: Command = {
                 reason = reason.substr(0, 45) + '...';
             }
 
-            const warnCount = `${warn.warns}/${guildSettings.warnsUntilBan} warns`;
-
-            formattedWarns.push(`Warnid: ${warn.warnid} Player: ${warn.player}${issuer} Time left: ${Util.formatTime(timeDif)}${reason ? ' Reason: ' + reason : ''} - ${warnCount}`);
+            warnedPlayers.push(`${warn.warnid} - ${warn.player}${displayIssuers ? '\n' : ''}`);
+            times.push(`${Util.formatTime(timeDif)}${displayIssuers ? '\n' : ''}`);
+            issuers.push(issuer);
+            reasons.push(reason ? reason : '-');
         });
 
-        message.channel.send(formattedWarns.join('\n'));
+        let fieldData: Discord.EmbedFieldData[];
+
+        if (displayIssuers) {
+            const issuerReasonColumn = issuers.map((issuer, idx) => `${issuer}\n${reasons[idx]}`);
+
+            fieldData = [
+                { name: 'Warn id / Player', value: warnedPlayers.join('\n'), inline: true },
+                { name: 'Time left', value: times.join('\n'), inline: true },
+                { name: 'Issuer / Reason', value: issuerReasonColumn.join('\n'), inline: true }
+            ]
+        } else {
+            fieldData = [
+                { name: 'Warn id / Player', value: warnedPlayers.join('\n'), inline: true },
+                { name: 'Time left', value: times.join('\n'), inline: true },
+                { name: 'Reason', value: reasons.join('\n'), inline: true }
+            ]
+        }
+
+        const botAvatarUrl = message.guild.client.user.avatarURL();
+
+        const warnsCardEmbed = new Discord.MessageEmbed()
+            .setColor('#126e82')
+            .setTitle('Warned players')
+            .addFields(fieldData)
+            .setFooter(`Limited to 10 warns${warns.length > 10 ? ', one or more active warns not displayed' : ''}`, botAvatarUrl);
+
+        message.channel.send(warnsCardEmbed);
     }
 }
 

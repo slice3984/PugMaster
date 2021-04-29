@@ -21,10 +21,10 @@ const command: Command = {
 
             if (!ao) {
                 await PlayerModel.setAo(BigInt(message.guild.id), BigInt(message.member.id), defaults[0]);
-                return message.reply(`ao enabled, you will have offline immunity for ${Util.formatTime(defaults[0])}`);
+                return message.channel.send(Util.formatMessage('success', `${message.author}, ao enabled, you will have offline immunity for ${Util.formatTime(defaults[0])}`));
             } else {
                 await PlayerModel.removeAos(BigInt(message.guild.id), message.member.id);
-                return message.reply('your ao got removed');
+                return message.channel.send(Util.formatMessage('success', `${message.author}, your ao got removed`));
             }
         }
 
@@ -32,11 +32,11 @@ const command: Command = {
             const ao = await PlayerModel.getAos(BigInt(message.guild.id), message.member.id);
 
             if (!ao) {
-                return message.reply('you got no active ao');
+                return message.channel.send(Util.formatMessage('info', `${message.author}, you got no active ao`));
             }
 
             const timeLeft = ao[0].ao_expire.getTime() - new Date().getTime();
-            message.reply(`your ao will expire in ${Util.formatTime(timeLeft)}`);
+            message.channel.send(Util.formatMessage('info', `${message.author}, your ao will expire in ${Util.formatTime(timeLeft)}`));
         }
     }
 }

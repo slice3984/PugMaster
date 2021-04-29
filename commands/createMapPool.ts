@@ -1,4 +1,5 @@
 import { Command } from '../core/types';
+import Util from '../core/util';
 import { Validator } from '../core/validator';
 import MappoolModel from '../models/mappool';
 
@@ -26,13 +27,13 @@ const command: Command = {
 
         const validMaps = [...new Set(Validator.Mappool.areValidMapNames(...maps))];
         if (validMaps.length === 0) {
-            return message.reply('no valid map names given, are the map names in a range of 1-45 chars?');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, no valid map names given, are the map names in a range of 1-45 chars?`));
         }
 
         await MappoolModel.addMappool(BigInt(message.guild.id), name);
         await MappoolModel.addMapsToPool(BigInt(message.guild.id), name, ...validMaps);
 
-        message.reply(`successfully created map pool ${name} with the following maps: ${validMaps.join(', ')}`);
+        message.channel.send(Util.formatMessage('success', `Created map pool **${name}** with the following maps: ${validMaps.map(map => `**${map}**`).join(', ')}`));
     }
 }
 

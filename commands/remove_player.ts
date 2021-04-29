@@ -19,16 +19,16 @@ const command: Command = {
         const player = await Util.getUser(message.guild, playerIdentifier, false) as Discord.GuildMember;
 
         if (!player) {
-            return message.reply(`given player not found`);
+            return message.channel.send(Util.formatMessage('error', `${message.author}, given player not found`));
         }
 
         const isAdded = await PickupModel.isPlayerAdded(BigInt(message.guild.id), BigInt(player.id));
 
         if (!isAdded.length) {
-            return message.reply(`${player.displayName} is not added to any pickups`);
+            return message.channel.send(Util.formatMessage('error', `**${player.displayName}** is not added to any pickups`));
         }
 
-        message.channel.send(`${player.displayName} got removed from all pickups`);
+        message.channel.send(Util.formatMessage('success', `**${player.displayName}** got removed from all pickups`));
         await PickupState.removePlayer(message.guild.id, player.id);
     }
 }

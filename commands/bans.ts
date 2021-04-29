@@ -1,3 +1,4 @@
+import Discord from 'discord.js';
 import { Command } from '../core/types';
 import GuildModel from '../models/guild';
 import Util from '../core/util';
@@ -19,70 +20,77 @@ const command: Command = {
     global: true,
     perms: false,
     exec: async (bot, message, params, defaults) => {
-        if (params.length === 0) {
-            const bans = await GuildModel.getBans(BigInt(message.guild.id), 'timed', 11);
+        let displayPerms = false;
+        const displayIssuers = defaults[0] === 'true';
+        let bans;
 
-            if (bans.length === 0) {
-                return message.reply('no bans found');
-            }
+        const bannedPlayers = [];
+        const issuers = [];
+        const times = [];
+        const reasons = [];
 
-            const formattedBans = ['Banned players (Limit 10)'];
-
-            if (bans.length === 11) {
-                formattedBans.push(`...earlier bans`);
-            }
-
-            bans.forEach((ban, index) => {
-                if (index === 10) {
-                    return;
-                }
-                const timeDif = ban.ends_at.getTime() - new Date().getTime();
-                const issuer = defaults[0] === 'true' ? ' Issuer: ' + ban.issuer : '';
-
-                let reason = ban.reason;
-
-                if (reason && reason.length > 45) {
-                    reason = reason.substr(0, 45) + '...';
-                }
-
-                formattedBans.push(`Banid: ${ban.banid} Player: ${ban.player}${issuer} Time left: ${Util.formatTime(timeDif)}${reason ? ' Reason: ' + reason : ''}${ban.is_warn_ban ? ' (AUTOBAN - WARNS)' : ''}`);
-            });
-
-            message.channel.send(formattedBans.join('\n'));
-        } else {
+        if (params.length > 0) {
             if (params[0].toLowerCase() !== 'perm') {
-                return message.reply('did you mean perm?');
+                return message.channel.send(Util.formatMessage('error', `${message.author}, did you mean perm?`));
             }
 
-            const bans = await GuildModel.getBans(BigInt(message.guild.id), 'perms_only', 11);
-
-            if (bans.length === 0) {
-                return message.reply('no permbans found');
-            }
-
-            const formattedBans = ['Permbanned players (Limit 10)'];
-
-            if (bans.length === 11) {
-                formattedBans.push(`...earlier permbans`);
-            }
-
-            bans.forEach((ban, index) => {
-                if (index === 10) {
-                    return;
-                }
-
-                let reason = ban.reason;
-
-                if (reason && reason.length > 45) {
-                    reason = reason.substr(0, 45) + '...';
-                }
-
-                const issuer = defaults[0] === 'true' ? ' Issuer: ' + ban.issuer : '';
-                formattedBans.push(`Banid: ${ban.banid} Player: ${ban.player}${issuer}${reason ? ' Reason: ' + reason : ''}`);
-            });
-
-            message.channel.send(formattedBans.join('\n'));
+            displayPerms = true;
+            bans = await GuildModel.getBans(BigInt(message.guild.id), 'perms_only', 11);
+        } else {
+            bans = await GuildModel.getBans(BigInt(message.guild.id), 'timed', 11);
         }
+
+        if (!bans.length) {
+            return message.channel.send(Util.formatMessage('info', `${message.author}, no ${displayPerms ? 'permbans' : 'bans'} found`));
+        }
+
+        bans.forEach((ban, index) => {
+            if (index === 10) {
+                return;
+            }
+
+            const timeLeft = !displayPerms ? Util.formatTime(ban.ends_at.getTime() - new Date().getTime(), true) : 'Permanent';
+            const issuer = ban.issuer;
+
+            let reason = ban.reason;
+
+            if (reason && reason.length > 30) {
+                reason = reason.substr(0, 30) + '...';
+            }
+
+            bannedPlayers.push(`${ban.banid} - ${ban.player}${displayIssuers ? '\n' : ''}`);
+            times.push(`${timeLeft}${displayIssuers ? '\n' : ''}`);
+            issuers.push(issuer);
+            reasons.push(reason ? reason : '-');
+        });
+
+        let fieldData: Discord.EmbedFieldData[];
+
+        if (displayIssuers) {
+            const issuerReasonColumn = issuers.map((issuer, idx) => `${issuer}\n${reasons[idx]}`);
+
+            fieldData = [
+                { name: 'Ban id / Player', value: bannedPlayers.join('\n'), inline: true },
+                { name: 'Time left', value: times.join('\n'), inline: true },
+                { name: 'Issuer / Reason', value: issuerReasonColumn.join('\n'), inline: true }
+            ]
+        } else {
+            fieldData = [
+                { name: 'Ban id / Player', value: bannedPlayers.join('\n'), inline: true },
+                { name: 'Time left', value: times.join('\n'), inline: true },
+                { name: 'Reason', value: reasons.join('\n'), inline: true }
+            ]
+        }
+
+        const botAvatarUrl = message.guild.client.user.avatarURL();
+
+        const bansCardEmbed = new Discord.MessageEmbed()
+            .setColor('#126e82')
+            .setTitle(`${displayPerms ? 'Permbanned' : 'Banned'} players`)
+            .addFields(fieldData)
+            .setFooter(`Limited to 10 bans${bans.length > 10 ? ', one or more active bans not displayed' : ''}`, botAvatarUrl);
+
+        message.channel.send(bansCardEmbed);
     }
 }
 

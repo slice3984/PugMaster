@@ -1,5 +1,6 @@
 import Rating from '../core/rating';
 import { Command } from '../core/types';
+import Util from '../core/util';
 import PickupModel from '../models/pickup';
 
 const command: Command = {
@@ -21,20 +22,20 @@ const command: Command = {
         const rateablePickup = await PickupModel.getStoredRateEnabledPickup(BigInt(message.guild.id), +params[0]);
 
         if (!rateablePickup) {
-            return message.reply('no rateable pickup found for the given id');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, no rateable pickup found with id **${params[0]}**`));
         }
 
         if (!rateablePickup.isRated) {
-            return message.reply('the given pickup is rateable but not rated yet');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, pickup **${rateablePickup.pickupId}** - **${rateablePickup.name}** is rateable but not rated yet`));
         }
 
         const success = await Rating.unrateMatch(message.guild.id, rateablePickup);
 
         if (!success) {
-            return message.reply(`you can only unrate up to ${Rating.RERATE_AMOUNT_LIMIT} proceeding rated pickups`);
+            return message.channel.send(Util.formatMessage('error', `${message.author}, you can only unrate up to ${Rating.RERATE_AMOUNT_LIMIT} proceeding rated pickups of the same kind`));
         }
 
-        message.channel.send(`Unrated pickup #**${rateablePickup.pickupId}** - **${rateablePickup.name}**, player ratings updated`);
+        message.channel.send(Util.formatMessage('success', `Unrated pickup #**${rateablePickup.pickupId}** - **${rateablePickup.name}**`));
     }
 }
 

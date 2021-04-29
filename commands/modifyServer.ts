@@ -1,6 +1,7 @@
 import { Command } from '../core/types';
 import ServerModel from '../models/server';
 import { Validator } from '../core/validator';
+import Util from '../core/util';
 
 const command: Command = {
     cmd: 'modify_server',
@@ -27,7 +28,7 @@ const command: Command = {
         }
 
         if (!['ip', 'password'].includes(field)) {
-            return message.reply('invalid field, has to be ip or password');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, invalid property, has to be **ip** or **password**`));
         }
 
         const server = await ServerModel.getServer(BigInt(message.guild.id), name);
@@ -35,26 +36,26 @@ const command: Command = {
         if (field === 'ip') {
             const validIp = Validator.Server.isValidIp(field);
             if (validIp !== true) {
-                return message.reply(validIp.errorMessage);
+                return message.channel.send(Util.formatMessage('error', validIp.errorMessage));
             }
 
             if (value === server.ip) {
-                return message.reply(`ip for server ${name} is already set to ${value}`);
+                return message.channel.send(Util.formatMessage('error', `IP for server **${name}** is already set to **${value}**`));
             }
         } else {
             const validPassword = Validator.Server.isValidPassword(field);
 
             if (validPassword !== true) {
-                return message.reply(validPassword.errorMessage);
+                return message.channel.send(Util.formatMessage('error', validPassword.errorMessage));
             }
 
             if (server.password && server.password === value) {
-                return message.reply(`password for server ${name} is already set to ${value}`);
+                return message.channel.send(Util.formatMessage('error', `Password for server **${name}** is already set to **${value}**`));
             }
         }
 
         await ServerModel.modifyServer(BigInt(message.guild.id), name, field, value);
-        message.reply(`successfully modified server ${name}, set ${field} to ${value}`);
+        message.channel.send(Util.formatMessage('success', `Modified server **${name}**, set **${field}** to **${value}**`));
     }
 }
 

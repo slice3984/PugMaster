@@ -1,6 +1,7 @@
 import { Command } from '../core/types';
 import PickupModel from '../models/pickup';
 import PickupState from '../core/pickupState';
+import Util from '../core/util';
 
 const command: Command = {
     cmd: 'remove',
@@ -18,7 +19,7 @@ const command: Command = {
         const isInPickingStage = await PickupModel.isPlayerAddedToPendingPickup(BigInt(message.guild.id), BigInt(message.member.id), 'picking_manual', 'mapvote', 'captain_selection');
 
         if (isInPickingStage) {
-            return message.reply('you are not allowed to remove from pickups in pending stage');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, you are not allowed to remove from pickups in pending stage`));
         }
 
         if (params.length === 0) {

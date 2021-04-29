@@ -1,4 +1,5 @@
 import { Command } from '../core/types';
+import Util from '../core/util';
 import PickupModel from '../models/pickup';
 
 const command: Command = {
@@ -15,7 +16,7 @@ const command: Command = {
         let validPickups = await PickupModel.areValidPickups(BigInt(message.guild.id), ...params);
 
         if (!validPickups.length) {
-            return message.reply(`no valid pickups provided`);
+            return message.channel.send(Util.formatMessage('error', `${message.author}, no valid pickups provided`));
         }
 
         const pickupIds = validPickups.map(pickup => pickup.id);
@@ -23,7 +24,7 @@ const command: Command = {
             .filter(pickup => pickup.promotionRole);
 
         if (!pickupsToUnsubscribe.length) {
-            return message.reply('given valid pickups got no promotion role');
+            return message.channel.send(Util.formatMessage('warn', `${message.author}, given valid pickups got no promotion role`));
         }
 
         const userRoleIds = message.member.roles.cache.map(role => role.id);
@@ -31,16 +32,16 @@ const command: Command = {
         pickupsToUnsubscribe = pickupsToUnsubscribe.filter(pickup => userRoleIds.includes(pickup.promotionRole));
 
         if (!pickupsToUnsubscribe.length) {
-            return message.reply('you are not subscribed to the given valid pickups');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, you are already not subscribed to the given valid pickups`));
         }
 
         try {
             await message.member.roles.remove(pickupsToUnsubscribe.map(pickup => pickup.promotionRole.toString()));
         } catch (_err) {
-            return message.channel.send('didn\'t manage to remove one or multiple roles, are the required permission given?');
+            return message.channel.send(Util.formatMessage('error', 'Not able to remove one or multiple roles, are the required permission given, do the roles exist?'));
         }
 
-        message.reply(`successfully unsubscribed from ${pickupsToUnsubscribe.map(pickup => pickup.name).join(', ')}`);
+        message.channel.send(Util.formatMessage('success', `${message.author}, unsubscribed from ${pickupsToUnsubscribe.map(pickup => `**${pickup.name}**`).join(', ')}`));
     }
 }
 

@@ -1,4 +1,5 @@
 import { Command } from '../core/types';
+import Util from '../core/util';
 import PickupModel from '../models/pickup';
 
 const command: Command = {
@@ -41,7 +42,7 @@ const command: Command = {
         }
 
         if (validPickups.length === 0) {
-            return message.reply('Invalid syntax, no pickups created');
+            return message.channel.send(Util.formatMessage('error', `Invalid syntax, no pickups created`));
         }
 
         let alreadyStored = await PickupModel.areValidPickups(BigInt(message.guild.id), ...validPickups
@@ -52,11 +53,11 @@ const command: Command = {
         validPickups = validPickups.filter(pickup => !alreadyStoredNames.includes(pickup.name));
 
         if (validPickups.length === 0) {
-            return message.reply('Valid given pickups are already stored');
+            return message.channel.send(Util.formatMessage('error', 'Valid given pickups are already stored'));
         }
 
         await PickupModel.createPickups(BigInt(message.guild.id), ...validPickups);
-        message.reply(`Successfully created ${validPickups.length} pickup${validPickups.length > 1 ? 's' : ''} (${validPickups.map(pickup => pickup.name).join(', ')})`);
+        message.channel.send(Util.formatMessage('success', `Created **${validPickups.length}** pickup${validPickups.length > 1 ? 's' : ''} (${validPickups.map(pickup => `**${pickup.name}**`).join(', ')})`));
     }
 };
 

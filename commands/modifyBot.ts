@@ -1,3 +1,5 @@
+import Discord from 'discord.js';
+import ConfigTool from '../core/configTool';
 import { Command } from '../core/types';
 import Util from '../core/util';
 import ServerModel from '../models/server';
@@ -21,16 +23,17 @@ const command: Command = {
             const errors = await bot.getGuild(message.guild.id).modifyProperty({ key, value });
 
             if (errors.length) {
-                return message.reply(errors[0].errorMessage);
+                return message.channel.send(Util.formatMessage('error', errors[0].errorMessage));
             }
 
-            message.reply(`successfully updated ${key} to ${value}`);
+            message.channel.send(Util.formatMessage('success', `Updated property ${key}, set value to ${value}`));
         } else {
             if (key !== 'show') {
                 return message.reply('invalid argument given, do you mean show?');
             }
 
             const settings = bot.getGuild(message.guild.id);
+            const config = ConfigTool.getConfig();
 
             const globalExpireTime = settings.globalExpireTime ? Util.formatTime(settings.globalExpireTime) : 'disabled';
             const reportExpiretime = Util.formatTime(settings.reportExpireTime);
@@ -63,7 +66,7 @@ const command: Command = {
                 const param = params[1].toLowerCase();
 
                 if (!['start', 'sub', 'notify'].includes(param)) {
-                    return message.reply('invalid argument given, do you mean start, sub or notify?')
+                    return message.channel.send(Util.formatMessage('error', `${message.author}, invalid argument given, do you mean **start**, **sub** or **notify**?`))
                 }
 
                 let toDisplay = '';
@@ -74,38 +77,65 @@ const command: Command = {
                     case 'notify': toDisplay = notifyMessage;
                 }
 
-                infoString = `**__${param} message__**\n${toDisplay}`;
-            } else {
-                infoString =
-                    `**__Server configuration__**\n` +
-                    `Prefix: **${settings.prefix}**\n` +
-                    `Global expire: **${globalExpireTime}**\n` +
-                    `Report expire: **${reportExpiretime}**\n` +
-                    `Trust time: **${trustTime}**\n` +
-                    `Explicit trust: **${explicitTrust}**\n` +
-                    `Default whitelist: **${whitelistRole ? whitelistRole.name : '-'}**\n` +
-                    `Default blacklist: **${blacklistRole ? blacklistRole.name : '-'}**\n` +
-                    `Promotion delay: **${promotionDelay}**\n` +
-                    `Default Server: **${defaultServer}**\n` +
-                    `Start message: **${settings.prefix}modify_bot show start**\n` +
-                    `Sub message: **${settings.prefix}modify_bot show sub**\n` +
-                    `Notify message: **${settings.prefix}modify_bot show notify**\n` +
-                    `Iteration time: **${iterationTime}**\n` +
-                    `Afk time: **${afkTime}**\n` +
-                    `Afk check iterations: **${afkCheckIterations}**\n` +
-                    `Picking iterations: **${pickingIterations}**\n` +
-                    `Map vote iterations: **${mapvoteIterations}**\n` +
-                    `Captain selection iterations: **${captainSelectionIterations}**\n` +
-                    `Max average elo varaince: **${maxAvgVariance}\n**` +
-                    `Max warn streaks: **${warnStreaks}**\n` +
-                    `Warns until ban: **${warnsUntilBan}**\n` +
-                    `Warn streak expiration: **${warnStreakExpiration}**\n` +
-                    `Warn expiration time: **${warnExpirationTime}**\n` +
-                    `Warn bantime: **${warnBanTime}**\n` +
-                    `Warn bantime multiplier: **${warnBanTimeMultiplier}**\n`;
-            }
+                infoString = `**${param} message**\n\`\`\`${toDisplay}\`\`\``;
 
-            message.channel.send(infoString);
+                message.channel.send(infoString);
+            } else {
+                const settingsObj = {
+                    'Prefix': settings.prefix,
+                    'Explicit trust': explicitTrust,
+                    'Trust time': trustTime,
+                    'Global expire': globalExpireTime,
+                    'AFK time': afkTime,
+                    'Promotion delay': promotionDelay,
+                    '\u200B': '\u200B',
+                    'Default Server': defaultServer,
+                    'Default Whitelist': `${whitelistRole ? whitelistRole.name : '-'}`,
+                    'Default Blacklist': `${blacklistRole ? blacklistRole.name : '-'}`,
+                    '\u200B ': '\u200B',
+                    'Iteration time': iterationTime,
+                    'AFK check iterations': afkCheckIterations,
+                    'Captain selection iterations': captainSelectionIterations,
+                    'Picking iterations': pickingIterations,
+                    'Map vote iterations': mapvoteIterations,
+                    '\u200B  ': '\u200B',
+                    'Report expire': reportExpiretime,
+                    'Max average elo variance': maxAvgVariance,
+                    '\u200B   ': '\u200B',
+                    'Max warn streaks': warnStreaks,
+                    'Warns until ban': warnsUntilBan,
+                    'Warn streak expiration': warnStreakExpiration,
+                    'Warn expiration time': warnExpirationTime,
+                    'Warn bantime': warnBanTime,
+                    'Warn bantime multiplier': warnBanTimeMultiplier,
+                    '\u200B    ': '\u200B',
+                    '**To display**': '\u200B',
+                    'Start message': `${settings.prefix}modify_bot show start`,
+                    'Notify message': `${settings.prefix}modify_bot show notify`,
+                    'Sub message': `${settings.prefix}modify_bot show sub`
+                };
+
+                const botAvatarUrl = message.guild.client.user.avatarURL();
+
+                const settingsEmbed = new Discord.MessageEmbed()
+                    .setColor('#126e82')
+                    .setTitle(`:gear: Bot settings - ${message.guild.name}`)
+                    .addFields(
+                        {
+                            name: 'Property',
+                            value: Object.getOwnPropertyNames(settingsObj).join('\n'),
+                            inline: true
+                        },
+                        {
+                            name: 'Value',
+                            value: Object.values(settingsObj).join('\n'),
+                            inline: true
+                        }
+                    )
+                    .setFooter(`${config.webserver.domain}/help/botvariables`, botAvatarUrl);
+
+                message.channel.send(settingsEmbed);
+            }
         }
     }
 }

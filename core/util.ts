@@ -4,6 +4,7 @@ import Bot from './bot';
 import { TimeError, PickupSettings, PickupStartConfiguration } from './types';
 import MappoolModel from '../models/mappool';
 import ServerModel from '../models/server';
+import ConfigTool from './configTool';
 
 export default class Util {
     private constructor() { }
@@ -85,7 +86,7 @@ export default class Util {
         return Util.getChannel(guild, await GuildModel.getPickupChannel(BigInt(guild.id))) as Discord.TextChannel;
     }
 
-    static formatTime(ms: number) {
+    static formatTime(ms: number, shortFormat = false) {
         const stringParts = [];
 
         let seconds = (ms / 1000) | 0;
@@ -105,7 +106,7 @@ export default class Util {
 
         const shorten = Math.sign(minutes) + Math.sign(hours) + Math.sign(days) + Math.sign(weeks) + Math.sign(seconds) > 2;
 
-        if (shorten) {
+        if (shorten || shortFormat) {
             if (weeks > 0) {
                 stringParts.push(`${weeks}w`);
             }
@@ -442,6 +443,25 @@ export default class Util {
 
     static removeObjectArrayDuplicates<T>(arr: T[], propertyToCheck: string): T[] {
         return [...new Map(arr.map(obj => [obj[propertyToCheck], obj])).values()];
+    }
+
+    static formatMessage(type: 'success' | 'info' | 'warn' | 'error', msg: string) {
+        const configEmojis = ConfigTool.getConfig().emojis;
+        let icon;
+
+        const successEmoji = configEmojis.success.length ? configEmojis.success : ':white_check_mark:';
+        const infoEmoji = configEmojis.info.length ? configEmojis.info : ":information_source:";
+        const warnEmoji = configEmojis.warn.length ? configEmojis.warn : ":warning:";
+        const errorEmoji = configEmojis.error.length ? configEmojis.error : ":x:";
+
+        switch (type) {
+            case 'success': icon = successEmoji; break;
+            case 'info': icon = infoEmoji; break;
+            case 'warn': icon = warnEmoji; break;
+            case 'error': icon = errorEmoji; break;
+        }
+
+        return `${icon} **|** ${msg}`;
     }
 
     static tsToEloNumber(skill: number) { return Math.ceil(skill * 16) }

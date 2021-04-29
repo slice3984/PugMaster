@@ -2,6 +2,7 @@ import { Command } from '../core/types';
 import GuildModel from '../models/guild';
 import PlayerModel from '../models/player';
 import afkCheckStage from '../core/stages/afkCheck';
+import Util from '../core/util';
 
 const command: Command = {
     cmd: 'ready',
@@ -15,20 +16,20 @@ const command: Command = {
         const playerState = await PlayerModel.getPlayerState(BigInt(message.guild.id), BigInt(message.author.id));
 
         if (!playerState || !playerState.isAfk) {
-            return message.reply('you are not set as AFK player');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, you are not set as AFK player`));
         }
 
         let pendingPickupsMap = await GuildModel.getPendingPickups(BigInt(message.guild.id));
 
         if (!pendingPickupsMap || !pendingPickupsMap.has(message.guild.id)) {
-            return message.reply('there is no pending pickup to ready up for');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, there is no pending pickup to ready up for`));
         }
 
         const pendingPickups = pendingPickupsMap.get(message.guild.id)
             .filter(pendingPickup => pendingPickup.stage === 'afk_check');
 
         if (!pendingPickups.length) {
-            return message.reply('there is no pending pickup to ready up for');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, there is no pending pickup to ready up for`));
         }
 
         const playerAddedTo = pendingPickups.filter(pendingPickup => {
@@ -37,7 +38,7 @@ const command: Command = {
         });
 
         if (!playerAddedTo.length) {
-            return message.reply('you are not added to any pending pickup');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, you are not added to any pending pickup`));
         }
         const readiedUpPickups = [];
         for (const pendingPickup of playerAddedTo) {
@@ -55,7 +56,7 @@ const command: Command = {
         }
 
         await GuildModel.removeAfks(null, BigInt(message.guild.id), message.author.id);
-        message.channel.send(`${message.author} readied up for ${readiedUpPickups.map(name => `**${name}**`).join(', ')}`);
+        message.channel.send(Util.formatMessage('success', `${message.author} readied up for ${readiedUpPickups.map(name => `**${name}**`).join(', ')}`));
     }
 }
 

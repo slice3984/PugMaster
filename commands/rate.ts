@@ -1,6 +1,7 @@
 import Discord from 'discord.js';
 import Rating from '../core/rating';
 import { Command, RateablePickup } from '../core/types';
+import Util from '../core/util';
 import PickupModel from '../models/pickup';
 
 const command: Command = {
@@ -17,13 +18,13 @@ const command: Command = {
     perms: true,
     exec: async (bot, message, params) => {
         if (!/^\d+$/.test(params[0])) {
-            return message.reply('pickup id has to be a number');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, pickup id has to be a number`));
         }
 
         const rateablePickup = await PickupModel.getStoredRateEnabledPickup(BigInt(message.guild.id), +params[0]);
 
         if (!rateablePickup) {
-            return message.reply('no rateable or rated pickup found for the given id');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, no rateable or rated pickup found with id **${params[0]}**`));
         }
 
         const givenRatings: { team: string; outcome: string }[] = [];
@@ -108,7 +109,7 @@ const command: Command = {
 
         if (validRatings.length !== rateablePickup.teams.length) {
             return message.reply(
-                'invalid ratings provided\n' +
+                'Invalid ratings provided\n' +
                 `${winWithDraw ? '- Ratings with a draw can\'t contain wins\n' : ''}` +
                 `${missingDraw ? '- There have to be at least two draw reports\n' : ''}` +
                 `${multipleWins ? '- Only one win report allowed\n' : ''}` +
@@ -129,7 +130,7 @@ const command: Command = {
             }
 
             if (!diffRatings) {
-                return message.reply('the given ratings are equal to the current ratings');
+                return message.channel.send(Util.formatMessage('error', `The given ratings are equal to the current ratings of **#${params[0]}** - **${rateablePickup.name}**`));
             }
         }
 
@@ -142,11 +143,11 @@ const command: Command = {
         const success = await Rating.rateMatch(message.guild.id, rateablePickup);
 
         if (!success) {
-            return message.reply(`you can only ${rateablePickup.isRated ? 'rerate' : 'rate'} up to ${Rating.RERATE_AMOUNT_LIMIT} proceeding rated pickups`);
+            return message.channel.send(Util.formatMessage('error', `It is only possible to ${rateablePickup.isRated ? 'rerate' : 'rate'} up to ${Rating.RERATE_AMOUNT_LIMIT} proceeding rated pickups of the same kind`));
         }
 
         const results = rateablePickup.teams.map(t => `Team ${t.name} - **${t.outcome.toUpperCase()}**`).join(' / ');
-        message.channel.send(`${rateablePickup.isRated ? 'Rerated' : 'Rated'} pickup **#${rateablePickup.pickupId}** - **${rateablePickup.name}**: ${results}`);
+        message.channel.send(Util.formatMessage('success', `${rateablePickup.isRated ? 'Rerated' : 'Rated'} pickup **#${rateablePickup.pickupId}** - **${rateablePickup.name}**: ${results}`));
     }
 }
 

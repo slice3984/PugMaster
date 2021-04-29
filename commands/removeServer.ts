@@ -1,4 +1,5 @@
 import { Command } from '../core/types';
+import Util from '../core/util';
 import ServerModel from '../models/server';
 
 const command: Command = {
@@ -19,7 +20,7 @@ const command: Command = {
 
 
         if (!validServers.length) {
-            return message.reply('given servers not found');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, given servers not found`));
         }
 
         await ServerModel.removeServers(BigInt(message.guild.id), ...validServers.map(server => server.name));
@@ -32,8 +33,8 @@ const command: Command = {
             }
         }
 
-        message.reply(`successfully removed server ${validServers.map(server => server.name).join(', ')}` +
-            (guildServer ? `\nCleared default server ${guildServer.name}` : ''));
+        message.channel.send(Util.formatMessage('success', `Removed server ${validServers.map(server => `**${server.name}**`).join(', ')}` +
+            (guildServer ? `\nCleared default server **${guildServer.name}**` : '')));
     }
 }
 

@@ -1,4 +1,5 @@
 import { Command } from '../core/types';
+import Util from '../core/util';
 import PlayerModel from '../models/player';
 
 const command: Command = {
@@ -17,13 +18,13 @@ const command: Command = {
 
         if (params.length >= 1) {
             if (params[0].toLowerCase() !== 'status') {
-                return message.reply('invalid argument given, do you mean status?');
+                return message.channel.send(Util.formatMessage('error', `${message.author}, invalid argument given, do you mean **status**?`));
             }
 
-            message.reply(`dm notifications for pickup starts are ${isEnabled ? 'enabled' : 'disabled'}`);
+            message.channel.send(Util.formatMessage('info', `${message.author}, your dm notifications for pickup starts are **${isEnabled ? 'enabled' : 'disabled'}**`));
         } else {
             await PlayerModel.toggleNotify(BigInt(message.guild.id), BigInt(message.member.id));
-            message.reply(`${isEnabled ? 'disabled' : 'enabled'} dm notifications for pickup starts`);
+            message.channel.send(Util.formatMessage('success', `${message.author}, **${isEnabled ? 'disabled' : 'enabled'}** dm notifications for pickup starts`));
         }
     }
 }

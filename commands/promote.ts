@@ -21,26 +21,27 @@ const command: Command = {
 
         // Can be null if used for the first time
         if (timeUntilNextPromote && timeUntilNextPromote > 0) {
-            return message.reply(`you can't promote too often, please wait ${Util.formatTime(timeUntilNextPromote)}`);
+            return message.channel.send(Util.formatMessage('info', `${message.author}, you can't promote too often, please wait **${Util.formatTime(timeUntilNextPromote)}**`));
         }
 
         const pickup = params[0].toLowerCase();
         const isValidPickup = await PickupModel.areValidPickups(BigInt(message.guild.id), pickup);
 
         if (!isValidPickup.length) {
-            return message.reply('no valid pickup provided');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, no valid pickup provided`));
         }
 
-        const promotionRole = await (await PickupModel.getPickupSettings(BigInt(message.guild.id), isValidPickup[0].id)).promotionRole;
+        const pickupSettings = await PickupModel.getPickupSettings(BigInt(message.guild.id), isValidPickup[0].id);
+        const promotionRole = pickupSettings.promotionRole;
 
         if (!promotionRole) {
-            return message.reply('no promotion role for this pickup set, can\'t promote it');
+            return message.channel.send(Util.formatMessage('error', `No promotion role set for **${pickupSettings.name}**, not able to promote it`));
         }
 
         const role = message.guild.roles.cache.get(promotionRole.toString());
 
         if (!role) {
-            return message.channel.send(`set promotion role for pickup ${pickup} not found`);
+            return message.channel.send(Util.formatMessage('error', `Stored promotion role for pickup **${pickupSettings.name}** not found`));
         }
 
         const activePickup = Array.from(await (await PickupModel.getActivePickups(BigInt(message.guild.id)))
@@ -65,14 +66,15 @@ const command: Command = {
                     }
                 }
             } catch (_err) {
-                return message.channel.send('can\'t remove the promotion role, are the required permissions given?');
+                return message.channel.send(Util.formatMessage('error', 'Can\'t remove the promotion role, are the required permissions given?'));
             }
         }
 
         guildSettings.updateLastPromote();
         await GuildModel.updateLastPromote(BigInt(message.guild.id));
 
-        message.channel.send(`${role} please ${guildSettings.prefix}add to ${pickup}`);
+        const playersLeft = activePickup ? pickupSettings.playerCount - activePickup.players.length : pickupSettings.playerCount;
+        message.channel.send(`${role} please ${guildSettings.prefix}add to **${pickupSettings.name}**, **${playersLeft}** player${playersLeft > 1 ? 's' : ''} left!`);
 
         // Readd removed roles
         try {

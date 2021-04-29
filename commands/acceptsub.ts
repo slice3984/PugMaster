@@ -24,14 +24,14 @@ const command: Command = {
         const latestUnratedPickup = await PickupModel.getLatestStoredRateEnabledPickup(BigInt(message.guild.id));
 
         if (!latestUnratedPickup) {
-            return message.reply('no pickup found you can be subbed for');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, no pickup found you can be subbed for`));
         }
 
         const endTimestamp = latestUnratedPickup.startedAt.getTime() + guildSettings.reportExpireTime;
 
 
         if (Date.now() > endTimestamp) {
-            return message.reply(`latest rateable pickup is too old, you can only accept sub requests for pickups less than ${Util.formatTime(guildSettings.reportExpireTime)} old`);
+            return message.channel.send(Util.formatMessage('error', `${message.author}, your latest rateable pickup is too old, you can only accept sub requests for pickups less than ${Util.formatTime(guildSettings.reportExpireTime)} old`));
         }
 
         // Check if the player is added to the latest pickup
@@ -41,7 +41,7 @@ const command: Command = {
             .map(player => player.id);
 
         if (!playersInPickup.includes(message.author.id)) {
-            return message.reply('you are not a participant in the latest rateable pickup');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, you are not a participant in the latest rateable pickup`));
         }
 
         // Validate the given player
@@ -49,19 +49,19 @@ const command: Command = {
 
         // Exists
         if (!player) {
-            return message.reply('given player to accept sub request not found');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, given player to accept sub request not found`));
         }
 
         // Sent a sub request
         const sentRequest = await PlayerModel.getSubRequest(BigInt(message.guild.id), BigInt(player.id));
 
         if (!sentRequest) {
-            return message.reply(`${player.displayName} didn't send any sub request`);
+            return message.channel.send(Util.formatMessage('error', `${message.author}, ${player.displayName} didn't send any sub request`));
         }
 
         // Sub request for the caller
         if (sentRequest !== message.author.id) {
-            return message.reply(`${player.displayName} didn't send a sub request for you`);
+            return message.channel.send(Util.formatMessage('error', `${message.author}, ${player.displayName} didn't send a sub request for you`));
         }
 
         // Clear all sub requests for this player
@@ -70,7 +70,7 @@ const command: Command = {
         // Replace player in stored pickups
         await StatsModel.replacePlayer(BigInt(message.guild.id), latestUnratedPickup.pickupId, BigInt(message.author.id), BigInt(player.id));
 
-        message.channel.send(`accepted sub request from ${player.displayName}, stored <@${player.id}> as substitute of <@${message.author.id}>`);
+        message.channel.send(Util.formatMessage('success', `Accepted sub request from ${player.displayName}, stored <@${player.id}> as substitute of <@${message.author.id}>`));
     }
 }
 

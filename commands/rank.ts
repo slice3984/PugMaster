@@ -22,22 +22,22 @@ const command: Command = {
         const players = await PlayerModel.getPlayer(BigInt(message.guild.id), identifier);
 
         if (!players) {
-            return message.reply('no player found with the given identifier');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, no player found with the given identifier`));
         }
 
         if (players.players.length > 1) {
             if (players.oldNick) {
-                return message.reply(`no player found with such name as current name, found multiple names in the name history, try calling the command with the player id again`);
+                return message.channel.send(Util.formatMessage('error', `${message.author}, no player found with such name as current name, found multiple names in the name history, try calling the command with the player id again`));
 
             } else {
-                return message.reply(`found multiple players using the given name, try calling the command with the player id again`);
+                return message.channel.send(Util.formatMessage('info', `${message.author}, found multiple players using the given name, try calling the command with the player id again`));
             }
         }
 
         const ratings = await StatsModel.getPlayerRatings(BigInt(message.guild.id), BigInt(players.players[0].userId));
 
         if (!ratings) {
-            return message.reply('no rated games found for this player');
+            return message.channel.send(Util.formatMessage('info', `${message.author}, no rated games found for **${players.players[0].currentNick}**`));
         }
 
         const pickupNames = [];

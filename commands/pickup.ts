@@ -1,4 +1,6 @@
+import Discord from 'discord.js';
 import { Command, ChannelType } from '../core/types';
+import Util from '../core/util';
 import GuildModel from '../models/guild';
 
 const command: Command = {
@@ -16,7 +18,7 @@ const command: Command = {
         const channelType = params[0].toLowerCase();
 
         if (!(types.includes(channelType))) {
-            return message.reply(`invalid channel type, valid types are: ${types.join(' ')}`);
+            return message.channel.send(Util.formatMessage('error', `${message.author}, invalid channel type, valid types are: ${types.map(type => `**${type}**`).join(', ')}`));
         }
 
         const guildId = BigInt(message.guild.id);
@@ -25,18 +27,18 @@ const command: Command = {
         // No bot channel set for this guild channel
         if (!currChannelType) {
             await GuildModel.createChannel(guildId, channelId, channelType);
-            message.reply(`Channel successfully configured as ${channelType} channel`);
+            message.channel.send(Util.formatMessage('success', `Configured channel **${(message.channel as Discord.TextChannel).name}** as **${channelType}** channel`));
         } else {
             if (channelType === 'none') {
                 await GuildModel.removeChannel(guildId, channelId);
-                return message.reply(`Deleted ${currChannelType} channel`);
+                return message.channel.send(Util.formatMessage('success', `Deleted ${currChannelType} channel`));
             }
             if (currChannelType === channelType) {
-                return message.reply(`This channel is already a ${currChannelType} channel`);
+                return message.channel.send(Util.formatMessage('error', `This channel is already a **${currChannelType}** channel`));
             }
 
             await GuildModel.updateChannel(guildId, channelId, channelType);
-            return message.reply(`Channel successfully updated, channel type is ${channelType} instead of ${currChannelType} now`);
+            return message.channel.send(Util.formatMessage('success', `Channel updated, channel type is **${channelType}** instead of **${currChannelType}** now`));
         }
     }
 }

@@ -78,7 +78,7 @@ export default class CommandHandler {
         if (commandTime) {
             if (commandTime + cmdCooldownTime > messageTimestamp) {
                 const timeLeft = (commandTime + cmdCooldownTime) - messageTimestamp;
-                message.reply(`you can execute this command again in ${Util.formatTime(timeLeft)}`);
+                message.channel.send(Util.formatMessage('info', `${message.author}, you can execute this command again in **${Util.formatTime(timeLeft)}**`));
                 return false;
             }
         }
@@ -87,7 +87,7 @@ export default class CommandHandler {
         return true;
     }
 
-    private handleFloodProtection(message: Discord.Message, guildSettings: GuildSettings): boolean {
+    private handleFloodProtection(message: Discord.Message, command: string, guildSettings: GuildSettings): boolean {
         const floodDelay = +this.config.settings.FLOOD_PROTECTION_DELAY;
         const floodMaxCommands = +this.config.settings.FLOOD_PROTECTION_MAX_COMMANDS;
         const floodTimeout = +this.config.settings.FLOOD_TIMEOUT_TIME;
@@ -130,7 +130,12 @@ export default class CommandHandler {
                     return true;
                 }
 
-                message.reply(`too quick, you got timed out for ${Util.formatTime(floodTimeout)}`);
+                // Don't display any message in case of the pickup command to avoid output in non bot managed channels
+                if (command === 'pickup') {
+                    return false;
+                }
+
+                message.channel.send(Util.formatMessage('error', `${message.author}, too quick, you got timed out for **${Util.formatTime(floodTimeout)}**`));
                 return false;
             }
         }
@@ -140,7 +145,7 @@ export default class CommandHandler {
         const guildSettings = this.bot.getGuild(message.guild.id);
 
         const errorHandler = (err) => {
-            message.reply('something went wrong executing this command');
+            message.channel.send(Util.formatMessage('error', 'Something went wrong executing this command'));
             Logger.logError(`Error in executing '${cmd}' command, args: ${args.length ? args.join(', ') : '-'}`, err, false, message.guild.id, message.guild.name);
         }
 
@@ -148,7 +153,7 @@ export default class CommandHandler {
             return;
         }
 
-        if (!this.handleFloodProtection(message, guildSettings)) {
+        if (!this.handleFloodProtection(message, cmd, guildSettings)) {
             return;
         }
 
@@ -156,15 +161,19 @@ export default class CommandHandler {
         const command = this.bot.getCommand(cmd)
 
         if (command.perms && !(await this.gotPermission(message.member, this.bot.getCommand(cmd).cmd))) {
-            return message.reply('insufficient permissions to execute this command')
+            if (cmd === 'pickup') {
+                // Don't display any message in case of the pickup command to avoid output in non bot managed channels
+                return;
+            }
+            return message.channel.send(Util.formatMessage('error', `${message.author}, insufficient permissions to execute this command`));
         }
 
         // Test if required args are given
         const requiredArgs = command.args ? command.args.filter(arg => arg.required).length : 0;
         if (requiredArgs > args.length) {
-            let reply = `arguments are missing, usage: ${guild.prefix}${command.cmd} `;
-            command.args.forEach(arg => reply += `${arg.name} `);
-            return message.reply(reply);
+            let reply = `${message.author}, arguments are missing, usage: ${guild.prefix}${command.cmd} `;
+            command.args.forEach(arg => reply += `**${arg.name}** `);
+            return message.channel.send(Util.formatMessage('info', reply));
         }
 
         if (!this.handleGuildCommandCooldown(message, cmd, guildSettings)) {

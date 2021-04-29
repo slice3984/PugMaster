@@ -21,7 +21,7 @@ const command: Command = {
         const addedToPickingPickup = await PickupModel.isPlayerAddedToPendingPickup(BigInt(message.guild.id), BigInt(message.member.id), 'picking_manual');
 
         if (!addedToPickingPickup) {
-            return message.reply('you are not added to any pickup in picking stage');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, you are not added to any pickup in picking stage`));
         }
 
         // Player is added to a valid pickup, check if he's captain
@@ -48,14 +48,14 @@ const command: Command = {
                 .filter(player => player.isCaptain);
 
             if (!captains.map(c => c.id).includes(message.member.id)) {
-                return message.reply('you are not a captain in this pickup');
+                return message.channel.send(Util.formatMessage('error', `${message.author}, you are not a captain in this pickup`));
             }
 
             const currentCaptain = captains.find(captain => captain.captainTurn);
             const currCaptainTeam = pendingPickup.teams.find(team => team.players.find(p => p.captainTurn)).name;
 
             if (currentCaptain.id !== message.member.id) {
-                return message.reply(`it is not your turn, waiting for ${currentCaptain.nick} to pick`);
+                return message.channel.send(Util.formatMessage('error', `${message.author}, it is not your turn, waiting for **${currentCaptain.nick}** to pick`));
             }
 
             // Always only one first pick
@@ -81,7 +81,7 @@ const command: Command = {
             }
 
             if (!picks.length) {
-                return message.reply(`given player${params.length > 1 ? 's' : ''} not found`);
+                return message.channel.send(Util.formatMessage('error', `${message.author}, given player${params.length > 1 ? 's' : ''} not found`));
             }
 
             const leftPlayersIds = pendingPickup.playersLeft.map(p => p.id);
@@ -93,7 +93,7 @@ const command: Command = {
             picks = Util.removeObjectArrayDuplicates(picks, 'id');
 
             if (!picks.length) {
-                return message.reply(`given player${params.length > 1 ? 's are' : ' is'} not available to pick`);
+                return message.channel.send(Util.formatMessage('error', `${message.author}, given player${params.length > 1 ? 's are' : ' is'} not available to pick`));
             }
 
             await PickupModel.addTeamPlayers(BigInt(message.guild.id), pendingPickup.pickupConfigId, ...picks.map(p => {
@@ -126,7 +126,7 @@ const command: Command = {
                 guildSettings.pendingPickups.delete(pendingPickup.pickupConfigId);
                 manualPicking(message.guild, pendingPickup.pickupConfigId, false, PickupStage.startCallback);
             } else {
-                return message.reply(`picked ${picks[0].displayName}, please pick one more player`);
+                return message.channel.send(Util.formatMessage('success', `${message.author}, picked **${picks[0].displayName}**, please pick one more player`));
             }
         }
     }

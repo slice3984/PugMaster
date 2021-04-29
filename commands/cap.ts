@@ -1,5 +1,6 @@
 import Bot from '../core/bot';
 import { Command } from '../core/types';
+import Util from '../core/util';
 import GuildModel from '../models/guild';
 import PickupModel from '../models/pickup';
 
@@ -16,7 +17,7 @@ const command: Command = {
         const addedToCapSelectionPickup = await PickupModel.isPlayerAddedToPendingPickup(BigInt(message.guild.id), BigInt(message.member.id), 'captain_selection');
 
         if (!addedToCapSelectionPickup) {
-            return message.reply('you are not added to any pickup in captain selection stage');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, you are not added to any pickup in captain selection stage`));
         }
 
         const pendingPickups = await GuildModel.getPendingPickups(BigInt(message.guild.id));

@@ -21,13 +21,13 @@ const command: Command = {
         const latestUnratedPickup = await PickupModel.getLatestStoredRateEnabledPickup(BigInt(message.guild.id));
 
         if (!latestUnratedPickup || latestUnratedPickup.isRated) {
-            return message.reply('no rateable pickup found');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, no rateable pickup found`));
         }
 
         const endTimestamp = latestUnratedPickup.startedAt.getTime() + guildSettings.reportExpireTime;
 
         if (Date.now() > endTimestamp) {
-            return message.reply(`the pickup is too old, you can only send sub requests for pickups less than ${Util.formatTime(guildSettings.reportExpireTime)} old`);
+            return message.channel.send(Util.formatMessage('error', `${message.author}, the pickup is too old, you can only send sub requests for pickups less than **${Util.formatTime(guildSettings.reportExpireTime)}** old`));
         }
 
         const pickupSettings = await PickupModel.getPickupSettings(BigInt(message.guild.id), latestUnratedPickup.pickupConfigId);
@@ -37,7 +37,7 @@ const command: Command = {
         const allowedToAdd = roleCheck(pickupSettings, guildSettings, message, pickupSettings.id);
 
         if (!allowedToAdd) {
-            return message.reply('you are not allowed to send sub requests for this pickup');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, you are not allowed to send sub requests for this pickup`));
         }
 
         // Trust check
@@ -48,7 +48,7 @@ const command: Command = {
                 const playedBefore = await PickupModel.playedBefore(BigInt(message.guild.id), BigInt(message.author.id));
 
                 if (!playedBefore) {
-                    return message.reply('no previous pickup game found for you, you need to be trusted to add');
+                    return message.channel.send(Util.formatMessage('error', `${message.author}, no previous pickup game found for you, you need to be trusted to sub`));
                 }
             }
         }
@@ -62,7 +62,7 @@ const command: Command = {
                 const alreadyTrusted = await PlayerModel.arePlayersTrusted(BigInt(message.guild.id), message.member.id);
 
                 if (alreadyTrusted.length === 0) {
-                    return message.reply(`you joined this server recently, please wait ${Util.formatTime(Math.abs(timeLeft))}`);
+                    return message.channel.send(Util.formatMessage('error', `${message.author}, you joined this server recently, please wait **${Util.formatTime(Math.abs(timeLeft))}**`));
                 }
             }
         }
@@ -71,7 +71,7 @@ const command: Command = {
         const isBanned = await PlayerModel.isPlayerBanned(BigInt(message.guild.id), BigInt(message.member.id));
 
         if (isBanned) {
-            return message.reply('banned players are not allowed to send sub requests');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, banned players are not allowed to send sub requests`));
         }
 
         const alreadySendRequest = await PlayerModel.getSubRequest(BigInt(message.guild.id), BigInt(message.author.id));
@@ -79,9 +79,9 @@ const command: Command = {
         if (!params.length) {
             if (alreadySendRequest) {
                 await PlayerModel.clearSubRequest(BigInt(message.guild.id), BigInt(message.author.id));
-                return message.reply('cancelled sub request');
+                return message.channel.send(Util.formatMessage('success', `${message.author}, cancelled sub request`));
             } else {
-                return message.reply('no sub request to cancel available');
+                return message.channel.send(Util.formatMessage('error', `${message.author}, no sub request to cancel available`));
             }
         }
 
@@ -92,30 +92,30 @@ const command: Command = {
 
         // Make sure the requester isn't a player of this pickup
         if (playersInPickup.includes(message.author.id)) {
-            return message.reply(`you can't send a sub request as participant in the same pickup`);
+            return message.channel.send(Util.formatMessage('error', `${message.author}, you can't send a sub request as participant in the same pickup`));
         }
 
         // Make sure the given player is valid and added to the pickup
         const player = await Util.getUser(message.guild, params[0]) as Discord.GuildMember;
 
         if (!player) {
-            return message.reply(`given player for sub request not found`);
+            return message.channel.send(Util.formatMessage('error', `${message.author}, given player for sub request not found`));
         }
 
         // Added to the pickup
         if (!playersInPickup.includes(player.id)) {
-            return message.reply('given player is not added to the latest unrated pickup');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, given player is not added to the latest unrated pickup`));
         }
 
         // Make sure the given player isn't already requested
         if (alreadySendRequest) {
             if (player.id === alreadySendRequest) {
-                return message.reply('you already sent a sub request for the given player');
+                return message.channel.send(Util.formatMessage('error', `${message.author}, you already sent a sub request for the given player`));
             }
         }
 
         await PlayerModel.setSubRequest(BigInt(message.guild.id), BigInt(message.author.id), BigInt(player.id));
-        message.channel.send(`requested to sub ${player.displayName}, <@${player.id}> use ${guildSettings.prefix}acceptsub <@${message.author.id}> to accept subbing or ignore the request`);
+        message.channel.send(`Requested to sub **${player.displayName}**, <@${player.id}> use ${guildSettings.prefix}acceptsub <@${message.author.id}> to accept subbing or ignore the request`);
     }
 }
 

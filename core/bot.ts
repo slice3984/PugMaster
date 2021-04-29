@@ -11,6 +11,7 @@ import PlayerModel from '../models/player';
 import PickupState from './pickupState';
 import Logger from './logger';
 import Console from '../console';
+import Util from './util';
 
 export default class Bot {
     private botIsReady = false;
@@ -209,11 +210,11 @@ export default class Bot {
                         await PickupState.removePlayers(guild, true, null, ...players);
                     }
 
-                    pickupChannel.send(`${toPing.join(', ')} ${toNick.map(player => player.displayName).join(', ')} your allow offline ran out`);
+                    pickupChannel.send(`${toPing.join(', ')} ${toNick.map(player => `**${player.displayName}**`).join(', ')} your allow offline ran out`);
 
                     if (toRemoveIds.length > 0) {
                         if (pickupChannel) {
-                            pickupChannel.send(`${toRemoveObjs.map(player => player.displayName).join(', ')} you got removed from all active pickups as you are offline`);
+                            pickupChannel.send(`${toRemoveObjs.map(player => `**${player.displayName}**`).join(', ')} you got removed from all active pickups as you are offline`);
                         }
                     }
                 } catch (err) {

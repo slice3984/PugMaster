@@ -1,4 +1,5 @@
 import { Command } from '../core/types';
+import Util from '../core/util';
 import { Validator } from '../core/validator';
 import ServerModel from '../models/server';
 
@@ -22,20 +23,20 @@ const command: Command = {
         const isValid = await Validator.Server.isValidServer(BigInt(message.guild.id), name, false);
 
         if (isValid !== true) {
-            return message.reply(isValid.errorMessage);
+            return message.channel.send(Util.formatMessage('error', isValid.errorMessage));
         }
 
         const validIp = Validator.Server.isValidIp(ip);
 
         if (validIp !== true) {
-            return message.reply(validIp.errorMessage);
+            return message.channel.send(Util.formatMessage('error', validIp.errorMessage));
         }
 
         if (params.length === 3) {
             const validPassword = Validator.Server.isValidPassword(params[2]);
 
             if (validPassword !== true) {
-                return message.reply(validPassword.errorMessage);
+                return message.channel.send(Util.formatMessage('error', validPassword.errorMessage));
             }
 
             await ServerModel.addServer(BigInt(message.guild.id), name, ip, params[2]);
@@ -43,7 +44,7 @@ const command: Command = {
             await ServerModel.addServer(BigInt(message.guild.id), name, ip);
         }
 
-        message.reply(`successfully created new server ${name}`);
+        message.channel.send(Util.formatMessage('success', `Created server **${name}**`));
     }
 }
 

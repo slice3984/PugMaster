@@ -21,7 +21,7 @@ const command: Command = {
 
         if (params.length > 1) {
             if (!/^\d+$/.test(params[1])) {
-                return message.reply('leaderboard page has to be a number');
+                return message.channel.send(Util.formatMessage('error', `${message.author}, leaderboard page has to be a number`));
             }
 
             page = +params[1] === 1 ? null : +params[1];
@@ -30,20 +30,20 @@ const command: Command = {
         const pickupSettings = await PickupModel.getPickupSettings(BigInt(message.guild.id), params[0]);
 
         if (!pickupSettings) {
-            return message.reply('given pickup not found');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, given pickup not found`));
         }
 
         if (!pickupSettings.rated) {
-            return message.reply('given pickup is not rated');
+            return message.channel.send(Util.formatMessage('warn', `${message.author}, given pickup is not rated, no leaderboard available`));
         }
 
         const ratings = await StatsModel.getLeaderboardRatings(pickupSettings.id, page ? page : 1);
 
         if (!ratings) {
             if (!page) {
-                return message.reply('there are no ratings stored for this pickup');
+                return message.channel.send(Util.formatMessage('warn', `${message.author}, there are no ratings stored for this pickup`));
             } else {
-                return message.reply('there are no ratings stored for this pickup in general or for this page');
+                return message.channel.send(Util.formatMessage('warn', `${message.author}, there are no ratings stored for this pickup in general or for this page`));
             }
         }
 

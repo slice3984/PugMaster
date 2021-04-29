@@ -1,9 +1,11 @@
+import Discord from 'discord.js';
 import { Command } from '../core/types';
 import { Validator } from '../core/validator';
 import PickupModel from '../models/pickup';
 import Util from '../core/util';
 import MappoolModel from '../models/mappool';
 import ServerModel from '../models/server';
+import ConfigTool from '../core/configTool';
 
 
 const command: Command = {
@@ -34,23 +36,23 @@ const command: Command = {
             const keyisValid = Validator.Pickup.areValidKeys(key);
 
             if (keyisValid.length) {
-                return message.reply(`unknown setting ${key}`);
+                return message.channel.send(Util.formatMessage('error', `Unknown property **${key}**`));
             }
 
             // Clear value if possible
             if (value === 'none') {
                 if (['name', 'players', 'teams', 'default', 'rated', 'afkcheck', 'pickmode', 'captain_selection'].includes(key)) {
-                    return message.reply('you can\'t disable this property');
+                    return message.channel.send(Util.formatMessage('error', `Property ${key} can't be disabled`));
                 }
 
                 await PickupModel.modifyPickup(BigInt(message.guild.id), pickup, dbColumn, null);
-                return message.reply(`successfully disabled ${key} property for pickup ${pickup}, using server default if set`);
+                return message.channel.send(Util.formatMessage('success', `Disabled property **${key}** for pickup **${pickup}**, using server default if set`));
             }
 
             const error = await Validator.Pickup.validate(message.guild, pickup, { key, value });
 
             if (error.length) {
-                return message.reply(error[0].errorMessage);
+                return message.channel.send(Util.formatMessage('error', error[0].errorMessage));
             }
 
             const pickupSettings = await PickupModel.getPickupSettings(BigInt(message.guild.id), pickup);
@@ -62,47 +64,49 @@ const command: Command = {
                 const oldRole = currentValue ? Util.getRole(message.guild, currentValue) : null;
 
                 if (oldRole && oldRole.id === newRole.id) {
-                    return message.reply(`${key} is already set to ${oldRole.name} for pickup ${pickup}`);
+                    return message.reply(Util.formatMessage('info', `Property **${key}** is already set to **${oldRole.name}** for pickup **${pickup}**`));
                 }
 
                 await PickupModel.modifyPickup(BigInt(message.guild.id), pickup, dbColumn, newRole.id);
-                message.reply(`successfully updated pickup ${pickup}, set ${key} to ${newRole.name}`);
+                message.channel.send(Util.formatMessage('success', `Updated pickup **${pickup}**, set **${key}** to **${newRole.name}**`));
             } else if (key === 'mappool') {
                 const poolId = await (await MappoolModel.getPools(BigInt(message.guild.id), value))[0].id;
 
                 if (currentValue && currentValue === poolId) {
-                    return message.reply(`${key} is already set to ${value} for pickup ${pickup}`);
+                    return message.channel.send(Util.formatMessage('info', `Map pool is already set to **${value}** for pickup **${pickup}**`));
                 }
 
                 await PickupModel.modifyPickup(BigInt(message.guild.id), pickup, dbColumn, poolId);
-                message.reply(`successfully updated pickup ${pickup}, set map pool to ${value}`);
+                message.reply(Util.formatMessage('success', `Updated pickup **${pickup}**, set map pool to **${value}**`));
             } else if (key === 'server') {
                 const serverId = await ServerModel.getServerIds(BigInt(message.guild.id), value);
 
                 if (currentValue && currentValue === serverId[0]) {
-                    return message.reply(`${key} is already set to ${value} for pickup ${pickup}`);
+                    return message.channel.send(Util.formatMessage('info', `Server is already set to **${value}** for pickup **${pickup}**`));
                 }
 
                 await PickupModel.modifyPickup(BigInt(message.guild.id), pickup, dbColumn, serverId[0]);
-                message.reply(`successfully updated pickup ${pickup}, set server to ${value}`);
+                message.channel.send(Util.formatMessage('success', `Updated pickup **${pickup}**, set server to **${value}**`));
             } else {
                 if (currentValue && currentValue.toString() === value) {
-                    return message.reply(`${key} is already set to ${value} for pickup ${pickup}`);
+                    return message.channel.send(Util.formatMessage('info', `Property **${key}** is already set to **${value}** for pickup **${pickup}**`));
                 }
 
                 await PickupModel.modifyPickup(BigInt(message.guild.id), pickup, dbColumn, value);
-                message.reply(`successfully updated pickup ${pickup}, set ${key} to ${value}`);
+                message.channel.send(Util.formatMessage('success', `Updated pickup **${pickup}**, set **${key}** to **${value}**`));
             }
         } else {
             if (key !== 'show') {
-                return message.reply('invalid argument given, do you mean show?');
+                return message.channel.send(Util.formatMessage('error', `${message.author}, invalid argument given, do you mean **show**?`));
             }
 
             const isValidPickup = await Validator.Pickup.isValidPickup(BigInt(message.guild.id), pickup);
 
             if (!isValidPickup) {
-                return message.reply(`pickup ${pickup} not found`);
+                return message.channel.send(Util.formatMessage('error', `${message.author}, pickup **${pickup}** not found`));
             }
+
+            const config = ConfigTool.getConfig();
 
             const settings = await PickupModel.getPickupSettings(BigInt(message.guild.id), pickup);
 
@@ -113,23 +117,45 @@ const command: Command = {
             const promotionRole = settings.promotionRole ? Util.getRole(message.guild, settings.promotionRole.toString()) : null;
             const captainRole = settings.captainRole ? Util.getRole(message.guild, settings.captainRole.toString()) : null;
 
-            const infoString =
-                `__Configuration **${settings.name}** pickup__\n` +
-                `Players/Teams: **${settings.playerCount}** / **${settings.teamCount}**\n` +
-                `Default Pickup: **${settings.isDefaultPickup ? 'yes' : 'no'}**\n` +
-                `AFK check: **${settings.afkCheck ? 'enabled' : 'disabled'}**\n` +
-                `Captain selection: **${settings.captainSelection}**\n` +
-                `Pick mode: **${settings.pickMode}**\n` +
-                `Rated: **${settings.rated ? 'rated' : 'unrated'}**\n` +
-                `Map pool: **${mapPoolName}**\n` +
-                `Map vote: **${settings.mapvote ? 'enabled' : 'disabled'}**\n` +
-                `Server: **${serverName}**\n` +
-                `Whitelist role: **${whitelistRole ? whitelistRole.name : '-'}**\n` +
-                `Blacklist role: **${blacklistRole ? blacklistRole.name : '-'}**\n` +
-                `Promotion role: **${promotionRole ? promotionRole.name : '-'}**\n` +
-                `Captain role: **${captainRole ? captainRole.name : '-'}**\n`;
+            const settingsObj = {
+                'Players': settings.playerCount,
+                'Teams': settings.teamCount,
+                'Default Pickup': `${settings.isDefaultPickup ? 'yes' : 'no'}`,
+                'Pick mode': settings.pickMode,
+                'Rated': `${settings.rated ? 'rated' : 'unrated'}`,
+                'AFK Check': `${settings.afkCheck ? 'enabled' : 'disabled'}`,
+                'Captain selection': settings.captainSelection,
+                'Server': serverName,
+                '\u200B': '\u200B',
+                'Map pool': mapPoolName,
+                'Map vote': `${settings.mapvote ? 'enabled' : 'disabled'}`,
+                '\u200B ': '\u200B',
+                'Whitelist role': `${whitelistRole ? whitelistRole.name : '-'}`,
+                'Blacklist role': `${blacklistRole ? blacklistRole.name : '-'}`,
+                'Promotion role': `${promotionRole ? promotionRole.name : '-'}`,
+                'Captain role': `${captainRole ? captainRole.name : '-'}`
+            }
 
-            message.channel.send(infoString);
+            const botAvatarUrl = message.guild.client.user.avatarURL();
+
+            const settingsEmbed = new Discord.MessageEmbed()
+                .setColor('#126e82')
+                .setTitle(`:gear: Pickup settings - ${settings.name}`)
+                .addFields(
+                    {
+                        name: 'Property',
+                        value: Object.getOwnPropertyNames(settingsObj).join('\n'),
+                        inline: true
+                    },
+                    {
+                        name: 'Value',
+                        value: Object.values(settingsObj).join('\n'),
+                        inline: true
+                    }
+                )
+                .setFooter(`${config.webserver.domain}/help/pickupvariables`, botAvatarUrl);
+
+            message.channel.send(settingsEmbed);
         }
     }
 }

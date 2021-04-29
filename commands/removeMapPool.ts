@@ -1,4 +1,5 @@
 import { Command } from '../core/types';
+import Util from '../core/util';
 import { Validator } from '../core/validator';
 import MappoolModel from '../models/mappool';
 
@@ -25,11 +26,11 @@ const command: Command = {
         }
 
         if (!validPools.length) {
-            return message.reply('given pools not found');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, given pools not found`));
         }
 
         await MappoolModel.removeMapPools(BigInt(message.guild.id), ...validPools);
-        message.reply(`successfully removed map pool ${validPools.join(', ')}`);
+        message.channel.send(Util.formatMessage('success', `Removed map pool ${validPools.map(pool => `**${pool}**`).join(', ')}`));
     }
 
 }

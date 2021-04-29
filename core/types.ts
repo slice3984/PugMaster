@@ -23,10 +23,16 @@ export interface Config {
         FLOOD_PROTECTION_MAX_COMMANDS: string;
         FLOOD_TIMEOUT_TIME: string;
     };
+    emojis: {
+        success: string;
+        info: string;
+        warn: string;
+        error: string;
+    };
     webserver: {
         port: string;
         domain: string;
-    }
+    };
 };
 
 interface DefaultValue {

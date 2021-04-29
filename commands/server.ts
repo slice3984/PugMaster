@@ -1,4 +1,5 @@
 import { Command } from '../core/types';
+import Util from '../core/util';
 import ServerModel from '../models/server';
 
 const command: Command = {
@@ -16,23 +17,23 @@ const command: Command = {
             const servers = await ServerModel.getServers(BigInt(message.guild.id));
 
             if (!servers.length) {
-                return message.reply('no servers stored');
+                return message.channel.send(Util.formatMessage('info', 'No servers stored'));
             }
 
-            message.reply(`server: ${servers.map(server => server.name).join(', ')}`);
+            message.channel.send(Util.formatMessage('info', `Server: ${servers.map(server => `**${server.name}**`).join(', ')}`));
         } else {
             const isServerStored = await ServerModel.isServerStored(BigInt(message.guild.id), params[0].toLowerCase());
 
             if (!isServerStored) {
-                return message.reply('server not found');
+                return message.channel.send(Util.formatMessage('error', `${message.author}, server not found`));
             }
 
             const server = await ServerModel.getServer(BigInt(message.guild.id), params[0].toLowerCase());
 
             if (server.password) {
-                message.reply(`name: ${server.name} ip: ${server.ip} password: ${server.password}`);
+                message.channel.send(Util.formatMessage('info', `Name: **${server.name}** IP: **${server.ip}** Password: **${server.password}**`));
             } else {
-                message.reply(`name: ${server.name} ip: ${server.ip}`);
+                message.channel.send(Util.formatMessage('info', `Name: **${server.name}** IP: **${server.ip}**`));
             }
         }
     }

@@ -18,7 +18,7 @@ const command: Command = {
             const top = await StatsModel.getTopPickupAmount(BigInt(message.guild.id), 'alltime', 10);
 
             if (!top.length) {
-                return message.reply('no pickups found');
+                return message.channel.send(Util.formatMessage('warn', `${message.author}, no pickup records found on this server`));
             }
 
             message.channel.send(
@@ -28,7 +28,7 @@ const command: Command = {
             const option = params[0].toLowerCase();
 
             if (!['day', 'week', 'month', 'year'].includes(option)) {
-                return message.reply('Did you mean day, week, month or year?');
+                return message.channel.send(Util.formatMessage('error', `${message.author}, did you mean **day**, **week**, **month** or **year**?`));
             }
 
             const top = await StatsModel.getTopPickupAmount(BigInt(message.guild.id), option, 10);

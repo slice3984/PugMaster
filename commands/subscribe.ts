@@ -1,4 +1,5 @@
 import { Command } from '../core/types';
+import Util from '../core/util';
 import PickupModel from '../models/pickup';
 
 const command: Command = {
@@ -15,7 +16,7 @@ const command: Command = {
         let validPickups = await PickupModel.areValidPickups(BigInt(message.guild.id), ...params);
 
         if (!validPickups.length) {
-            return message.reply(`no valid pickups provided`);
+            return message.channel.send(Util.formatMessage('error', `${message.author}, no valid pickups provided`));
         }
 
         const pickupIds = validPickups.map(pickup => pickup.id);
@@ -23,7 +24,7 @@ const command: Command = {
             .filter(pickup => pickup.promotionRole);
 
         if (!pickupsToSubscribe.length) {
-            return message.reply('given valid pickups got no promotion role');
+            return message.channel.send(Util.formatMessage('warn', `${message.author}, given valid pickups got no promotion role`));
         }
 
         const userRoleIds = message.member.roles.cache.map(role => role.id);
@@ -31,7 +32,7 @@ const command: Command = {
         pickupsToSubscribe = pickupsToSubscribe.filter(pickup => !userRoleIds.includes(pickup.promotionRole));
 
         if (!pickupsToSubscribe.length) {
-            return message.reply('you are already subscribed to the given valid pickups');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, you are already subscribed to the given valid pickups`));
         }
 
         pickupsToSubscribe.filter(pickup => {
@@ -43,16 +44,16 @@ const command: Command = {
         });
 
         if (!pickupsToSubscribe.length) {
-            return message.channel.send('can\'t find the set promotion roles for the given valid pickups');
+            return message.channel.send(Util.formatMessage('error', `Stored promotion roles for provided valid pickups not found`));
         }
 
         try {
             await message.member.roles.add(pickupsToSubscribe.map(pickup => pickup.promotionRole.toString()))
         } catch (_err) {
-            return message.channel.send('didn\'t manage to set one or multiple roles, are the required permission given, do the roles exist?');
+            return message.channel.send(Util.formatMessage('error', 'Not able to set one or multiple roles, are the required permission given, do the roles exist?'));
         }
 
-        message.reply(`successfully subscribed to ${pickupsToSubscribe.map(pickup => pickup.name).join(', ')}`);
+        message.channel.send(Util.formatMessage('success', `${message.author}, subscribed to ${pickupsToSubscribe.map(pickup => `**${pickup.name}**`).join(', ')}`));
     }
 }
 

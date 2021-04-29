@@ -30,19 +30,19 @@ const command: Command = {
             players = await StatsModel.getLastActive(BigInt(message.guild.id), 50, limit);
 
             if (!players.length) {
-                return message.reply(`no pickups played in past ${defaults[0]} days`);
+                return message.channel.send(Util.formatMessage('info', `${message.author}, no pickups played in past ${defaults[0]} days`));
             }
         } else {
             pickup = params[0].toLowerCase();
 
             if (!await (await PickupModel.areValidPickups(BigInt(message.guild.id), pickup)).length) {
-                return message.reply('unknown pickup provided');
+                return message.channel.send(Util.formatMessage('error', `${message.author}, invalid pickup provided`));
             }
 
             players = await StatsModel.getLastActive(BigInt(message.guild.id), 50, limit, pickup);
 
             if (!players.length) {
-                return message.reply(`no ${pickup} pickups played in past ${defaults[0]} days`);
+                return message.channel.send(Util.formatMessage('info', `${message.author}, no **${pickup}** pickups played in past **${defaults[0]} days**`));
             }
         }
 
@@ -71,7 +71,7 @@ const command: Command = {
         }
 
         if (!online.length && !afk.length && !dnd.length) {
-            return message.reply('no online pickup players found');
+            return message.reply(`${message.author}, no online pickup players found`);
         }
 
         const formatArray = arr => arr.map(player => `\`${player.nick}\` (${player.amount})`);

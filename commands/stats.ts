@@ -21,10 +21,10 @@ const command: Command = {
             const stats = await StatsModel.getStats(BigInt(message.guild.id));
 
             if (!stats.length) {
-                return message.reply('no pickups stored');
+                return message.channel.send(Util.formatMessage('info', 'No pickups stored'));
             }
 
-            return message.channel.send(stats.map(pickup => `\`${pickup.name}\` (**${pickup.amount}**)`).join(' '));
+            return message.channel.send(Util.formatMessage('info', `**Played pickups**: ${stats.map(pickup => `\`${pickup.name}\` (**${pickup.amount}**)`).join(' ')}`));
         }
 
         // Try pickup
@@ -34,28 +34,28 @@ const command: Command = {
             const name = stats[0].name;
             const amount = stats[0].amount;
 
-            return message.channel.send(`${amount} **${name}** pickup${amount > 1 ? 's' : ''} played`);
+            return message.channel.send(Util.formatMessage('info', `${amount} **${name}** pickup${amount > 1 ? 's' : ''} played`));
         } else {
             // By player
             const players = await PlayerModel.getPlayer(BigInt(message.guild.id), identifier);
 
             if (!players) {
-                return message.reply('no pickup or player found with the given identifier');
+                return message.channel.send(Util.formatMessage('error', `${message.author}, no pickup or player found with the given identifier`));
             }
 
             if (players.players.length > 1) {
                 if (players.oldNick) {
-                    return message.reply(`no player found with such name as current name, found multiple names in the name history, try calling the command with the player id again`);
+                    return message.channel.send(Util.formatMessage('error', `${message.author}, no player found with such name as current name, found multiple names in the name history, try calling the command with the player id again`));
 
                 } else {
-                    return message.reply(`found multiple players using the given name, try calling the command with the player id again`);
+                    return message.channel.send(Util.formatMessage('info', `${message.author}, found multiple players using the given name, try calling the command with the player id again`));
                 }
             }
 
             const stats = await StatsModel.getStats(BigInt(message.guild.id), players.players[0].id);
 
             if (!stats.length) {
-                return message.reply('no pickup records found for this player');
+                return message.channel.send(Util.formatMessage('info', `${message.author}, no pickup records found for this player`));
             }
 
             const msg = `Stats for **${stats[0].nick}**\n` +

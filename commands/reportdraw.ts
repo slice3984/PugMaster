@@ -24,7 +24,7 @@ const command: Command = {
 
         if (params[0]) {
             if (!/^\d+$/.test(params[0])) {
-                return message.reply('pickup id has to be a number');
+                return message.channel.send(Util.formatMessage('error', `${message.author}, pickup id has to be a number`));
             }
 
             latestUnratedPickup = await PickupModel.getLatestStoredRateEnabledPickup(BigInt(message.guild.id), BigInt(message.author.id), +params[0]);
@@ -33,31 +33,31 @@ const command: Command = {
         }
 
         if (!latestUnratedPickup || latestUnratedPickup.isRated) {
-            return message.reply('no rateable pickup found');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, no rateable pickup found`));
         }
 
         const endTimestamp = latestUnratedPickup.startedAt.getTime() + guildSettings.reportExpireTime;
 
         if (Date.now() > endTimestamp) {
-            return message.reply(`the pickup is too old, you can only report draws for pickups less than ${Util.formatTime(guildSettings.reportExpireTime)} old`);
+            return message.channel.send(Util.formatMessage('error', `${message.author}, the pickup is too old, you can only report draws for pickups less than **${Util.formatTime(guildSettings.reportExpireTime)}** old`));
         }
 
         const captain = latestUnratedPickup.captains.find(captain => captain.id === message.member.id);
 
         if (!captain) {
-            return message.reply('you are not a captain of the latest unrated pickup');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, you are not a captain of the latest unrated pickup`));
         }
 
         const reports = await PickupModel.getReportedOutcomes(latestUnratedPickup.pickupId);
 
         if (reports && reports.filter(r => r.team === captain.team).length) {
-            return message.reply('you already rated this pickup');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, you already rated this pickup`));
         }
 
         const amountFollowingPickups = await RatingModel.getAmountOfFollowingPickups(BigInt(message.guild.id), latestUnratedPickup.pickupConfigId, latestUnratedPickup.pickupId);
 
         if (amountFollowingPickups > Rating.RERATE_AMOUNT_LIMIT) {
-            return message.reply(`the given pickup is too far in the past, it is only possible to report outcomes for pickups less than ${Rating.RERATE_AMOUNT_LIMIT} rated pickups in the past`);
+            return message.channel.send(Util.formatMessage('error', `${message.author}, the given pickup is too far in the past, it is only possible to report outcomes for pickups less than ${Rating.RERATE_AMOUNT_LIMIT} rated pickups in the past`));
         }
 
         let leftCaptains;
@@ -83,7 +83,7 @@ const command: Command = {
 
         await PickupModel.reportOutcome(latestUnratedPickup.pickupId, captain.team, 'draw');
 
-        await message.reply(`reported draw for **team ${captain.team}**`);
+        await message.channel.send(Util.formatMessage('success', `Reported draw for **team ${captain.team}** @ **#${latestUnratedPickup.pickupId}** - **${latestUnratedPickup.name}**`));
 
         // Last report, rate the pickup
         if (!leftCaptainCount) {
@@ -97,7 +97,7 @@ const command: Command = {
 
         // If there is only 1 rating left and only 1 draw reported, ask for draw report to finalize
         if (leftCaptainCount === 1 && reports.filter(r => r.outcome === 'draw').length < 2) {
-            return await message.channel.send(`<@${leftCaptains[0].id}> please ${prefix}reportdraw to finalize the rating`);
+            return await message.channel.send(Util.formatMessage('info', `<@${leftCaptains[0].id}> please **${prefix}reportdraw** to finalize the rating`));
         }
 
         await message.channel.send(
@@ -112,7 +112,7 @@ const command: Command = {
 const rateMatch = async (message: Discord.Message, pickup: RateablePickup) => {
     await Rating.rateMatch(message.guild.id, pickup);
     const results = pickup.teams.map(t => `Team ${t.name} - **${t.outcome.toUpperCase()}**`).join(' / ');
-    message.channel.send(`Rated pickup **#${pickup.pickupId}** - **${pickup.name}**: ${results}`);
+    message.channel.send(Util.formatMessage('success', `Rated pickup **#${pickup.pickupId}** - **${pickup.name}**: ${results}`));
 }
 
 module.exports = command;

@@ -49,16 +49,16 @@ export namespace Validator {
                         }
 
                         if (isPickupActive) {
-                            errors.push({ type: 'players', errorMessage: 'can\'t modify name when the pickup is active' });
+                            errors.push({ type: 'players', errorMessage: 'Can\'t modify name when the pickup is active' });
                         }
 
                         if (!/^[a-zA-Z0-9]+$/.test(value)) {
-                            errors.push({ type: 'name', errorMessage: 'invalid pickup name, has to be alphanumeric only' });
+                            errors.push({ type: 'name', errorMessage: 'Invalid pickup name, has to be alphanumeric only' });
                             break;
                         }
 
                         if (value.length > 20 || value.length === 0) {
-                            errors.push({ type: 'name', errorMessage: 'pickup name must be between 1-20 chars long' });
+                            errors.push({ type: 'name', errorMessage: 'Pickup name must be between 1-20 chars long' });
                             break;
                         }
                         break;
@@ -68,16 +68,16 @@ export namespace Validator {
                         }
 
                         if (isPickupActive) {
-                            errors.push({ type: 'players', errorMessage: 'can\'t modify players when the pickup is active' });
+                            errors.push({ type: 'players', errorMessage: 'Can\'t modify players when the pickup is active' });
                         }
 
                         if (!/^\d+$/.test(value)) {
-                            errors.push({ type: 'players', errorMessage: 'amount has to be a number' });
+                            errors.push({ type: 'players', errorMessage: 'Amount has to be a number' });
                             break;
                         }
 
                         if (!(value.length <= 3 && +value >= 2 && +value <= 100)) {
-                            errors.push({ type: 'players', errorMessage: 'player count has to be in the range of 2 and 100' });
+                            errors.push({ type: 'players', errorMessage: 'Player count has to be in the range of 2 and 100' });
                             break;
                         }
 
@@ -86,18 +86,18 @@ export namespace Validator {
                         }
 
                         if (+value % pickupSettings.teamCount !== 0) {
-                            errors.push({ type: 'players', errorMessage: `can't create even teams with the given player count (players: ${value} teams: ${pickupSettings.teamCount})` });
+                            errors.push({ type: 'players', errorMessage: `Can't create even teams with the given player count (players: ${value} teams: ${pickupSettings.teamCount})` });
                             break;
                         }
                         break;
                     case 'teams':
                         if (!/^\d+$/.test(value)) {
-                            errors.push({ type: 'teams', errorMessage: 'amount has to be a number' });
+                            errors.push({ type: 'teams', errorMessage: 'Amount has to be a number' });
                             break;
                         }
 
                         if (!(value.length <= 2 && +value >= 2 && +value <= 10)) {
-                            errors.push({ type: 'teams', errorMessage: 'team count has to be in a range of 2 and 10' });
+                            errors.push({ type: 'teams', errorMessage: 'Team count has to be in a range of 2 and 10' });
                             break;
                         }
 
@@ -106,13 +106,13 @@ export namespace Validator {
                         }
 
                         if (pickupSettings.playerCount % +value !== 0) {
-                            errors.push({ type: 'teams', errorMessage: `can't create even teams with the given team count (players: ${pickupSettings.playerCount} teams: ${value})` });
+                            errors.push({ type: 'teams', errorMessage: `Can't create even teams with the given team count (players: ${pickupSettings.playerCount} teams: ${value})` });
                             break;
                         }
                         break;
                     case 'default':
                         if (!['true', 'false'].includes(value)) {
-                            errors.push({ type: 'default', errorMessage: 'value has to be true or false' });
+                            errors.push({ type: 'default', errorMessage: 'Value has to be true or false' });
                             break;
                         }
                         break;
@@ -120,13 +120,13 @@ export namespace Validator {
                         const validPool = await MappoolModel.isMappoolStored(BigInt(guild.id), value);
 
                         if (!validPool) {
-                            errors.push({ type: 'mappool', errorMessage: 'given map pool not found' });
+                            errors.push({ type: 'mappool', errorMessage: 'Given map pool not found' });
                             break;
                         }
                         break;
                     case 'mapvote':
                         if (!['true', 'false'].includes(value)) {
-                            errors.push({ type: 'mapvote', errorMessage: 'value has to be true or false' });
+                            errors.push({ type: 'mapvote', errorMessage: 'Value has to be true or false' });
                             break;
                         }
 
@@ -135,12 +135,12 @@ export namespace Validator {
                         }
 
                         if ((pickupSettings.mapvote ? 'true' : 'false') === value.toLowerCase()) {
-                            errors.push({ type: 'mappool', errorMessage: `map voting is already ${pickupSettings.mapvote ? 'enabled' : 'disabled'} for pickup ${pickupSettings.name}` });
+                            errors.push({ type: 'mappool', errorMessage: `Map voting is already ${pickupSettings.mapvote ? 'enabled' : 'disabled'} for pickup ${pickupSettings.name}` });
                             break;
                         }
 
                         if (!pickupSettings.mapPoolId) {
-                            errors.push({ type: 'mappool', errorMessage: 'there has to be a map pool assigned to the pickup with at least two maps' });
+                            errors.push({ type: 'mappool', errorMessage: 'There has to be a map pool assigned to the pickup with at least two maps' });
                             break;
                         }
 
@@ -148,25 +148,25 @@ export namespace Validator {
                         const mapPool = await MappoolModel.getMaps(BigInt(guild.id), poolName);
 
                         if (mapPool.length < 2) {
-                            errors.push({ type: 'mappool', errorMessage: `map pool ${poolName} for pickup ${pickupSettings.name} only contains one map, two or more required for voting` });
+                            errors.push({ type: 'mappool', errorMessage: `Map pool ${poolName} for pickup ${pickupSettings.name} only contains one map, two or more required for voting` });
                             break;
                         }
                         break;
                     case 'afkcheck':
                         if (!['true', 'false'].includes(value)) {
-                            errors.push({ type: 'afkcheck', errorMessage: 'value has to be true or false' });
+                            errors.push({ type: 'afkcheck', errorMessage: 'Value has to be true or false' });
                             break;
                         }
                         break;
                     case 'captain_selection':
                         if (!['manual', 'auto'].includes(value)) {
-                            errors.push({ type: 'captain_selection', errorMessage: 'value has to be manual or auto' });
+                            errors.push({ type: 'captain_selection', errorMessage: 'Value has to be manual or auto' });
                             break;
                         }
                         break;
                     case 'pickmode':
                         if (!['no_teams', 'manual', 'random', 'elo', 'autopick'].includes(value)) {
-                            errors.push({ type: 'pickmode', errorMessage: 'value has to be no_teams, manual, random or elo' });
+                            errors.push({ type: 'pickmode', errorMessage: 'Value has to be no_teams, manual, random or elo' });
                             break;
                         }
 
@@ -175,19 +175,19 @@ export namespace Validator {
                         }
 
                         if (value.toLocaleLowerCase() === 'no_teams' && pickupSettings.rated) {
-                            errors.push({ type: 'pickmode', errorMessage: 'no_teams is invalid for pickups in rated mode, disable rated mode first' });
+                            errors.push({ type: 'pickmode', errorMessage: 'Value no_teams is invalid for pickups in rated mode, disable rated mode first' });
                             break;
                         }
 
                         if ((pickupSettings.playerCount / pickupSettings.teamCount) < 2 && ['manual', 'random', 'elo'].includes(value)) {
-                            errors.push({ type: 'pickmode', errorMessage: `can't use ${value.toLowerCase()} pick mode for a pickup with one player teams` });
+                            errors.push({ type: 'pickmode', errorMessage: `Can't use ${value.toLowerCase()} pick mode for a pickup with one player teams` });
                             break;
                         }
 
                         break;
                     case 'rated':
                         if (!['true', 'false'].includes(value)) {
-                            errors.push({ type: 'rated', errorMessage: 'value has to be true or false' });
+                            errors.push({ type: 'rated', errorMessage: 'Value has to be true or false' });
                             break;
                         }
 
@@ -196,7 +196,7 @@ export namespace Validator {
                         }
 
                         if ((pickupSettings.playerCount / pickupSettings.teamCount) > 1 && pickupSettings.pickMode === 'no_teams') {
-                            errors.push({ type: 'rated', errorMessage: 'pickup has to be in manual, random, elo or autopick picking mode to be rateable' });
+                            errors.push({ type: 'rated', errorMessage: 'Pickup has to be in manual, random, elo or autopick picking mode to be rateable' });
                             break;
                         }
                         break;
@@ -204,7 +204,7 @@ export namespace Validator {
                         const whitelistRole = Util.getRole(guild, value);
 
                         if (!whitelistRole) {
-                            errors.push({ type: 'whitelist', errorMessage: 'can\'t find the given role' });
+                            errors.push({ type: 'whitelist', errorMessage: 'Can\'t find the given role' });
                             break;
                         }
 
@@ -215,7 +215,7 @@ export namespace Validator {
                         if ([pickupSettings.blacklistRole ? pickupSettings.blacklistRole.toString() : null,
                         pickupSettings.promotionRole ? pickupSettings.promotionRole.toString() : null,
                         pickupSettings.captainRole ? pickupSettings.captainRole.toString() : null].includes(whitelistRole.id)) {
-                            errors.push({ type: 'blacklist', errorMessage: 'can\'t set the same roles for different pickup specific roles' });
+                            errors.push({ type: 'blacklist', errorMessage: 'Can\'t set the same roles for different pickup specific roles' });
                             break;
                         }
                         break;
@@ -223,7 +223,7 @@ export namespace Validator {
                         const blacklistRole = Util.getRole(guild, value);
 
                         if (!blacklistRole) {
-                            errors.push({ type: 'blacklist', errorMessage: 'can\'t find the given role' });
+                            errors.push({ type: 'blacklist', errorMessage: 'Can\'t find the given role' });
                             break;
                         }
 
@@ -234,7 +234,7 @@ export namespace Validator {
                         if ([pickupSettings.whitelistRole ? pickupSettings.whitelistRole.toString() : null,
                         pickupSettings.promotionRole ? pickupSettings.promotionRole.toString() : null,
                         pickupSettings.captainRole ? pickupSettings.captainRole.toString() : null].includes(blacklistRole.id)) {
-                            errors.push({ type: 'blacklist', errorMessage: 'can\'t set the same roles for different pickup specific roles' });
+                            errors.push({ type: 'blacklist', errorMessage: 'Can\'t set the same roles for different pickup specific roles' });
                             break;
                         }
                         break;
@@ -242,7 +242,7 @@ export namespace Validator {
                         const promotionRole = Util.getRole(guild, value);
 
                         if (!promotionRole) {
-                            errors.push({ type: 'promotion', errorMessage: 'can\'t find the given role' });
+                            errors.push({ type: 'promotion', errorMessage: 'Can\'t find the given role' });
                             break;
                         }
 
@@ -252,7 +252,7 @@ export namespace Validator {
                         if ([pickupSettings.blacklistRole ? pickupSettings.blacklistRole.toString() : null,
                         pickupSettings.whitelistRole ? pickupSettings.whitelistRole.toString() : null,
                         pickupSettings.captainRole ? pickupSettings.captainRole.toString() : null].includes(promotionRole.id)) {
-                            errors.push({ type: 'blacklist', errorMessage: 'can\'t set the same roles for different pickup specific roles' });
+                            errors.push({ type: 'blacklist', errorMessage: 'Can\'t set the same roles for different pickup specific roles' });
                             break;
                         }
                         break;
@@ -260,7 +260,7 @@ export namespace Validator {
                         const captainRole = Util.getRole(guild, value);
 
                         if (!captainRole) {
-                            errors.push({ type: 'captain', errorMessage: 'can\'t find the given role' });
+                            errors.push({ type: 'captain', errorMessage: 'Can\'t find the given role' });
                             break;
                         }
 
@@ -270,7 +270,7 @@ export namespace Validator {
                         if ([pickupSettings.blacklistRole ? pickupSettings.blacklistRole.toString() : null,
                         pickupSettings.promotionRole ? pickupSettings.promotionRole.toString() : null,
                         pickupSettings.whitelistRole ? pickupSettings.whitelistRole.toString() : null].includes(captainRole.id)) {
-                            errors.push({ type: 'blacklist', errorMessage: 'can\'t set the same roles for different pickup specific roles' });
+                            errors.push({ type: 'blacklist', errorMessage: 'Can\'t set the same roles for different pickup specific roles' });
                             break;
                         }
                         break;
@@ -278,7 +278,7 @@ export namespace Validator {
                         const validServer = await ServerModel.isServerStored(BigInt(guild.id), value);
 
                         if (!validServer) {
-                            errors.push({ type: 'server', errorMessage: 'can\'t find the given server' });
+                            errors.push({ type: 'server', errorMessage: 'Can\'t find the given server' });
                             break;
                         }
                         break;
@@ -329,19 +329,19 @@ export namespace Validator {
             const doesExist = await ServerModel.isServerStored(guildId, name);
 
             if (isDuplicate && !doesExist.length) {
-                return { type: 'exists', errorMessage: 'server not found' };
+                return { type: 'exists', errorMessage: 'Server not found' };
             }
 
             if (!isDuplicate && doesExist.length) {
-                return { type: 'exists', errorMessage: 'server already stored' };
+                return { type: 'exists', errorMessage: 'Server already stored' };
             }
 
             if (!/^[a-zA-Z0-9]+$/.test(name)) {
-                return { type: 'name', errorMessage: 'invalid server name, has to be alphanumeric only' };
+                return { type: 'name', errorMessage: 'Invalid server name, has to be alphanumeric only' };
             }
 
             if (name.length > 45 || name.length === 0) {
-                return { type: 'name', errorMessage: 'server name must be between 1-45 chars long' };
+                return { type: 'name', errorMessage: 'Server name must be between 1-45 chars long' };
             }
 
             return true;
@@ -349,14 +349,14 @@ export namespace Validator {
 
         export function isValidIp(ip) {
             if (ip.length > 45 || ip.length === 0) {
-                return { type: 'ip', errorMessage: 'ip must be between 1-45 chars long' };
+                return { type: 'ip', errorMessage: 'IP must be between 1-45 chars long' };
             }
             return true;
         }
 
         export function isValidPassword(ip) {
             if (ip.length > 45 || ip.length === 0) {
-                return { type: 'password', errorMessage: 'password must be between 1-45 chars long' };
+                return { type: 'password', errorMessage: 'Password must be between 1-45 chars long' };
             }
             return true;
         }
@@ -383,14 +383,14 @@ export namespace Validator {
                 switch (key) {
                     case 'prefix':
                         if (value.length > 3) {
-                            errors.push({ type: key, errorMessage: 'prefix must be between 1-3 chars long' });
+                            errors.push({ type: key, errorMessage: 'Prefix must be between 1-3 chars long' });
                             break;
                         }
 
                         const currentPrefix = guildSettings.prefix;
 
                         if (currentPrefix === value) {
-                            errors.push({ type: key, errorMessage: `prefix is already set to ${value}` });
+                            errors.push({ type: key, errorMessage: `Prefix is already set to ${value}` });
                             break;
                         }
                         break;
@@ -398,59 +398,59 @@ export namespace Validator {
                         const validTime = Util.validateTimeString(value, +config.settings.MAX_GLOBAL_EXPIRE, 10800000);
 
                         if (validTime === 'exceeded') {
-                            errors.push({ type: key, errorMessage: `max global expire time is ${Util.formatTime(+config.settings.MAX_GLOBAL_EXPIRE)}` });
+                            errors.push({ type: key, errorMessage: `Max global expire time is ${Util.formatTime(+config.settings.MAX_GLOBAL_EXPIRE)}` });
                             break;
                         } else if (validTime === 'subceeded') {
-                            errors.push({ type: key, errorMessage: `min global expire time is ${Util.formatTime(10800000)}` });
+                            errors.push({ type: key, errorMessage: `Min global expire time is ${Util.formatTime(10800000)}` });
                             break;
                         } else if (validTime === 'invalid') {
-                            errors.push({ type: key, errorMessage: 'invalid time amounts given' });
+                            errors.push({ type: key, errorMessage: 'Invalid time amounts given' });
                             break;
                         }
 
                         if (guildSettings.globalExpireTime === validTime) {
-                            errors.push({ type: key, errorMessage: `global expire is already set to ${Util.formatTime(validTime)}` });
+                            errors.push({ type: key, errorMessage: `Global expire is already set to ${Util.formatTime(validTime)}` });
                         }
                         break;
                     case 'report_expire':
                         const validReportExpireTime = Util.validateTimeString(value, 86400000, 1800000);
 
                         if (validReportExpireTime === 'exceeded') {
-                            errors.push({ type: key, errorMessage: `max report expire time is ${Util.formatTime(86400000)}` });
+                            errors.push({ type: key, errorMessage: `Max report expire time is ${Util.formatTime(86400000)}` });
                             break;
                         } else if (validReportExpireTime === 'subceeded') {
-                            errors.push({ type: key, errorMessage: `min report expire time is ${Util.formatTime(1800000)}` });
+                            errors.push({ type: key, errorMessage: `Min report expire time is ${Util.formatTime(1800000)}` });
                             break;
                         } else if (validReportExpireTime === 'invalid') {
-                            errors.push({ type: key, errorMessage: 'invalid time amounts given' });
+                            errors.push({ type: key, errorMessage: 'Invalid time amounts given' });
                             break;
                         }
 
                         if (guildSettings.trustTime === validReportExpireTime) {
-                            errors.push({ type: key, errorMessage: `report expire time is already set to ${Util.formatTime(validReportExpireTime)}` });
+                            errors.push({ type: key, errorMessage: `Report expire time is already set to ${Util.formatTime(validReportExpireTime)}` });
                         }
                         break;
                     case 'trust_time':
                         const validTrustTime = Util.validateTimeString(value, 1209600000, 900000);
 
                         if (validTrustTime === 'exceeded') {
-                            errors.push({ type: key, errorMessage: `max trust time is ${Util.formatTime(1209600000)}` });
+                            errors.push({ type: key, errorMessage: `Max trust time is ${Util.formatTime(1209600000)}` });
                             break;
                         } else if (validTrustTime === 'subceeded') {
-                            errors.push({ type: key, errorMessage: `min trust time is ${Util.formatTime(900000)}` });
+                            errors.push({ type: key, errorMessage: `Min trust time is ${Util.formatTime(900000)}` });
                             break;
                         } else if (validTrustTime === 'invalid') {
-                            errors.push({ type: key, errorMessage: 'invalid time amounts given' });
+                            errors.push({ type: key, errorMessage: 'Invalid time amounts given' });
                             break;
                         }
 
                         if (guildSettings.trustTime === validTrustTime) {
-                            errors.push({ type: key, errorMessage: `trust time is already set to ${Util.formatTime(validTrustTime)}` });
+                            errors.push({ type: key, errorMessage: `Trust time is already set to ${Util.formatTime(validTrustTime)}` });
                         }
                         break;
                     case 'explicit_trust':
                         if (!['true', 'false'].includes(value)) {
-                            errors.push({ type: key, errorMessage: 'value has to be true or false' });
+                            errors.push({ type: key, errorMessage: 'Value has to be true or false' });
                             break;
                         }
                         break;
@@ -458,16 +458,16 @@ export namespace Validator {
                         const whitelistRole = Util.getRole(guild, value);
 
                         if (!whitelistRole) {
-                            errors.push({ type: key, errorMessage: 'can\'t find the given role' });
+                            errors.push({ type: key, errorMessage: 'Can\'t find the given role' });
                             break;
                         }
 
                         if (BigInt(whitelistRole.id) === guildSettings.whitelistRole) {
-                            errors.push({ type: key, errorMessage: 'the given role is already set as whitelist role' });
+                            errors.push({ type: key, errorMessage: 'The given role is already set as whitelist role' });
                         }
 
                         if ([guildSettings.whitelistRole, guildSettings.blacklistRole].includes(BigInt(whitelistRole.id))) {
-                            errors.push({ type: key, errorMessage: 'can\'t use the same role twice in server settings' });
+                            errors.push({ type: key, errorMessage: 'Can\'t use the same role twice in server settings' });
                             break;
                         }
                         break;
@@ -475,16 +475,16 @@ export namespace Validator {
                         const blacklistRole = Util.getRole(guild, value);
 
                         if (!blacklistRole) {
-                            errors.push({ type: key, errorMessage: 'can\'t find the given role' });
+                            errors.push({ type: key, errorMessage: 'Can\'t find the given role' });
                             break;
                         }
 
                         if (BigInt(blacklistRole.id) === guildSettings.blacklistRole) {
-                            errors.push({ type: key, errorMessage: 'the given role is already set as blacklist role' });
+                            errors.push({ type: key, errorMessage: 'The given role is already set as blacklist role' });
                         }
 
                         if ([guildSettings.whitelistRole, guildSettings.blacklistRole].includes(BigInt(blacklistRole.id))) {
-                            errors.push({ type: key, errorMessage: 'can\'t use the same role twice in server settings' });
+                            errors.push({ type: key, errorMessage: 'Can\'t use the same role twice in server settings' });
                             break;
                         }
                         break;
@@ -492,25 +492,25 @@ export namespace Validator {
                         const validPromotionDelay = Util.validateTimeString(value, 43200000, 300000);
 
                         if (validPromotionDelay === 'exceeded') {
-                            errors.push({ type: key, errorMessage: `max promotion delay time is ${Util.formatTime(43200000)}` });
+                            errors.push({ type: key, errorMessage: `Max promotion delay time is ${Util.formatTime(43200000)}` });
                             break;
                         } else if (validPromotionDelay === 'subceeded') {
-                            errors.push({ type: key, errorMessage: `min promotion delay time is ${Util.formatTime(300000)}` });
+                            errors.push({ type: key, errorMessage: `Min promotion delay time is ${Util.formatTime(300000)}` });
                             break;
                         } else if (validPromotionDelay === 'invalid') {
-                            errors.push({ type: key, errorMessage: 'invalid time amounts given' });
+                            errors.push({ type: key, errorMessage: 'Invalid time amounts given' });
                             break;
                         }
 
                         if (guildSettings.promotionDelay === validPromotionDelay) {
-                            errors.push({ type: key, errorMessage: `promotion delay is already set to ${Util.formatTime(validPromotionDelay)}` });
+                            errors.push({ type: key, errorMessage: `Promotion delay is already set to ${Util.formatTime(validPromotionDelay)}` });
                         }
                         break;
                     case 'server':
                         const validServer = await ServerModel.isServerStored(BigInt(guild.id), value);
 
                         if (!validServer) {
-                            errors.push({ type: key, errorMessage: 'can\'t find the given server' });
+                            errors.push({ type: key, errorMessage: 'Can\'t find the given server' });
                             break;
                         }
 
@@ -546,36 +546,36 @@ export namespace Validator {
                         const iterationTime = Util.validateTimeString(value, 300000, 10000, true);
 
                         if (iterationTime === 'exceeded') {
-                            errors.push({ type: key, errorMessage: `max iteration time is ${Util.formatTime(300000)}` });
+                            errors.push({ type: key, errorMessage: `Max iteration time is ${Util.formatTime(300000)}` });
                             break;
                         } else if (iterationTime === 'subceeded') {
-                            errors.push({ type: key, errorMessage: `min iteration time is ${Util.formatTime(10000)}` });
+                            errors.push({ type: key, errorMessage: `Min iteration time is ${Util.formatTime(10000)}` });
                             break;
                         } else if (iterationTime === 'invalid') {
-                            errors.push({ type: key, errorMessage: 'invalid time amounts given' });
+                            errors.push({ type: key, errorMessage: 'Invalid time amounts given' });
                             break;
                         }
 
                         if (guildSettings.iterationTime === iterationTime) {
-                            errors.push({ type: key, errorMessage: `iteration time is already set to ${Util.formatTime(iterationTime)}` });
+                            errors.push({ type: key, errorMessage: `Iteration time is already set to ${Util.formatTime(iterationTime)}` });
                         }
                         break;
                     case 'afk_time':
                         const afkTime = Util.validateTimeString(value, 21600000, 300000);
 
                         if (afkTime === 'exceeded') {
-                            errors.push({ type: key, errorMessage: `max afk time is ${Util.formatTime(21600000)}` });
+                            errors.push({ type: key, errorMessage: `Max afk time is ${Util.formatTime(21600000)}` });
                             break;
                         } else if (afkTime === 'subceeded') {
-                            errors.push({ type: key, errorMessage: `min afk time is ${Util.formatTime(300000)}` });
+                            errors.push({ type: key, errorMessage: `Min afk time is ${Util.formatTime(300000)}` });
                             break;
                         } else if (afkTime === 'invalid') {
-                            errors.push({ type: key, errorMessage: 'invalid time amounts given' });
+                            errors.push({ type: key, errorMessage: 'Invalid time amounts given' });
                             break;
                         }
 
                         if (guildSettings.afkTime === afkTime) {
-                            errors.push({ type: key, errorMessage: `afk time is already set to ${Util.formatTime(afkTime)}` });
+                            errors.push({ type: key, errorMessage: `Afk time is already set to ${Util.formatTime(afkTime)}` });
                         }
                         break;
                     case 'afk_check_iterations':
@@ -594,7 +594,7 @@ export namespace Validator {
                         break;
                     case 'max_avg_elo_variance':
                         if (!/^\d+$/.test(value)) {
-                            errors.push({ type: key, errorMessage: 'amount has to be a number' });
+                            errors.push({ type: key, errorMessage: 'Amount has to be a number' });
                             break;
                         }
 
@@ -605,17 +605,17 @@ export namespace Validator {
                         }
 
                         if (guildSettings.maxAvgVariance === +value) {
-                            errors.push({ type: key, errorMessage: `max average elo variance is already set to ${Util.tsToEloNumber(+value)}` });
+                            errors.push({ type: key, errorMessage: `Max average elo variance is already set to ${Util.tsToEloNumber(+value)}` });
                         }
                         break;
                     case 'warn_streaks':
                         if (!/^\d+$/.test(value)) {
-                            errors.push({ type: key, errorMessage: 'amount has to be a number' });
+                            errors.push({ type: key, errorMessage: 'Amount has to be a number' });
                             break;
                         }
 
                         if (+value < 1 || +value > +config.settings.MAX_WARN_STREAKS) {
-                            errors.push({ type: key, errorMessage: `warn streaks has to be a number between 1-${config.settings.MAX_WARN_STREAKS}` });
+                            errors.push({ type: key, errorMessage: `Warn streaks has to be a number between 1-${config.settings.MAX_WARN_STREAKS}` });
                             break;
                         }
                         break;
@@ -631,39 +631,39 @@ export namespace Validator {
                         const validTimeWarns = Util.validateTimeString(value, +values[key][0], +values[key][1]);
 
                         if (validTimeWarns === 'exceeded') {
-                            errors.push({ type: key, errorMessage: `max ${key.replace('_', ' ')} time is ${Util.formatTime(+values[key][0])}` });
+                            errors.push({ type: key, errorMessage: `Max ${key.replace('_', ' ')} time is ${Util.formatTime(+values[key][0])}` });
                             break;
                         } else if (validTimeWarns === 'subceeded') {
-                            errors.push({ type: key, errorMessage: `min ${key.replace('_', ' ')} time is ${Util.formatTime(+values[key][1])}` });
+                            errors.push({ type: key, errorMessage: `Min ${key.replace('_', ' ')} time is ${Util.formatTime(+values[key][1])}` });
                             break;
                         } else if (validTimeWarns === 'invalid') {
-                            errors.push({ type: key, errorMessage: 'invalid time amounts given' });
+                            errors.push({ type: key, errorMessage: 'Invalid time amounts given' });
                             break;
                         }
 
                         if (guildSettings[values[key][2]] === validTimeWarns) {
-                            errors.push({ type: key, errorMessage: `warn ${key.replace('_', ' ')} time is already set to ${Util.formatTime(validTimeWarns)}` });
+                            errors.push({ type: key, errorMessage: `Warn ${key.replace('_', ' ')} time is already set to ${Util.formatTime(validTimeWarns)}` });
                             break;
                         }
                         break;
                     case 'warn_bantime_multiplier':
                         if (!/^\d+$/.test(value)) {
-                            errors.push({ type: key, errorMessage: 'amount has to be a number' });
+                            errors.push({ type: key, errorMessage: 'Amount has to be a number' });
                             break;
                         }
 
                         if (+value < 1 || +value > +config.settings.MAX_WARN_BANTIME_MULTIPLIER) {
-                            errors.push({ type: key, errorMessage: `warn streak bantime multiplier has to be a number between 1-${config.settings.MAX_WARN_BANTIME_MULTIPLIER}` });
+                            errors.push({ type: key, errorMessage: `Warn streak bantime multiplier has to be a number between 1-${config.settings.MAX_WARN_BANTIME_MULTIPLIER}` });
                             break;
                         }
                         break;
                     case 'warns_until_ban':
                         if (!/^\d+$/.test(value)) {
-                            errors.push({ type: key, errorMessage: 'amount has to be a number' });
+                            errors.push({ type: key, errorMessage: 'Amount has to be a number' });
                             break;
                         }
                         if (+value < 2 || +value > 10) {
-                            errors.push({ type: key, errorMessage: `warns until ban has to be a number between 1-10` });
+                            errors.push({ type: key, errorMessage: `Warns until ban has to be a number between 1-10` });
                         }
                 }
             }
@@ -685,7 +685,7 @@ export namespace Validator {
                 let value = obj.value;
 
                 if (!command.defaults.map(def => def.name).includes(key)) {
-                    errors.push({ type: key, errorMessage: `unknown setting ${key}` });
+                    errors.push({ type: key, errorMessage: `Unknown property ${key}` });
                 }
 
                 command.defaults.forEach(def => {
@@ -700,7 +700,7 @@ export namespace Validator {
                             break;
                         case 'number':
                             if (!/^\d+$/.test(value)) {
-                                errors.push({ type: key, errorMessage: 'amount has to be a number' });
+                                errors.push({ type: key, errorMessage: 'Amount has to be a number' });
                                 break;
                             }
 
@@ -723,13 +723,13 @@ export namespace Validator {
                             const timeVal = Util.validateTimeString(value, maxTime, minTime);
 
                             if (timeVal === 'exceeded') {
-                                errors.push({ type: key, errorMessage: `max ${def.name} time is ${Util.formatTime(maxTime)}` });
+                                errors.push({ type: key, errorMessage: `Max ${def.name} time is ${Util.formatTime(maxTime)}` });
                                 break;
                             } else if (timeVal === 'subceeded') {
-                                errors.push({ type: key, errorMessage: `min ${def.name} time is ${Util.formatTime(minTime)}` });
+                                errors.push({ type: key, errorMessage: `Min ${def.name} time is ${Util.formatTime(minTime)}` });
                                 break;
                             } else if (timeVal === 'invalid') {
-                                errors.push({ type: key, errorMessage: 'invalid time amounts given' });
+                                errors.push({ type: key, errorMessage: 'Invalid time amounts given' });
                                 break;
                             }
                     }

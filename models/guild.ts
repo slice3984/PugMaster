@@ -166,15 +166,7 @@ export default class GuildModel {
     }
 
     static async updateChannel(guildId: bigint, channelId: bigint, type: ChannelType) {
-        const guildChannels = Bot.getInstance().getGuild(guildId).channels;
-        for (const [channelId, channelType] of guildChannels) {
-            if (channelType === type) {
-                guildChannels.delete(channelId);
-            }
-            if (channelId === channelId) {
-                guildChannels.set(channelId, type);
-            }
-        }
+        Bot.getInstance().getGuild(guildId).channels.set(channelId, type);
 
         await db.execute(`
         UPDATE guild_channels

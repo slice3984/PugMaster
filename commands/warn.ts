@@ -27,7 +27,7 @@ const command: Command = {
         const player = await Util.getUser(message.guild, playerIdentifier, false) as GuildMember;
 
         if (!player) {
-            return message.reply(`given player not found`);
+            return message.channel.send(Util.formatMessage('error', `${message.author}, given player not found`));
         }
 
         await PlayerModel.storeOrUpdatePlayer(BigInt(message.guild.id), BigInt(player.id), player.displayName);
@@ -40,7 +40,7 @@ const command: Command = {
 
             if (reason) {
                 if (reason.length > 128) {
-                    return message.reply('max reason length is 128 chars');
+                    return message.channel.send(Util.formatMessage('error', `${message.author}, max reason length is 128 chars`));
                 }
             }
 
@@ -87,7 +87,7 @@ const command: Command = {
             await PlayerModel.unbanPlayer(BigInt(message.guild.id), BigInt(player.id));
             await PlayerModel.banPlayer(BigInt(message.guild.id), BigInt(message.member.id), BigInt(player.id), banTime, true, reasonToDisplay);
 
-            const msg = `${player.displayName} got banned for ${Util.formatTime(banTime)}, ${guildSettings.warnsUntilBan}/${guildSettings.warnsUntilBan} warns (Streak ${currentStreak})`;
+            const msg = `**${player.displayName}** got banned for **${Util.formatTime(banTime)}**, ${guildSettings.warnsUntilBan}/${guildSettings.warnsUntilBan} warns (Streak ${currentStreak})`;
 
             if (defaults[0] === 'true') {
                 // Check if it got executed in the listen channel
@@ -107,13 +107,13 @@ const command: Command = {
 
             if (reason) {
                 if (reason.length > 128) {
-                    return message.reply('max reason length is 128 chars');
+                    return message.channel.send(Util.formatMessage('error', `${message.author}, max reason length is 128 chars`));
                 }
             }
 
             await PlayerModel.warnPlayer(BigInt(message.guild.id), BigInt(message.member.id), BigInt(player.id), reason);
 
-            const msg = `${player.displayName} got warned${reason ? ' Reason: ' + reason : ''} (${activeWarns.length + 1}/${guildSettings.warnsUntilBan} warns)`;
+            const msg = `**${player.displayName}** got warned${reason ? ' Reason: ' + `**${reason}**` : ''} (**${activeWarns.length + 1}**/**${guildSettings.warnsUntilBan}** warns)`;
 
             if (defaults[0] === 'true') {
                 // Check if it got executed in the listen channel
@@ -121,12 +121,12 @@ const command: Command = {
                 if (isListenChannel) {
                     const puChannel = await Util.getPickupChannel(message.guild);
                     if (puChannel) {
-                        await puChannel.send(msg);
+                        puChannel.send(Util.formatMessage('success', msg));
                     }
                 }
             }
 
-            return message.channel.send(msg);
+            await message.channel.send(Util.formatMessage('success', msg));
         }
     }
 }

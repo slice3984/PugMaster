@@ -32,26 +32,26 @@ const command: Command = {
         const addedPlayer = await Util.getUser(message.guild, params[0]) as Discord.GuildMember;
 
         if (!addedPlayer) {
-            return message.reply('given player to replace not found');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, given player to replace not found`));
         }
 
         if (!playersInPickup.includes(addedPlayer.id)) {
-            return message.reply('given player to replace didn\'t participate in the latest rateable pickup');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, given player to replace didn't participate in the latest rateable pickup`));
         }
 
         // Sub
         const subPlayer = await Util.getUser(message.guild, params[1]) as Discord.GuildMember;
 
         if (!subPlayer) {
-            return message.reply('given substitute player not found');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, given substitute player not found`));
         }
 
         if (playersInPickup.includes(subPlayer.id)) {
-            return message.reply('given substitute player participated in the latest rateable pickup as well, not available as substitute');
+            return message.channel.send(Util.formatMessage('error', `${message.author}, given substitute player participated in the latest rateable pickup as well, not available as substitute`));
         }
 
         await StatsModel.replacePlayer(BigInt(message.guild.id), latestUnratedPickup.pickupId, BigInt(addedPlayer.id), BigInt(subPlayer.id));
-        message.reply(`set ${subPlayer.displayName} as substitute for ${addedPlayer.displayName} for pickup **#${latestUnratedPickup.pickupId}** - **${latestUnratedPickup.name}**`);
+        message.channel.send(Util.formatMessage('success', `Set **${subPlayer.displayName}** as substitute for **${addedPlayer.displayName}** for pickup **#${latestUnratedPickup.pickupId}** - **${latestUnratedPickup.name}**`));
     }
 }
 
