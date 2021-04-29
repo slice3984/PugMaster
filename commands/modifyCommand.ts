@@ -20,7 +20,7 @@ const command: Command = {
         const operation = params[1].toLowerCase();
 
         if (!bot.doesCommandExist(command)) {
-            return message.reply(`unknown command ${command}`);
+            return message.channel.send(Util.formatMessage('error', `Unknown command **${command}**`));
         }
 
         const guildSettings = bot.getGuild(message.guild.id);
@@ -28,29 +28,29 @@ const command: Command = {
 
         if (params.length === 2) {
             if (!['show', 'enable', 'disable'].includes(operation)) {
-                return message.reply('unknown operation do you mean show, enable or disable?');
+                return message.channel.send(Util.formatMessage('error', `${message.author}, unknown operation do you mean **show**, **enable** or **disable**?`));
             }
 
             if (operation === 'disable') {
                 if (['modify_command', 'permission', 'pickup'].includes(command.cmd)) {
-                    return message.reply('you can\'t disable this command');
+                    return message.channel.send(Util.formatMessage('error', `Command **${command.cmd}** can't be disabled`));
                 }
 
                 if (guildSettings.disabledCommands.includes(command.cmd)) {
-                    return message.reply(`command ${command.cmd} is already disabled`);
+                    return message.channel.send(Util.formatMessage('error', `Command **${command.cmd}** is already disabled`));
                 }
 
                 guildSettings.disableCommand(command.cmd);
-                return message.reply(`disabled command ${command.cmd}`);
+                return message.channel.send(Util.formatMessage('success', `Disabled command **${command.cmd}**`));
             }
 
             if (operation === 'enable') {
                 if (!guildSettings.disabledCommands.includes(command.cmd)) {
-                    return message.reply(`command ${command.cmd} is not disabled`);
+                    return message.channel.send(Util.formatMessage('error', `Command **${command.cmd}** is not disabled`));
                 }
 
                 guildSettings.enableCommand(command.cmd);
-                return message.reply(`enabled command ${command.cmd}`);
+                return message.channel.send(Util.formatMessage('success', `Enabled command **${command.cmd}**`));
             }
 
             if (operation === 'show') {
@@ -75,9 +75,9 @@ const command: Command = {
                         });
                     }
 
-                    message.channel.send(`Settings of ${command.cmd}\n${info}`);
+                    message.channel.send(`Settings of command **${command.cmd}**\n${info}`);
                 } else {
-                    message.reply(`command ${command.cmd} got no settings`);
+                    message.channel.send(Util.formatMessage('info', `Command **${command.cmd}** got no settings`));
                 }
             }
         } else {
@@ -85,12 +85,12 @@ const command: Command = {
 
             if (command.defaults) {
                 const defaultvalue = command.defaults.find(def => def.name === operation);
-                const type = defaultvalue.type;
 
                 if (!defaultvalue) {
-                    return message.reply(`unknown setting, did you mean ${command.defaults.map(def => def.name).join(', ')}?`);
+                    return message.channel.send(Util.formatMessage('error', `${message.author}, unknown property, did you mean ${command.defaults.map(def => `**${def.name}**`).join(', ')}?`));
                 }
 
+                const type = defaultvalue.type;
                 const isInvalid = Validator.CommandOption.validate(guildSettings, { command, key: operation, value });
 
                 if (isInvalid.length) {
@@ -113,16 +113,16 @@ const command: Command = {
                 const isNumeric = command.defaults[index].type === 'number';
 
                 if (currentSettings[index].toString() === value) {
-                    return message.reply(`property ${operation} of command ${command.cmd} is already set to this value`);
+                    return message.channel.send(Util.formatMessage('error', `Property **${operation}** of command **${command.cmd}** is already set to this value`));
                 }
 
                 currentSettings[index] = isNumeric ? +value : value;
 
                 await guildSettings.modifyCommand(command, currentSettings);
-                message.reply(`successfully modified command ${command.cmd}, set ${operation} to ${type === 'time' ? Util.formatTime(+value) : value}`);
+                message.channel.send(Util.formatMessage('success', `Modified command **${command.cmd}**, set **${operation}** to ${type === 'time' ? `**${Util.formatTime(+value)}**` : `**${value}**`}`));
 
             } else {
-                message.reply('this command got no configurable settings');
+                message.channel.send(Util.formatMessage('error', 'This command got no configurable settings'));
             }
         }
     }
