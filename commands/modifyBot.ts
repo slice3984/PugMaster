@@ -29,7 +29,7 @@ const command: Command = {
             message.channel.send(Util.formatMessage('success', `Updated property ${key}, set value to ${value}`));
         } else {
             if (key !== 'show') {
-                return message.reply('invalid argument given, do you mean show?');
+                return message.channel.send(Util.formatMessage('error', `${message.author}, invalid argument given, do you mean **show**?`));
             }
 
             const settings = bot.getGuild(message.guild.id);
@@ -53,6 +53,7 @@ const command: Command = {
             const mapvoteIterations = settings.mapvoteIterations;
             const captainSelectionIterations = settings.captainSelectionIterations;
             const maxAvgVariance = settings.maxAvgVariance;
+            const maxRankRatingCap = settings.maxRankRatingCap;
             const warnStreaks = settings.warnStreaks;
             const warnsUntilBan = settings.warnsUntilBan;
             const warnStreakExpiration = Util.formatTime(settings.warnStreakExpiration);
@@ -101,6 +102,7 @@ const command: Command = {
                     '\u200B  ': '\u200B',
                     'Report expire': reportExpiretime,
                     'Max average elo variance': maxAvgVariance,
+                    'Max rank rating cap': maxRankRatingCap,
                     '\u200B   ': '\u200B',
                     'Max warn streaks': warnStreaks,
                     'Warns until ban': warnsUntilBan,

@@ -464,5 +464,16 @@ export default class Util {
         return `${icon} **|** ${msg}`;
     }
 
-    static tsToEloNumber(skill: number) { return Math.ceil(skill * 16) }
+    static tsToEloNumber(skill: number) { return Math.ceil(skill * 100) }
+
+    static tsToRankIcon(mu: number, sigma: number, ratingCap: number) {
+        const skill = this.tsToEloNumber(mu - (3 * sigma));
+        const ratingPerRank = ratingCap / 15;
+        let rank = Math.round(skill / ratingPerRank);
+
+        rank = !rank || rank < 0 ? 1 : rank;
+        rank = rank > 15 ? 15 : rank;
+
+        return rank;
+    }
 }

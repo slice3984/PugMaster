@@ -252,4 +252,28 @@ export default class RatingModel {
             }
         });
     }
+
+    static async getCurrentRatings(pickupConfigId: number, ...playerIds: bigint[]): Promise<{ id: string, mu: number, sigma: number, amount: number }[]> {
+        const data: any = await db.execute(`
+        SELECT COUNT(*) as amount, p.user_id, pr.rating, pr.variance from players p
+        JOIN pickup_players pp ON pp.player_id = p.id
+        JOIN pickups ps ON pp.pickup_id = ps.id
+        JOIN player_ratings pr ON pr.player_id = p.id AND pr.pickup_config_id = ${pickupConfigId}
+        WHERE ps.pickup_config_id = ${pickupConfigId} AND pp.rating IS NOT NULL AND p.user_id IN (${Array(playerIds.length).fill('?').join(',')})
+        GROUP BY p.id;
+        `, [...playerIds]);
+
+        if (!data[0].length) {
+            return [];
+        }
+
+        return data[0].map(row => {
+            return {
+                id: row.user_id.toString(),
+                mu: row.rating,
+                sigma: row.variance,
+                amount: row.amount
+            }
+        });
+    }
 }

@@ -116,6 +116,18 @@
                 <td>true or false</td>
               </tr>
               <tr>
+                <td>
+                  max_rank_rating_cap<span class="help-article__red">*</span>
+                </td>
+                <td>The rating required to reach the highest rank</td>
+                <td>
+                  <div class="help-article__type help-article__type--number">
+                    Number
+                  </div>
+                </td>
+                <td>1000 to 5000</td>
+              </tr>
+              <tr>
                 <td>whitelist<span class="help-article__red">*</span></td>
                 <td>Only allow players with this role to add</td>
                 <td>
@@ -196,6 +208,6 @@ export default defineComponent({
 
 <style lang="scss" scoped>
 .wrapper {
-  width: 60vw;
+  width: 70vw;
 }
 </style>

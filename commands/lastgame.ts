@@ -70,7 +70,7 @@ const command: Command = {
 }
 
 const formatOutput = (pickupInfo: PickupInfo, toHighlight?: string | null) => {
-    const formatPlayers = (players: { nick: string; isCaptain: boolean }[], onePlayerTeams: boolean) => {
+    const formatPlayers = (players: { nick: string; isCaptain: boolean, outcome?: 'win' | 'draw' | 'loss' }[], onePlayerTeams: boolean) => {
         players = players.sort((p1, p2) => {
             return +p2.isCaptain - +p1.isCaptain;
         });
@@ -83,10 +83,19 @@ const formatOutput = (pickupInfo: PickupInfo, toHighlight?: string | null) => {
                 playerStr += `\`${p.nick}\``;
             }
 
+            if (onePlayerTeams && p.outcome) {
+                switch (p.outcome) {
+                    case 'win': playerStr += ' (**WON**)'; break;
+                    case 'draw': playerStr += ' (**DREW**)'; break;
+                    case 'loss': playerStr += ' (**LOST**)';
+                }
+            }
+
             // Ignore duels
             if (p.isCaptain && !onePlayerTeams) {
                 playerStr += ' (Captain)';
             }
+
 
             return playerStr;
         });
@@ -98,7 +107,7 @@ const formatOutput = (pickupInfo: PickupInfo, toHighlight?: string | null) => {
     if (pickupInfo.teams.length > 1) {
         // 1 player per team pickups are considered as duel
         if (pickupInfo.teams[0].players.length === 1) {
-            const nicks = formatPlayers(pickupInfo.teams.flatMap(t => t.players), true).join(' **vs** ');
+            const nicks = formatPlayers(pickupInfo.teams.flatMap(t => t.players.map(p => ({ ...p, outcome: t.outcome }))), true).join(' **vs** ');
             str += `\nPlayers: ${nicks}`;
         } else {
             pickupInfo.teams.forEach(team => {

@@ -40,6 +40,7 @@ export default class GuildSettings {
         private _mapvoteIterations: number,
         private _captainSelectionIterations: number,
         private _maxAvgVariance: number,
+        private _maxRankRatingCap: number,
         private _warnStreaks: number,
         private _warnsUntilBan: number,
         private _warnStreakExpiration: number,
@@ -55,7 +56,7 @@ export default class GuildSettings {
 
             if (prop.value === 'none') {
                 if (['prefix', 'report_expire', 'warn_streaks', 'iteration_time', 'afk_time', 'afk_check_iterations', 'picking_iterations',
-                    'max_avg_elo_variance', 'warn_streak_expiration', 'warn_expiration', 'warn_bantime', 'warn_bantime_multiplier', 'warns_until_ban', 'captain_selection_iterations'].includes(prop.key)) {
+                    'max_avg_elo_variance', 'warn_streak_expiration', 'warn_expiration', 'warn_bantime', 'warn_bantime_multiplier', 'warns_until_ban', 'captain_selection_iterations', 'max_rank_rating_cap'].includes(prop.key)) {
                     errors.push({ type: 'none', errorMessage: `you can't disable property ${prop.key}` });
                 } else {
                     continue;
@@ -138,6 +139,7 @@ export default class GuildSettings {
                 case 'picking_iterations': this._pickingIterations = +value; break;
                 case 'captain_selection_iterations': this._captainSelectionIterations = +value; break;
                 case 'max_avg_elo_variance': this._maxAvgVariance = +value; break;
+                case 'max_rank_rating_cap': this._maxRankRatingCap = +value; break;
                 case 'warn_streaks': this._warnStreaks = value ? +value : null; break;
                 case 'warns_until_ban': this._warnsUntilBan = value ? +value : null; break;
                 case 'warn_streak_expiration': this._warnStreakExpiration = +value; break;
@@ -249,6 +251,10 @@ export default class GuildSettings {
 
     public get maxAvgVariance(): number {
         return this._maxAvgVariance;
+    }
+
+    public get maxRankRatingCap(): number {
+        return this._maxRankRatingCap;
     }
 
     public get warnBanTimeMultiplier(): number {

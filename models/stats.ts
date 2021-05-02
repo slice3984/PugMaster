@@ -371,6 +371,7 @@ export default class StatsModel {
         Promise<{
             pickupConfigId: number;
             pickup: string;
+            rankRatingCap: number;
             ratings: { rank: number, nick: string; rating: number, variance: number, wins: number, losses: number, draws: number }[]
         }> {
         page = page - 1;
@@ -380,6 +381,7 @@ export default class StatsModel {
                 pc.id,
                 pc.name,
                 rc.lastgame,
+                pc.max_rank_rating_cap,
                 p.current_nick,
                 pr.rating,
                 pr.variance,
@@ -467,6 +469,7 @@ export default class StatsModel {
         const ratings = {
             pickupConfigId: null,
             pickup: null,
+            rankRatingCap: null,
             ratings: []
         };
 
@@ -478,6 +481,7 @@ export default class StatsModel {
             if (!idx) {
                 ratings.pickupConfigId = row.id;
                 ratings.pickup = row.name;
+                ratings.rankRatingCap = row.max_rank_rating_cap;
             }
 
             ratings.ratings.push({
@@ -500,6 +504,7 @@ export default class StatsModel {
             nick: string;
             ratings: {
                 pickup: string;
+                rankRatingCap: number;
                 rating: number;
                 variance: number,
                 wins: number,
@@ -542,7 +547,7 @@ export default class StatsModel {
            ELSE
               0 
         END
-     ) as draw, COUNT(*) AS pickups, ps.current_nick, pc.name, pr.rating, pr.variance, rankings.global_rank 
+     ) as draw, COUNT(*) AS pickups, ps.current_nick, pc.name, pc.max_rank_rating_cap, pr.rating, pr.variance, rankings.global_rank 
      FROM
         pickups p 
         JOIN
@@ -623,6 +628,7 @@ export default class StatsModel {
 
             ratings.ratings.push({
                 pickup: row.name,
+                rankRatingCap: row.max_rank_rating_cap,
                 rating: row.rating,
                 variance: row.variance,
                 wins: row.win,

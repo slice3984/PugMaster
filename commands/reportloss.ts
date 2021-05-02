@@ -131,9 +131,8 @@ const command: Command = {
 }
 
 const rateMatch = async (message: Discord.Message, pickup: RateablePickup) => {
-    await Rating.rateMatch(message.guild.id, pickup);
-    const results = pickup.teams.map(t => `Team ${t.name} - **${t.outcome.toUpperCase()}**`).join(' / ');
-    message.channel.send(Util.formatMessage('success', `Rated pickup **#${pickup.pickupId}** - **${pickup.name}**: ${results}`));
+    const toSend = await Rating.rateMatch(message.guild.id, pickup);
+    message.channel.send(toSend);
 }
 
 module.exports = command;

@@ -28,6 +28,23 @@ export interface Config {
         info: string;
         warn: string;
         error: string;
+        unranked: string;
+        rank_1: string;
+        rank_2: string;
+        rank_3: string;
+        rank_4: string;
+        rank_5: string;
+        rank_6: string;
+        rank_7: string;
+        rank_8: string;
+        rank_9: string;
+        rank_10: string;
+        rank_11: string;
+        rank_12: string;
+        rank_13: string;
+        rank_14: string;
+        rank_15: string;
+        lb_leader: string;
     };
     webserver: {
         port: string;
@@ -84,6 +101,7 @@ export interface PickupSettings {
     captainSelection: 'manual' | 'auto',
     pickMode: 'no_teams' | 'manual' | 'random' | 'elo' | 'autopick';
     rated: boolean;
+    maxRankRatingCap: number;
     whitelistRole: string | null;
     blacklistRole: string | null;
     promotionRole: string | null;

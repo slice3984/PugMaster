@@ -115,6 +115,7 @@ export default class GuildModel {
                 data.map_vote_iterations,
                 data.captain_selection_iterations,
                 data.max_avg_elo_variance,
+                data.max_rank_rating_cap,
                 data.warn_streaks,
                 data.warns_until_ban,
                 data.warn_streak_expiration,

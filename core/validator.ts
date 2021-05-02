@@ -13,7 +13,7 @@ export namespace Validator {
     export namespace Pickup {
         export function areValidKeys(...keys) {
             const validKeys = ['name', 'players', 'teams', 'default', 'mappool', 'mapvote', 'afkcheck', 'captain_selection',
-                'pickmode', 'rated', 'whitelist', 'blacklist', 'promotion', 'captain', 'server'];
+                'pickmode', 'rated', 'max_rank_rating_cap', 'whitelist', 'blacklist', 'promotion', 'captain', 'server', 'max_rank_rating_cap'];
             const invalidKeys = keys.filter(key => !validKeys.includes(key));
 
             return invalidKeys;
@@ -200,6 +200,17 @@ export namespace Validator {
                             break;
                         }
                         break;
+                    case 'max_rank_rating_cap':
+                        if (!/^\d+$/.test(value)) {
+                            errors.push({ type: key, errorMessage: 'Amount has to be a number' });
+                            break;
+                        }
+
+                        if (+value < Util.tsToEloNumber(10) || +value > Util.tsToEloNumber(50)) {
+                            errors.push({ type: key, errorMessage: `${key.replace('_', ' ')} has to be a number between ${Util.tsToEloNumber(10)} and ${Util.tsToEloNumber(50)}` });
+                            break;
+                        }
+                        break;
                     case 'whitelist':
                         const whitelistRole = Util.getRole(guild, value);
 
@@ -366,7 +377,7 @@ export namespace Validator {
         export function areValidKeys(...keys) {
             const validKeys = ['prefix', 'global_expire', 'report_expire', 'trust_time', 'explicit_trust', 'whitelist', 'blacklist', 'promotion_delay', 'server',
                 'start_message', 'sub_message', 'notify_message', 'iteration_time', 'afk_time', 'afk_check_iterations', 'picking_iterations', 'map_vote_iterations', 'max_avg_elo_variance',
-                'warn_streaks', 'warns_until_ban', 'warn_streak_expiration', 'warn_expiration', 'warn_bantime', 'warn_bantime_multiplier', 'captain_selection_iterations'];
+                'warn_streaks', 'warns_until_ban', 'warn_streak_expiration', 'warn_expiration', 'warn_bantime', 'warn_bantime_multiplier', 'captain_selection_iterations', 'max_rank_rating_cap'];
 
             const invalidKeys = keys.filter(key => !validKeys.includes(key));
 
@@ -606,6 +617,17 @@ export namespace Validator {
 
                         if (guildSettings.maxAvgVariance === +value) {
                             errors.push({ type: key, errorMessage: `Max average elo variance is already set to ${Util.tsToEloNumber(+value)}` });
+                        }
+                        break;
+                    case 'max_rank_rating_cap':
+                        if (!/^\d+$/.test(value)) {
+                            errors.push({ type: key, errorMessage: 'Amount has to be a number' });
+                            break;
+                        }
+
+                        if (+value < Util.tsToEloNumber(10) || +value > Util.tsToEloNumber(50)) {
+                            errors.push({ type: key, errorMessage: `${key.replace('_', ' ')} has to be a number between ${Util.tsToEloNumber(10)} and ${Util.tsToEloNumber(50)}` });
+                            break;
                         }
                         break;
                     case 'warn_streaks':

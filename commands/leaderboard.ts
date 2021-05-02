@@ -1,4 +1,6 @@
 import Discord from 'discord.js';
+import Bot from '../core/bot';
+import ConfigTool from '../core/configTool';
 import { Command } from '../core/types';
 import Util from '../core/util';
 import PickupModel from '../models/pickup';
@@ -17,6 +19,8 @@ const command: Command = {
     global: false,
     perms: false,
     exec: async (bot, message, params) => {
+        const guildSettings = Bot.getInstance().getGuild(message.guild.id);
+        const emojis = ConfigTool.getConfig().emojis;
         let page;
 
         if (params.length > 1) {
@@ -55,17 +59,29 @@ const command: Command = {
             let rank = '';
 
             switch (player.rank) {
-                case 1: rank = ':first_place:'; break;
+                case 1: rank = emojis.lb_leader; break;
                 case 2: rank = ':second_place:'; break;
                 case 3: rank = ':third_place:'; break;
                 default: rank = `#${player.rank}`;
             }
 
             const name = player.nick;
-            const rating = `${Util.tsToEloNumber(player.rating)} ± ${Util.tsToEloNumber(player.variance)}`;
+            const amountOfGames = +player.wins + +player.draws + +player.losses;
+            const rankCap = ratings.rankRatingCap || guildSettings.maxRankRatingCap;
+
+            let rankIcon;
+
+            if (amountOfGames < 10) {
+                rankIcon = emojis.unranked;
+            } else {
+                rankIcon = emojis[`rank_${Util.tsToRankIcon(player.rating, player.variance, rankCap)}`];
+            }
+
+            const winPercentage = Math.round((+player.wins / amountOfGames) * 100);
+            const rating = `${rankIcon} ${Util.tsToEloNumber(player.rating)} ± ${Util.tsToEloNumber(player.variance)}`;
 
             playerNicks.push(`**${rank}** ${name}`);
-            playerGames.push(`**${player.wins}** / **${player.draws}** / **${player.losses}**`);
+            playerGames.push(`**${player.wins}** / **${player.draws}** / **${player.losses}** **(${winPercentage}%)**`);
             playerRatings.push(`**${rating}**`);
         });
 
@@ -78,7 +94,7 @@ const command: Command = {
                 { name: 'Player', value: playerNicks.join('\n'), inline: true },
                 { name: 'W / D / L', value: playerGames.join('\n'), inline: true },
                 { name: 'Rating', value: playerRatings.join('\n'), inline: true },
-            ).setFooter('Player skill uncertainty taken into account for ranking.\nActive in last 14 days.', botAvatarUrl)
+            ).setFooter('Player skill uncertainty taken into account for ranking.\nActive in last 14 days / 10 games required to be ranked', botAvatarUrl)
 
         message.channel.send(leaderboardEmbed);
     }

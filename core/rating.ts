@@ -1,11 +1,25 @@
+import Discord from 'discord.js';
 import * as ts from 'ts-trueskill';
+import PickupModel from '../models/pickup';
 import RatingModel from "../models/rating";
+import Bot from './bot';
+import ConfigTool from './configTool';
 import { RatingPickup, RateablePickup, RatingTeam } from "./types";
+import Util from './util';
 
 interface UpdateData {
     pickups: PlayerRating[],
-    playerRatings: { id: bigint, mu: number, sigma: number }[]
+    playerRatings: { id: bigint, mu: number, sigma: number }[],
 }
+
+interface RatingResult {
+    id: string;
+    amountGames: number;
+    prevMu: number;
+    prevSigma: number;
+    newMu: number;
+    newSigma: number;
+}[]
 
 interface PlayerRating {
     pickupId: number;
@@ -168,7 +182,7 @@ export default class Rating {
         const amountFollowingPickups = await RatingModel.getAmountOfFollowingPickups(BigInt(guildId), pickupToRate.pickupConfigId, pickupToRate.pickupId);
 
         if (amountFollowingPickups > Rating.RERATE_AMOUNT_LIMIT) {
-            return false;
+            return Util.formatMessage('error', `It is only possible to ${pickupToRate.isRated ? 'rerate' : 'rate'} up to ${this.RERATE_AMOUNT_LIMIT} proceeding rated pickups of the same kind`);
         }
 
         const updateData = await this.generateRatings(guildId, pickupToRate, amountFollowingPickups, false);
@@ -180,22 +194,23 @@ export default class Rating {
             }
         });
 
+        const message = await this.generateRatingMessage(guildId, pickupToRate, outcomes, updateData.playerRatings);
         await RatingModel.rate(BigInt(guildId), pickupToRate.pickupId, pickupToRate.pickupConfigId, outcomes, updateData.pickups);
-        return true;
+        return message;
     }
 
-    static async unrateMatch(guildId: string, pickupToUnrate: RateablePickup): Promise<boolean> {
+    static async unrateMatch(guildId: string, pickupToUnrate: RateablePickup): Promise<Discord.MessageEmbed | string> {
         // If the latest rated pickup is the one being unrated there is no need to generate new ratings
         const amountFollowingPickups = await RatingModel.getAmountOfFollowingPickups(BigInt(guildId), pickupToUnrate.pickupConfigId, pickupToUnrate.pickupId);
 
         if (amountFollowingPickups > Rating.RERATE_AMOUNT_LIMIT) {
-            return false;
+            return Util.formatMessage('error', `It is only possible to unrate up to ${this.RERATE_AMOUNT_LIMIT} proceeding rated pickups of the same kind`);
         }
 
+        const playerIds = pickupToUnrate.teams.flatMap(p => p.players.map(p2 => BigInt(p2.id)));
         if (!amountFollowingPickups) {
             const playerRatings: { id: bigint, mu: number | null, sigma: number | null }[] = [];
 
-            const playerIds = pickupToUnrate.teams.flatMap(p => p.players.map(p2 => BigInt(p2.id)));
             const previousKnownRatings = await RatingModel.getPreviousNewestRatings(BigInt(guildId), pickupToUnrate.pickupId, pickupToUnrate.pickupConfigId, ...playerIds);
 
             playerIds.forEach(id => {
@@ -207,12 +222,95 @@ export default class Rating {
                 });
             });
 
+            const message = this.generateRatingMessage(guildId, pickupToUnrate, null, playerRatings);
             await RatingModel.unrate(BigInt(guildId), pickupToUnrate.pickupId, pickupToUnrate.pickupConfigId, [], playerRatings);
+            return message;
         } else {
             const updateData = await this.generateRatings(guildId, pickupToUnrate, amountFollowingPickups, true);
+            const message = this.generateRatingMessage(guildId, pickupToUnrate, null, updateData.playerRatings);
             await RatingModel.unrate(BigInt(guildId), pickupToUnrate.pickupId, pickupToUnrate.pickupConfigId, updateData.pickups, updateData.playerRatings);
+            return message;
+        }
+    }
+
+    private static async generateRatingMessage(guildId: string,
+        pickup: RateablePickup,
+        outcomes: { team: string; result: "win" | "draw" | "loss" }[], newRatings: { id: bigint, mu: number, sigma: number }[]): Promise<Discord.MessageEmbed | string> {
+        const players = pickup.teams.flatMap(p => p.players.map(p2 => ({ id: BigInt(p2.id), nick: p2.nick })));
+        const pickupSettings = await PickupModel.getPickupSettings(BigInt(guildId), pickup.pickupConfigId);
+
+        // Only display rating changes for pickups with less than 11 players
+        if (players.length > 10) {
+            if (outcomes) {
+                const results = outcomes.map(o => `Team **${o.team}** - **${o.result.toUpperCase()}**`).join(' / ');
+                return Util.formatMessage('success', `${pickup.isRated ? 'Rerated' : 'Rated'} pickup **#${pickup.pickupId}** - **${pickup.name}**: ${results}`);
+            } else {
+                return Util.formatMessage('success', `Unrated pickup **#${pickup.pickupId}** - **${pickup.name}**`);
+            }
         }
 
-        return true;
+        const guildSettings = Bot.getInstance().getGuild(guildId);
+        const emojis = ConfigTool.getConfig().emojis;
+
+        const currentRatings = await RatingModel.getCurrentRatings(pickup.pickupConfigId, ...players.map(p => p.id));
+        const results: RatingResult[] = [];
+
+        newRatings.forEach(rating => {
+            const oldRating = currentRatings.find(r => r.id === rating.id.toString());
+            results.push({
+                id: rating.id.toString(),
+                amountGames: oldRating ? oldRating.amount : 0,
+                newMu: rating.mu,
+                newSigma: rating.sigma,
+                prevMu: oldRating ? oldRating.mu : null,
+                prevSigma: oldRating ? oldRating.sigma : null,
+            })
+        });
+
+        const rankCap = pickupSettings.maxRankRatingCap || guildSettings.maxRankRatingCap;
+        const playerNicks = players.map(p => p.nick);
+        const from = [];
+        const to = [];
+
+        players.forEach(p => {
+            const result = results.find(r => r.id === p.id.toString());
+            const amountAfter = outcomes ? result.amountGames - 1 : result.amountGames + 1; // Can be only unrate without outcomes
+            let rankIconBefore = result.amountGames >= 10 ? emojis[`rank_${Util.tsToRankIcon(result.prevMu, result.prevSigma, rankCap)}`] : emojis.unranked;
+            let rankIconAfter = amountAfter >= 10 ? emojis[`rank_${Util.tsToRankIcon(result.newMu, result.newSigma, rankCap)}`] : emojis.unranked;
+
+            const ratingChange = Math.abs(result.prevMu - result.newMu);
+
+            from.push(`${rankIconBefore}${result.prevMu ? Util.tsToEloNumber(result.prevMu) : 'UNRATED'}`);
+            to.push(`${rankIconAfter}${result.newMu ? Util.tsToEloNumber(result.newMu) : 'UNRATED'} ${result.newMu ? `(**${result.prevMu > result.newMu ? '-' : '+'}${Util.tsToEloNumber(ratingChange)}**)` : ''}`);
+        });
+
+        let fieldData: Discord.EmbedFieldData[];
+        let title;
+
+        if (outcomes) {
+            fieldData = [
+                { name: 'Results', value: outcomes.map(o => `**${o.team}** - **${o.result.toUpperCase()}**`).join(' / ') },
+                { name: 'Player', value: playerNicks.join('\n'), inline: true },
+                { name: 'From', value: from.join('\n'), inline: true },
+                { name: 'To', value: to.join('\n'), inline: true }
+            ]
+
+            title = `${pickup.isRated ? 'Rerated' : 'Rated'} pickup #${pickup.pickupId} - ${pickup.name}`;
+        } else {
+            fieldData = [
+                { name: 'Player', value: playerNicks.join('\n'), inline: true },
+                { name: 'From', value: from.join('\n'), inline: true },
+                { name: 'To', value: to.join('\n'), inline: true }
+            ]
+
+            title = `Unrated pickup #${pickup.pickupId} - ${pickup.name}`;
+        }
+
+        const ratingUpdateCard = new Discord.MessageEmbed()
+            .setColor('#126e82')
+            .setTitle(title)
+            .addFields(fieldData)
+
+        return ratingUpdateCard;
     }
 }

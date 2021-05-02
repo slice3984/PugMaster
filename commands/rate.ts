@@ -140,14 +140,8 @@ const command: Command = {
             team.outcome = rating.outcome;
         }
 
-        const success = await Rating.rateMatch(message.guild.id, rateablePickup);
-
-        if (!success) {
-            return message.channel.send(Util.formatMessage('error', `It is only possible to ${rateablePickup.isRated ? 'rerate' : 'rate'} up to ${Rating.RERATE_AMOUNT_LIMIT} proceeding rated pickups of the same kind`));
-        }
-
-        const results = rateablePickup.teams.map(t => `Team ${t.name} - **${t.outcome.toUpperCase()}**`).join(' / ');
-        message.channel.send(Util.formatMessage('success', `${rateablePickup.isRated ? 'Rerated' : 'Rated'} pickup **#${rateablePickup.pickupId}** - **${rateablePickup.name}**: ${results}`));
+        const toSend = await Rating.rateMatch(message.guild.id, rateablePickup);
+        message.channel.send(toSend);
     }
 }
 

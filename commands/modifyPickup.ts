@@ -123,6 +123,7 @@ const command: Command = {
                 'Default Pickup': `${settings.isDefaultPickup ? 'yes' : 'no'}`,
                 'Pick mode': settings.pickMode,
                 'Rated': `${settings.rated ? 'rated' : 'unrated'}`,
+                'Max rank rating cap': `${settings.maxRankRatingCap ? settings.maxRankRatingCap : '-'}`,
                 'AFK Check': `${settings.afkCheck ? 'enabled' : 'disabled'}`,
                 'Captain selection': settings.captainSelection,
                 'Server': serverName,

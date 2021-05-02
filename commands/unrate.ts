@@ -29,13 +29,8 @@ const command: Command = {
             return message.channel.send(Util.formatMessage('error', `${message.author}, pickup **${rateablePickup.pickupId}** - **${rateablePickup.name}** is rateable but not rated yet`));
         }
 
-        const success = await Rating.unrateMatch(message.guild.id, rateablePickup);
-
-        if (!success) {
-            return message.channel.send(Util.formatMessage('error', `${message.author}, you can only unrate up to ${Rating.RERATE_AMOUNT_LIMIT} proceeding rated pickups of the same kind`));
-        }
-
-        message.channel.send(Util.formatMessage('success', `Unrated pickup #**${rateablePickup.pickupId}** - **${rateablePickup.name}**`));
+        const toSend = await Rating.unrateMatch(message.guild.id, rateablePickup);
+        message.channel.send(toSend);
     }
 }
 

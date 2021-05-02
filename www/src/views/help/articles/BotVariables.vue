@@ -207,7 +207,17 @@
                     Number
                   </div>
                 </td>
-                <td>16 to 134</td>
+                <td>100 to 830</td>
+              </tr>
+              <tr>
+                <td>max_rank_rating_cap</td>
+                <td>The rating required to reach the highest rank</td>
+                <td>
+                  <div class="help-article__type help-article__type--number">
+                    Number
+                  </div>
+                </td>
+                <td>1000 to 5000</td>
               </tr>
               <tr>
                 <td>warn_streaks</td>
@@ -303,6 +313,6 @@ export default defineComponent({
 
 <style lang="scss" scoped>
 .wrapper {
-  width: 60vw;
+  width: 70vw;
 }
 </style>

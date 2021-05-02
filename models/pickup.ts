@@ -342,6 +342,7 @@ export default class PickupModel {
             captainSelection: settings.captain_selection,
             pickMode: settings.pick_mode,
             rated: Boolean(settings.is_rated),
+            maxRankRatingCap: settings.max_rank_rating_cap ? settings.max_rank_rating_cap : null,
             whitelistRole: settings.whitelist_role ? settings.whitelist_role.toString() : null,
             blacklistRole: settings.blacklist_role ? settings.blacklist_role.toString() : null,
             promotionRole: settings.promotion_role ? settings.promotion_role.toString() : null,
@@ -666,7 +667,7 @@ export default class PickupModel {
         JOIN pickup_players pp ON ps.id = pp.pickup_id
         LEFT JOIN rated_results rr ON rr.pickup_id = ps.id AND rr.team = pp.team
         JOIN players p ON p.id = pp.player_id
-        LEFT JOIN player_ratings pr ON pr.player_id = p.id
+        LEFT JOIN player_ratings pr ON pr.player_id = p.id AND pc.id = pr.pickup_config_id
         WHERE pc.guild_id = ? AND ps.id = ? AND pc.is_rated = 1
         `, [guildId, puId]);
 
