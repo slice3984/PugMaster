@@ -1,4 +1,4 @@
-# Pickupbot
+# PugMaster
 ## Multi guild feature-rich discord pickup bot
 ## Features
 - Up to 100 player pickups with up to 10 teams
@@ -6,6 +6,7 @@
 - Customizable dm, start & sub messages
 - AFK check system
 - Map vote system
+- Leaderboards / Ranks based on skill
 - Multiple pick modes
     - No teams
     - Manual discord picking with captain system
@@ -15,6 +16,7 @@
     - Trueskill based player ratings
     - Ability for captains to report losses and draws
     - Ability to rate, unrate & rerate pickups as admin
+	- Individual ratings per pickup
 - Ban & warns system
     - Role based whitelist / blacklist system for all pickups or specific pickups
     - Ban command for timed or permanent bans
@@ -31,13 +33,12 @@
 
 ## Tech
 
-- SCSS & Typescript & Chart.js for the frontend 
+- SCSS & Typescript & Vue.js for the frontend 
 - Node.js based backend
     - Typescript
     - Mysql
     - Discord.js
     - Express
-    - Ejs
 
 ## Building & Dev
 - Includes npm scripts for building and development
@@ -50,4 +51,4 @@
 - Mysql server
 - Node.js runtime
 
-**Instance of a hosted bot can be found here: [Pickup bot](https://slice.sh/pickup/)**
+**Instance of a hosted bot can be found here: [PugMaster](https://slice.sh/pugmaster/)**
