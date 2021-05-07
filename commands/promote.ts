@@ -25,7 +25,7 @@ const command: Command = {
         }
 
         const pickup = params[0].toLowerCase();
-        const isValidPickup = await PickupModel.areValidPickups(BigInt(message.guild.id), pickup);
+        const isValidPickup = await PickupModel.areValidPickups(BigInt(message.guild.id), true, pickup);
 
         if (!isValidPickup.length) {
             return message.channel.send(Util.formatMessage('error', `${message.author}, no valid pickup provided`));

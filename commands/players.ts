@@ -35,7 +35,7 @@ const command: Command = {
         } else {
             pickup = params[0].toLowerCase();
 
-            if (!await (await PickupModel.areValidPickups(BigInt(message.guild.id), pickup)).length) {
+            if (!await (await PickupModel.areValidPickups(BigInt(message.guild.id), true, pickup)).length) {
                 return message.channel.send(Util.formatMessage('error', `${message.author}, invalid pickup provided`));
             }
 
@@ -59,7 +59,7 @@ const command: Command = {
                 continue;
             }
 
-            const playerObj = await Util.getUser(message.guild, player.id.toString(), false) as Discord.GuildMember;
+            const playerObj = await Util.getUser(message.guild, player.id.toString()) as Discord.GuildMember;
 
             if (playerObj) {
                 switch (playerObj.presence.status) {

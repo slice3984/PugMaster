@@ -29,7 +29,7 @@ const command: Command = {
     exec: async (bot, message, params, defaults) => {
         const playerIdentifier = params[0];
         const time = params[1].toLowerCase();
-        const player = await Util.getUser(message.guild, playerIdentifier, true);
+        const player = await Util.getUser(message.guild, playerIdentifier, false);
 
         if (!player) {
             return message.channel.send(Util.formatMessage('error', `${message.author}, given player not found`));
@@ -40,6 +40,8 @@ const command: Command = {
         } else {
             PlayerModel.storeOrUpdatePlayer(BigInt(message.guild.id), BigInt(player.id), player.username);
         }
+
+        await PlayerModel.storeOrUpdatePlayer(BigInt(message.guild.id), BigInt(message.author.id), message.member.displayName);
 
         if (['perm', 'permanent'].includes(time)) {
             const isBannedAlready = await PlayerModel.isPlayerBanned(BigInt(message.guild.id), BigInt(player.id));

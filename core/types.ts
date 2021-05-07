@@ -92,6 +92,7 @@ export type TimeError = 'exceeded' | 'subceeded' | 'invalid';
 export interface PickupSettings {
     id: number;
     name: string;
+    enabled: boolean;
     playerCount: number;
     teamCount: number;
     isDefaultPickup: boolean;
@@ -236,9 +237,10 @@ export interface RateablePickup {
     name: string;
     startedAt: Date;
     isRated: boolean;
-    captains: { team: string; id: string; rating: number; nick: string }[]; // Can be empty if the team got autopicked
+    captains: { team: string; alias: string; id: string; rating: number; nick: string }[]; // Can be empty if the team got autopicked
     teams: {
         name: string;
+        alias?: string;
         outcome: 'win' | 'draw' | 'loss' | null,
         players: {
             id: string;

@@ -72,6 +72,19 @@ export const createTables = () => new Promise(async (res, _req) => {
         ENGINE = InnoDB;
         `,
     `
+    CREATE TABLE IF NOT EXISTS teams (
+      guild_id BIGINT NOT NULL,
+      team_id VARCHAR(2) NOT NULL,
+      name VARCHAR(30) NOT NULL,
+      UNIQUE INDEX teams_UNIQUE (guild_id ASC, team_id ASC),
+      CONSTRAINT fk_teams_guild_id
+        FOREIGN KEY (guild_id)
+        REFERENCES guilds (guild_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE)
+    ENGINE = InnoDB;  
+    `,
+    `
     CREATE TABLE IF NOT EXISTS commands (
       name VARCHAR(20) NOT NULL,
       disabled TINYINT NOT NULL DEFAULT 0,
@@ -222,6 +235,7 @@ export const createTables = () => new Promise(async (res, _req) => {
       id INT NOT NULL AUTO_INCREMENT,
       guild_id BIGINT NOT NULL,
       name VARCHAR(20) NOT NULL,
+      is_enabled TINYINT NOT NULL DEFAULT '1',
       player_count SMALLINT NOT NULL,
       team_count SMALLINT NOT NULL DEFAULT 2,
       is_default_pickup TINYINT NOT NULL DEFAULT 0,

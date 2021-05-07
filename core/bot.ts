@@ -44,6 +44,30 @@ export default class Bot {
 
         this.client.on('ready', async () => {
             await this.loadConnectedGuildsSettings();
+
+            const connectedGuilds = [...this.guilds.keys()];
+
+            // Clear pending pickups
+            if (connectedGuilds.length) {
+                const guildsWithPendingPickups = await GuildModel.getGuildsWithPendingPickups(...connectedGuilds);
+
+                if (guildsWithPendingPickups.length) {
+                    await GuildModel.clearPendingPickups();
+
+                    guildsWithPendingPickups.forEach(async guildId => {
+                        const guildObj = this.client.guilds.cache.get(guildId);
+
+                        if (guildObj) {
+                            const pickupChannel = await this.getPickupChannel(guildObj);
+                            if (pickupChannel) {
+                                await pickupChannel.send('**Detected one or more pending pickups, pending pickups cleared due to bot restart**');
+                            }
+                        }
+                    });
+                }
+
+            }
+
             // TODO: Refresh state
             await this.registerCommands();
             await this.registerEventListeners();
@@ -58,10 +82,12 @@ export default class Bot {
         return this.botIsReady;
     }
 
+    private async getPickupChannel(guild: Discord.Guild): Promise<Discord.TextChannel | null> {
+        return guild.channels.cache.get(await GuildModel.getPickupChannel(BigInt(guild.id))) as Discord.TextChannel;
+    }
+
     private mainLoop() {
         setInterval(async () => {
-            // Can't use the util getPickupChannel method here
-            const getPickupChannel = async guild => guild.channels.cache.get(await GuildModel.getPickupChannel(BigInt(guild.id))) as Discord.TextChannel;
             const connectedGuilds = [...this.guilds.keys()];
             const dateInMs = new Date().getTime();
             const leftExpires = new Map();
@@ -94,7 +120,7 @@ export default class Bot {
                 try {
                     await PickupState.removePlayers(guild, true, null, ...players);
                     const guildObj = this.client.guilds.cache.get(guild);
-                    const pickupChannel = await getPickupChannel(guildObj);
+                    const pickupChannel = await this.getPickupChannel(guildObj);
                     const playerObjs = players.map(player => guildObj.members.cache.get(player));
                     const prefix = this.getGuild(guildObj.id).prefix;
 
@@ -135,7 +161,7 @@ export default class Bot {
                 try {
                     await PickupState.removePlayers(guild, true, null, ...players);
                     const guildObj = this.client.guilds.cache.get(guild);
-                    const pickupChannel = await getPickupChannel(guildObj);
+                    const pickupChannel = await this.getPickupChannel(guildObj);
                     const playerObjs = players.map(player => guildObj.members.cache.get(player));
 
                     if (pickupChannel) {
@@ -173,7 +199,7 @@ export default class Bot {
                     const validPlayers = players.filter(player => addedPlayers.includes(player));
 
                     const guildObj = this.client.guilds.cache.get(guild);
-                    const pickupChannel = await getPickupChannel(guildObj);
+                    const pickupChannel = await this.getPickupChannel(guildObj);
 
                     const toPing = [];
                     const toNick = [];
@@ -229,7 +255,7 @@ export default class Bot {
 
                     try {
                         const guildObj = this.client.guilds.cache.get(guild as string);
-                        const pickupChannel = await getPickupChannel(guildObj);
+                        const pickupChannel = await this.getPickupChannel(guildObj);
 
                         let msg = '';
                         pickups.forEach(pickup => msg += `${genPickupInfo(pickup)} `);
@@ -378,7 +404,14 @@ export default class Bot {
         let guildCounter = 0;
         const guilds = this.client.guilds.cache.values();
         for (const guild of guilds) {
-            const data = await GuildModel.getGuildSettings(guild);
+            let data = await GuildModel.getGuildSettings(guild);
+
+            if (!data) {
+                const newGuild = await GuildModel.createGuild(guild);
+                console.log(`Successfully stored new guild '${newGuild}'`);
+                data = await GuildModel.getGuildSettings(guild);
+            }
+
             this.guilds.set(BigInt(guild.id), data);
             guildCounter++;
         }

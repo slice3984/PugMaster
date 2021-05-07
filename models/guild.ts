@@ -58,6 +58,10 @@ export default class GuildModel {
             SELECT * FROM guilds WHERE guild_id = ?
             `, [guild.id]);
 
+            if (!data[0].length) {
+                return null;
+            }
+
             data = data[0][0];
 
             let guildChannels = await db.execute(`
@@ -489,12 +493,13 @@ export default class GuildModel {
 
     static async getPendingPickup(guildId: bigint, pickupConfigId: number): Promise<PendingPickup> {
         const data: any = await db.execute(`
-        SELECT sp.guild_id, p.current_nick, p.user_id, pr.rating, pr.variance, pc.id, pc.name, pc.player_count, sp.in_stage_since, sp.stage_iteration, sp.stage, st.team, st.is_captain, st.captain_turn
+        SELECT sp.guild_id, p.current_nick, p.user_id, pr.rating, pr.variance, pc.id, pc.name, pc.player_count, sp.in_stage_since, sp.stage_iteration, sp.stage, IFNULL(t.name, st.team) as team, st.is_captain, st.captain_turn
         FROM state_pickup sp
         JOIN state_pickup_players spp ON spp.pickup_config_id = sp.pickup_config_id
         JOIN players p ON p.user_id = spp.player_id AND p.guild_id = spp.guild_id
         JOIN pickup_configs pc ON sp.pickup_config_id = pc.id
         LEFT JOIN state_teams st ON (sp.pickup_config_id = st.pickup_config_id AND spp.player_id = st.player_id)
+        LEFT JOIN teams t ON t.team_id = st.team AND t.guild_id = pc.guild_id
         LEFT JOIN player_ratings pr ON pr.player_id = p.id AND pc.id = pr.pickup_config_id
         WHERE sp.stage != 'fill' AND sp.guild_id = ? AND pc.id = ?
         `, [guildId, pickupConfigId]);
@@ -558,6 +563,19 @@ export default class GuildModel {
             // @ts-ignore
             playersLeft
         }
+    }
+
+    static async getGuildsWithPendingPickups(...guildIds: bigint[]): Promise<string[]> {
+        const data: any = await db.execute(`
+        SELECT DISTINCT sp.guild_id FROM state_pickup sp
+	    WHERE sp.stage != 'fill' AND sp.guild_id IN (${Array(guildIds.length).fill('?').join(',')})
+        `, guildIds);
+
+        if (!data[0].length) {
+            return [];
+        }
+
+        return data[0].map(row => row.guild_id);
     }
 
     static async getPendingPickups(...guildIds: bigint[]): Promise<Map<string, PendingPickup[]>> {
@@ -704,6 +722,40 @@ export default class GuildModel {
             await db.execute(`
             DELETE FROM state_teams WHERE guild_id = ?
             `, [guildId]);
+        });
+    }
+
+    static async clearPendingPickups() {
+        // Clear states
+        await transaction(db, async (db) => {
+            // Pickup states
+            await db.execute(`
+            DELETE FROM state_pickup sp WHERE sp.stage != 'fill'
+            `);
+
+            // Pickup players
+            await db.execute(`
+            DELETE spp FROM state_pickup_players spp
+            LEFT JOIN state_pickup sp ON sp.pickup_config_id = spp.pickup_config_id
+            WHERE sp.pickup_config_id IS NULL
+            `);
+
+            // Guild players
+            await db.execute(`
+            DELETE sgp FROM state_guild_player sgp
+            LEFT JOIN state_pickup_players spp ON spp.guild_id = sgp.guild_id AND spp.player_id = sgp.player_id
+            WHERE spp.guild_id IS NULL
+            `)
+
+            // Left states
+            await db.execute(`
+            UPDATE state_guild_player SET is_afk = NULL, sub_request = NULL 
+            `)
+
+            // Teams
+            await db.execute(`
+            DELETE FROM state_teams
+            `)
         });
     }
 

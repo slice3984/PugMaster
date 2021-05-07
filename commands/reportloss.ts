@@ -90,7 +90,7 @@ const command: Command = {
                     // Pickup is ready to be rated, only 1 report left after this report
                     if ((reports.length === latestUnratedPickup.teams.length - 1) && drawReports.length) {
                         await PickupModel.reportOutcome(latestUnratedPickup.pickupId, captain.team, 'loss');
-                        await message.reply(`reported loss for **team ${captain.team}**`);
+                        await message.reply(`reported loss for **team ${captain.alias || captain.team}**`);
 
                         // Only left possible report is draw, ask the left captain to finalize with reporting draw
                         if (drawReports.length < 2) {
@@ -118,7 +118,7 @@ const command: Command = {
 
             await PickupModel.reportOutcome(latestUnratedPickup.pickupId, captain.team, 'loss');
 
-            await message.channel.send(Util.formatMessage('success', `Reported loss for **team ${captain.team}** @ **#${latestUnratedPickup.pickupId}** - **${latestUnratedPickup.name}**`));
+            await message.channel.send(Util.formatMessage('success', `Reported loss for **team ${captain.alias || captain.team}** @ **#${latestUnratedPickup.pickupId}** - **${latestUnratedPickup.name}**`));
 
             await message.channel.send(
                 `Waiting for ${leftCaptainCount - 1} ${leftCaptainCount > 2 ? 'captains' : 'captain'} ` +

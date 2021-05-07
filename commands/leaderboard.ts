@@ -31,7 +31,7 @@ const command: Command = {
             page = +params[1] === 1 ? null : +params[1];
         }
 
-        const pickupSettings = await PickupModel.getPickupSettings(BigInt(message.guild.id), params[0]);
+        const pickupSettings = await PickupModel.getPickupSettings(BigInt(message.guild.id), params[0], true);
 
         if (!pickupSettings) {
             return message.channel.send(Util.formatMessage('error', `${message.author}, given pickup not found`));

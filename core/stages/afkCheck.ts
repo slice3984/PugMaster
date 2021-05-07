@@ -27,7 +27,7 @@ const afkCheckStage = async (guild: Discord.Guild, pickupConfigId: number, first
         const timestamp = new Date().getTime();
 
         for (const id of playerIds) {
-            const user = (await Util.getUser(guild, id.toString(), true) as Discord.GuildMember);
+            const user = (await Util.getUser(guild, id.toString()) as Discord.GuildMember);
 
             if (user) {
                 let messageTimestamp = user.lastMessage ? (await user.lastMessage.fetch()).createdTimestamp : null;
@@ -58,7 +58,7 @@ const afkCheckStage = async (guild: Discord.Guild, pickupConfigId: number, first
         const afkPlayersDb = await GuildModel.getAfks(BigInt(guild.id), ...playerIds);
 
         for (const id of playerIds) {
-            const user = (await Util.getUser(guild, id.toString(), true) as Discord.GuildMember);
+            const user = (await Util.getUser(guild, id.toString()) as Discord.GuildMember);
 
             if (user) {
                 if (afkPlayersDb.includes(user.id)) {

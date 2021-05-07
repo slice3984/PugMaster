@@ -242,7 +242,10 @@ export default class Rating {
         // Only display rating changes for pickups with less than 11 players
         if (players.length > 10) {
             if (outcomes) {
-                const results = outcomes.map(o => `Team **${o.team}** - **${o.result.toUpperCase()}**`).join(' / ');
+                const results = outcomes.map(o => {
+                    const team = pickup.teams.find(t => t.name === o.team).alias || o.team;
+                    return `Team **${team}** - **${o.result.toUpperCase()}**`;
+                }).join(' / ');
                 return Util.formatMessage('success', `${pickup.isRated ? 'Rerated' : 'Rated'} pickup **#${pickup.pickupId}** - **${pickup.name}**: ${results}`);
             } else {
                 return Util.formatMessage('success', `Unrated pickup **#${pickup.pickupId}** - **${pickup.name}**`);
@@ -288,8 +291,13 @@ export default class Rating {
         let title;
 
         if (outcomes) {
+            const mappedOutcomes = outcomes.map(o => {
+                const team = pickup.teams.find(t => t.name === o.team).alias || o.team;
+                return `**${team}** - **${o.result.toUpperCase()}**`;
+            });
+
             fieldData = [
-                { name: 'Results', value: outcomes.map(o => `**${o.team}** - **${o.result.toUpperCase()}**`).join(' / ') },
+                { name: 'Results', value: mappedOutcomes.join(' / ') },
                 { name: 'Player', value: playerNicks.join('\n'), inline: true },
                 { name: 'From', value: from.join('\n'), inline: true },
                 { name: 'To', value: to.join('\n'), inline: true }

@@ -83,7 +83,7 @@ const command: Command = {
 
         await PickupModel.reportOutcome(latestUnratedPickup.pickupId, captain.team, 'draw');
 
-        await message.channel.send(Util.formatMessage('success', `Reported draw for **team ${captain.team}** @ **#${latestUnratedPickup.pickupId}** - **${latestUnratedPickup.name}**`));
+        await message.channel.send(Util.formatMessage('success', `Reported draw for **team ${captain.alias || captain.team}** @ **#${latestUnratedPickup.pickupId}** - **${latestUnratedPickup.name}**`));
 
         // Last report, rate the pickup
         if (!leftCaptainCount) {

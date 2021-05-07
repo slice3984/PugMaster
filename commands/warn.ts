@@ -24,14 +24,14 @@ const command: Command = {
     exec: async (bot, message, params, defaults) => {
         const guildSettings = bot.getGuild(message.guild.id);
         const playerIdentifier = params[0];
-        const player = await Util.getUser(message.guild, playerIdentifier, false) as GuildMember;
+        const player = await Util.getUser(message.guild, playerIdentifier) as GuildMember;
 
         if (!player) {
             return message.channel.send(Util.formatMessage('error', `${message.author}, given player not found`));
         }
 
         await PlayerModel.storeOrUpdatePlayer(BigInt(message.guild.id), BigInt(player.id), player.displayName);
-
+        await PlayerModel.storeOrUpdatePlayer(BigInt(message.guild.id), BigInt(message.author.id), message.member.displayName);
         // Check if this warn is a ban
         const activeWarns = await PlayerModel.getActiveWarns(BigInt(message.guild.id), BigInt(player.id));
 

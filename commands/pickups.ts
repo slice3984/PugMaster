@@ -16,15 +16,23 @@ const command: Command = {
             return message.reply('no pickups stored');
         }
 
-        const pickupCardEmbed = new Discord.MessageEmbed()
-            .setColor('#126e82')
-            .setTitle('Available pickups')
-            .addFields(
-                { name: 'Pickup', value: pickups.map(pickup => pickup.name).join('\n'), inline: true },
-                { name: 'Players', value: pickups.map(pickup => `${pickup.added} / ${pickup.max}`).join('\n'), inline: true }
-            )
+        let toSend;
 
-        message.channel.send(pickupCardEmbed);
+        if (pickups.length > 15) {
+            toSend = `Available pickups\n` +
+                pickups.map(pickup => `**${pickup.name}${pickup.rated ? ' (Rated)' : ''}** [ **${pickup.added}** / **${pickup.max}** ]`).join(' ');
+        } else {
+            toSend = new Discord.MessageEmbed()
+                .setColor('#126e82')
+                .setTitle('Available pickups')
+                .addFields(
+                    { name: 'Pickup', value: pickups.map(pickup => pickup.name).join('\n'), inline: true },
+                    { name: 'Players', value: pickups.map(pickup => `${pickup.added} / ${pickup.max}`).join('\n'), inline: true },
+                    { name: 'Rated', value: pickups.map(pickup => `${pickup.rated ? 'Yes' : 'No'}`), inline: true }
+                );
+        }
+
+        message.channel.send(toSend);
     }
 }
 

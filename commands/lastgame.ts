@@ -30,7 +30,7 @@ const command: Command = {
             let pickup;
 
             // Check for valid pickup
-            const gotPickup = await PickupModel.areValidPickups(BigInt(message.guild.id), identifier.toLowerCase());
+            const gotPickup = await PickupModel.areValidPickups(BigInt(message.guild.id), true, identifier.toLowerCase());
 
             if (gotPickup.length) {
                 pickup = await StatsModel.getLastGame(BigInt(message.guild.id), { isPlayer: false, value: identifier.toLowerCase() });

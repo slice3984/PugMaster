@@ -45,7 +45,7 @@ const command: Command = {
             return message.channel.send(Util.formatMessage('error', `Invalid syntax, no pickups created`));
         }
 
-        let alreadyStored = await PickupModel.areValidPickups(BigInt(message.guild.id), ...validPickups
+        let alreadyStored = await PickupModel.areValidPickups(BigInt(message.guild.id), false, ...validPickups
             .map(pickup => pickup.name));
 
         const alreadyStoredNames = alreadyStored.map(pickup => pickup.name);
@@ -54,6 +54,20 @@ const command: Command = {
 
         if (validPickups.length === 0) {
             return message.channel.send(Util.formatMessage('error', 'Valid given pickups are already stored'));
+        }
+
+        const pickups = await PickupModel.getAllPickups(BigInt(message.guild.id), true);
+
+        const exceededBy = (pickups.length + validPickups.length) - 50;
+
+        if (exceededBy > 0) {
+            return message.channel.send(Util.formatMessage('error', `Exceeding the maximum stored pickup capacity of **50** by **${exceededBy}**, remove pickups to create more`));
+        }
+
+        const exceededByActive = (pickups.filter(p => p.enabled).length + validPickups.length) - 20;
+
+        if (exceededByActive > 0) {
+            return message.channel.send(Util.formatMessage('error', `Exceeding the maximum capacity of enabled pickups of **20** by **${exceededByActive}**, disable pickups to create more`));
         }
 
         await PickupModel.createPickups(BigInt(message.guild.id), ...validPickups);

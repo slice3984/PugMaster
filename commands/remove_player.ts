@@ -16,7 +16,7 @@ const command: Command = {
     perms: true,
     exec: async (bot, message, params) => {
         const playerIdentifier = params[0];
-        const player = await Util.getUser(message.guild, playerIdentifier, false) as Discord.GuildMember;
+        const player = await Util.getUser(message.guild, playerIdentifier) as Discord.GuildMember;
 
         if (!player) {
             return message.channel.send(Util.formatMessage('error', `${message.author}, given player not found`));

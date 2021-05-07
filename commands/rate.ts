@@ -1,8 +1,8 @@
-import Discord from 'discord.js';
 import Rating from '../core/rating';
-import { Command, RateablePickup } from '../core/types';
+import { Command } from '../core/types';
 import Util from '../core/util';
 import PickupModel from '../models/pickup';
+import TeamModel from '../models/teams';
 
 const command: Command = {
     cmd: 'rate',
@@ -30,17 +30,27 @@ const command: Command = {
         const givenRatings: { team: string; outcome: string }[] = [];
         const validRatings: { team: string; outcome: 'win' | 'draw' | 'loss' }[] = [];
 
+        const teamNames = await TeamModel.getTeams(BigInt(message.guild.id));
+
         for (const rating of params.slice(1)) {
             const parts = rating.split(':').filter(part => !(part === '')).map(part => part.trim().toUpperCase());
 
             if (parts.length < 2) {
                 continue;
             } else {
-                const team = parts[0];
+                let team = parts[0];
                 let result = parts[1];
 
-                if (!/^[a-zA-Z]+$/.test(team) || team.length > 1) {
-                    continue;
+                const foundTeam = teamNames.find(t => t.name.toUpperCase() === team.toUpperCase());
+
+                if (foundTeam) {
+                    team = foundTeam.teamId;
+                } else {
+                    if (team.length > 1 || !/[a-jA-J]/.test(team)) {
+                        continue;
+                    }
+
+                    team.toUpperCase();
                 }
 
                 if (!['W', 'D', 'L'].includes(result)) {
@@ -109,11 +119,13 @@ const command: Command = {
 
         if (validRatings.length !== rateablePickup.teams.length) {
             return message.reply(
-                'Invalid ratings provided\n' +
-                `${winWithDraw ? '- Ratings with a draw can\'t contain wins\n' : ''}` +
-                `${missingDraw ? '- There have to be at least two draw reports\n' : ''}` +
-                `${multipleWins ? '- Only one win report allowed\n' : ''}` +
-                `${missingWin ? '- There has to be at least one win if no draws given' : ''}`
+                Util.formatMessage('error',
+                    'Invalid ratings provided\n' +
+                    `${winWithDraw ? '- Ratings with a draw can\'t contain wins\n' : ''}` +
+                    `${missingDraw ? '- There have to be at least two draw reports\n' : ''}` +
+                    `${multipleWins ? '- Only one win report allowed\n' : ''}` +
+                    `${missingWin ? '- There has to be at least one win if no draws given' : ''}`
+                )
             );
         }
 

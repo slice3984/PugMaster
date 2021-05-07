@@ -22,7 +22,7 @@ const command: Command = {
         const isValid = await Validator.Mappool.isValidPool(BigInt(message.guild.id), name, false);
 
         if (isValid !== true) {
-            return message.reply(isValid.errorMessage);
+            return message.channel.send(Util.formatMessage('error', isValid.errorMessage));
         }
 
         const validMaps = [...new Set(Validator.Mappool.areValidMapNames(...maps))];

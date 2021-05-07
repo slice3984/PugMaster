@@ -22,7 +22,7 @@ const command: Command = {
     exec: async (bot, message, params, defaults) => {
         const identifier = params[0];
         let nick = '';
-        const player = await Util.getUser(message.guild, identifier);
+        const player = await Util.getUser(message.guild, identifier, false);
 
         if (!player) {
             if (!/\d+/.test(identifier)) {

@@ -2,14 +2,14 @@ import Discord from 'discord.js';
 import GuildModel from '../models/guild';
 import Bot from './bot';
 import { TimeError, PickupSettings, PickupStartConfiguration } from './types';
-import MappoolModel from '../models/mappool';
 import ServerModel from '../models/server';
 import ConfigTool from './configTool';
+import TeamModel from '../models/teams';
 
 export default class Util {
     private constructor() { }
 
-    static async getUser(guild: Discord.Guild, identifier: string, fetch = false): Promise<Discord.User | Discord.GuildMember> {
+    static async getUser(guild: Discord.Guild, identifier: string, onlyGuildMembers = true): Promise<Discord.User | Discord.GuildMember> {
         let id: string | RegExpMatchArray = identifier.match(/<@!?(\d+)>/);
         if (!id) {
             if (!/\d+/.test(identifier)) {
@@ -21,30 +21,19 @@ export default class Util {
             id = id[1];
         }
 
-        if (fetch) {
-            const bot = Bot.getInstance();
-            const user = guild.members.cache.get(id);
+        const bot = Bot.getInstance();
 
-            if (!user) {
-                try {
-                    const user = await bot.getClient().users.fetch(id);
-                    return user;
-                } catch (_err) {
-                    return null;
-                }
+        try {
+            let user: Discord.User | Discord.GuildMember = await guild.members.fetch(id);
+
+            if (!user && !onlyGuildMembers) {
+                user = await bot.getClient().users.fetch(id);
+                return user;
             }
 
             return user;
-        } else {
-            let user;
-
-            try {
-                user = await guild.members.fetch(id);
-            } catch (_err) {
-                return null;
-            }
-
-            return user;
+        } catch (_err) {
+            return null;
         }
     }
 
@@ -274,8 +263,15 @@ export default class Util {
                     if (!Array.isArray(config.teams[0])) {
                         formattedTeams.push('Players', (config.teams as bigint[]).map(id => `<@${id.toString()}>`).join(', '));
                     } else {
+                        const storedTeams = await TeamModel.getTeams(BigInt(config.guild.id));
+
                         config.teams.forEach((team, index) => {
-                            formattedTeams.push(`Team ${String.fromCharCode(65 + index)}`); // Team A, Team B..
+                            const teamId = String.fromCharCode(65 + index);
+
+                            const storedTeam = storedTeams.find(t => t.teamId === teamId);
+                            const teamName = storedTeam ? storedTeam.name : teamId;
+
+                            formattedTeams.push(`Team ${teamName}`);
                             formattedTeams.push(team.map(id => `<@${id.toString()}>`).join(', '));
                         });
                     }

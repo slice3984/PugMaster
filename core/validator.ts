@@ -12,7 +12,7 @@ const config = ConfigTool.getConfig();
 export namespace Validator {
     export namespace Pickup {
         export function areValidKeys(...keys) {
-            const validKeys = ['name', 'players', 'teams', 'default', 'mappool', 'mapvote', 'afkcheck', 'captain_selection',
+            const validKeys = ['name', 'enabled', 'players', 'teams', 'default', 'mappool', 'mapvote', 'afkcheck', 'captain_selection',
                 'pickmode', 'rated', 'max_rank_rating_cap', 'whitelist', 'blacklist', 'promotion', 'captain', 'server', 'max_rank_rating_cap'];
             const invalidKeys = keys.filter(key => !validKeys.includes(key));
 
@@ -20,7 +20,7 @@ export namespace Validator {
         };
 
         export async function isValidPickup(guildId: bigint, pickup: string, isDuplicate = true) {
-            const doesExist = await PickupModel.areValidPickups(guildId, pickup);
+            const doesExist = await PickupModel.areValidPickups(guildId, false, pickup);
 
             if (isDuplicate && doesExist.length) {
                 return true;
@@ -60,6 +60,20 @@ export namespace Validator {
                         if (value.length > 20 || value.length === 0) {
                             errors.push({ type: 'name', errorMessage: 'Pickup name must be between 1-20 chars long' });
                             break;
+                        }
+                        break;
+                    case 'enabled':
+                        if (!['true', 'false'].includes(value)) {
+                            errors.push({ type: 'default', errorMessage: 'Value has to be true or false' });
+                            break;
+                        }
+
+                        if (!isPickupActive) {
+                            isPickupActive = await (await PickupModel.getActivePickups(BigInt(guild.id))).has(pickup as string);
+                        }
+
+                        if (isPickupActive) {
+                            errors.push({ type: 'players', errorMessage: 'Can\'t disable pickups with queued up players' });
                         }
                         break;
                     case 'players':
@@ -302,6 +316,12 @@ export namespace Validator {
 
     export namespace Mappool {
         export async function isValidPool(guildId: bigint, name: string, isDuplicate = true): Promise<ValidationError | true> {
+            const guildPools = await MappoolModel.getPools(guildId);
+
+            if (guildPools.length >= 50) {
+                return { type: 'exceeded', errorMessage: 'Already reached max stored map pools capacity of 50, remove pools to add more' };
+            }
+
             const doesExist = await MappoolModel.isMappoolStored(guildId, name);
 
             if (isDuplicate && !doesExist) {
@@ -337,6 +357,12 @@ export namespace Validator {
 
     export namespace Server {
         export async function isValidServer(guildId: bigint, name: string, isDuplicate = true): Promise<ValidationError | true> {
+            const guildServers = await ServerModel.getServers(guildId);
+
+            if (guildServers.length >= 50) {
+                return { type: 'exceeded', errorMessage: 'Already reached max stored server capacity of 50, remove servers to add more' };
+            }
+
             const doesExist = await ServerModel.isServerStored(guildId, name);
 
             if (isDuplicate && !doesExist.length) {

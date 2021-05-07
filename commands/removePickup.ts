@@ -17,7 +17,7 @@ const command: Command = {
     exec: async (bot, message, params) => {
         const pickups = params.map(param => param.toLowerCase());
 
-        let validPickups = await PickupModel.areValidPickups(BigInt(message.guild.id), ...pickups);
+        let validPickups = await PickupModel.areValidPickups(BigInt(message.guild.id), false, ...pickups);
 
         if (!validPickups.length) {
             return message.channel.send(Util.formatMessage('error', `${message.author}, no valid pickups provided`));

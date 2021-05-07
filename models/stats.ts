@@ -95,7 +95,7 @@ export default class StatsModel {
             pc.is_rated,
             pr.rating,
             pr.variance,
-            pp.team,
+            IFNULL(t.name, pp.team) as team,
             rr.result,
             ps.started_at,
             ps.id FROM players p
@@ -104,7 +104,10 @@ export default class StatsModel {
             JOIN pickup_configs pc ON ps.pickup_config_id = pc.id
             LEFT JOIN player_ratings pr ON pr.pickup_config_id = ps.pickup_config_id AND p.id = pr.player_id
             LEFT JOIN rated_results rr ON pp.pickup_id = rr.pickup_id AND pp.team = rr.team
-            WHERE ps.id = (SELECT MAX(id) FROM pickups WHERE guild_id = ?)
+            LEFT JOIN teams t ON t.team_id = pp.team AND t.guild_id = pc.guild_id
+            WHERE ps.id = (SELECT MAX(p.id) FROM pickups p
+                JOIN pickup_configs pc ON pc.id = p.pickup_config_id
+                WHERE p.guild_id = ? AND pc.is_enabled = 1)
             `, [guildId]);
         } else {
             if (!identifier.isPlayer) {
@@ -117,7 +120,7 @@ export default class StatsModel {
                 pc.is_rated,
                 pr.rating,
 				pr.variance,
-                pp.team,
+                IFNULL(t.name, pp.team) as team,
                 rr.result,
                 ps.started_at,
                 ps.id FROM players p
@@ -126,10 +129,11 @@ export default class StatsModel {
                     JOIN pickup_configs pc ON ps.pickup_config_id = pc.id
                     LEFT JOIN player_ratings pr ON pr.pickup_config_id = ps.pickup_config_id AND p.id = pr.player_id
                     LEFT JOIN rated_results rr ON pp.pickup_id = rr.pickup_id AND pp.team = rr.team
+                    LEFT JOIN teams t ON t.team_id = pp.team AND t.guild_id = pc.guild_id
                     WHERE ps.id = (
                         SELECT MAX(ps.id) FROM pickups ps
                         JOIN pickup_configs pc ON ps.pickup_config_id = pc.id
-                        WHERE pc.guild_id = ? AND pc.name = ?
+                        WHERE pc.guild_id = ? AND pc.name = ? AND pc.is_enabled = 1
                     )
             `, [guildId, identifier.value]);
             } else {
@@ -142,7 +146,7 @@ export default class StatsModel {
                 pc.is_rated,
                 pr.rating,
 				pr.variance,
-                pp.team,
+                IFNULL(t.name, pp.team) as team,
                 rr.result,
                 ps.started_at,
                 ps.id FROM players p
@@ -151,7 +155,11 @@ export default class StatsModel {
                     JOIN pickup_configs pc ON ps.pickup_config_id = pc.id
                     LEFT JOIN player_ratings pr ON pr.pickup_config_id = ps.pickup_config_id AND p.id = pr.player_id
                     LEFT JOIN rated_results rr ON pp.pickup_id = rr.pickup_id AND pp.team = rr.team
-                    WHERE ps.id = (SELECT MAX(pickup_id) FROM pickup_players WHERE player_id = ?)
+                    LEFT JOIN teams t ON t.team_id = pp.team AND t.guild_id = pc.guild_id
+                    WHERE ps.id = (SELECT MAX(pp.pickup_id) FROM pickup_players pp
+                        JOIN pickups p ON p.id = pp.pickup_id
+                        JOIN pickup_configs pc ON pc.id = p.pickup_config_id 
+                        WHERE player_id = ? AND pc.is_enabled = 1)
                 `, [identifier.value])
             }
         }
@@ -340,7 +348,9 @@ export default class StatsModel {
             results = await db.execute(`
             SELECT p.current_nick, COUNT(pp.player_id) as amount FROM pickup_players pp
             JOIN players p ON pp.player_id = p.id
-            WHERE p.guild_id = ?
+            JOIN pickups ps ON ps.id = pp.pickup_id
+            JOIN pickup_configs pc ON pc.id = ps.pickup_config_id
+            WHERE p.guild_id = ? AND pc.is_enabled = 1
             GROUP BY pp.player_id ORDER BY amount DESC
             LIMIT ?
             `, [guildId, limit]);
@@ -348,8 +358,9 @@ export default class StatsModel {
             results = await db.execute(`
             SELECT p.current_nick, COUNT(pp.player_id) as amount FROM pickup_players pp
             JOIN pickups ps ON pp.pickup_id = ps.id
+            JOIN pickup_configs pc ON pc.id = ps.pickup_config_id
             JOIN players p ON pp.player_id = p.id
-            WHERE p.guild_id = ? AND ((NOW() - INTERVAL 1 ${intervalTime})  < ps.started_at)
+            WHERE p.guild_id = ? AND ((NOW() - INTERVAL 1 ${intervalTime})  < ps.started_at) AND pc.is_enabled = 1
             GROUP BY pp.player_id ORDER BY amount DESC
             LIMIT ?
             `, [guildId, limit]);
@@ -601,7 +612,8 @@ export default class StatsModel {
      WHERE
         p.guild_id = ? 
         AND p.is_rated = 1 
-        AND ps.user_id = ? 
+        AND ps.user_id = ?
+        AND pc.is_enabled = 1
      GROUP BY
         p.pickup_config_id,
         pp.player_id 
@@ -709,7 +721,7 @@ export default class StatsModel {
                     lg 
                     ON lg.player_id = p.id 
                     AND lg.pickup_config_id = pc.id 
-            WHERE ((NOW() - INTERVAL 14 DAY) < lg.lastgame)
+            WHERE ((NOW() - INTERVAL 14 DAY) < lg.lastgame) AND pc.is_enabled = 1
             )
             res 
         WHERE
@@ -752,7 +764,7 @@ export default class StatsModel {
             results = await db.execute(`
             SELECT COUNT(p.id) as amount, pc.name FROM pickups p
             JOIN pickup_configs pc ON pc.id = p.pickup_config_id
-            WHERE p.guild_id = ?
+            WHERE p.guild_id = ? AND pc.is_enabled = 1
             GROUP BY p.pickup_config_id
             ORDER BY amount DESC;
             `, [guildId]);
@@ -770,7 +782,7 @@ export default class StatsModel {
             results = await db.execute(`
             SELECT COUNT(p.id) as amount, pc.name FROM pickups p
             JOIN pickup_configs pc ON pc.id = p.pickup_config_id
-            WHERE p.guild_id = ? AND pc.name = ?
+            WHERE p.guild_id = ? AND pc.name = ? AND pc.is_enabled = 1
             GROUP BY pc.name
             `, [guildId, identifier]);
 
@@ -791,7 +803,7 @@ export default class StatsModel {
             JOIN pickup_players pp ON pp.pickup_id = p.id
             JOIN pickup_configs pc ON p.pickup_config_id = pc.id
             JOIN players pl ON pp.player_id = pl.id
-            WHERE p.guild_id = ? AND pl.id = ?
+            WHERE p.guild_id = ? AND pl.id = ? AND pc.is_enabled = 1
             GROUP BY p.pickup_config_id
             ORDER BY amount DESC
             `, [guildId, identifier]);
@@ -909,10 +921,11 @@ export default class StatsModel {
 
     static async getPickupInfo(guildId: bigint, pickupId: number): Promise<PickupInfoAPI | { foundPickup: boolean }> {
         const data: any = await db.execute(`
-        SELECT p.id, p.is_rated, pp.team, p.map, ps.current_nick, ps.user_id, rr.result FROM pickups p
+        SELECT p.id, p.is_rated, IFNULL(t.name, pp.team) as team, p.map, ps.current_nick, ps.user_id, rr.result FROM pickups p
         JOIN pickup_players pp ON p.id = pp.pickup_id
         JOIN players ps ON pp.player_id = ps.id
         LEFT JOIN rated_results rr ON rr.pickup_id = p.id AND rr.team = pp.team
+        LEFT JOIN teams t ON t.team_id = pp.team AND t.guild_id = p.guild_id
         WHERE p.guild_id = ? and p.id = ?
         `, [guildId, pickupId]);
 

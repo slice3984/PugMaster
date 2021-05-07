@@ -16,7 +16,7 @@ const command: Command = {
     exec: async (bot, message, params) => {
         const pickupName = params[0].toLowerCase();
 
-        if (!await (await PickupModel.areValidPickups(BigInt(message.guild.id), pickupName)).length) {
+        if (!await (await PickupModel.areValidPickups(BigInt(message.guild.id), true, pickupName)).length) {
             return message.channel.send(Util.formatMessage('error', `${message.author}, given pickup not found`));
         }
 

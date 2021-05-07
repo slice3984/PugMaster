@@ -26,7 +26,7 @@ const command: Command = {
         const identifier = params[0];
 
         // Try userid, mention first
-        const player = await Util.getUser(message.guild, identifier, true);
+        const player = await Util.getUser(message.guild, identifier, false);
 
         if (!player) {
             // Try banid

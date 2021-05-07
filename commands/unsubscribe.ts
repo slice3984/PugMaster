@@ -13,7 +13,7 @@ const command: Command = {
     global: false,
     perms: false,
     exec: async (bot, message, params) => {
-        let validPickups = await PickupModel.areValidPickups(BigInt(message.guild.id), ...params);
+        let validPickups = await PickupModel.areValidPickups(BigInt(message.guild.id), true, ...params);
 
         if (!validPickups.length) {
             return message.channel.send(Util.formatMessage('error', `${message.author}, no valid pickups provided`));

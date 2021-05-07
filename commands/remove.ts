@@ -28,7 +28,7 @@ const command: Command = {
             return;
         }
 
-        const existingPickups = await PickupModel.areValidPickups(BigInt(message.guild.id), ...params);
+        const existingPickups = await PickupModel.areValidPickups(BigInt(message.guild.id), false, ...params);
 
         if (!existingPickups.length) {
             return;
