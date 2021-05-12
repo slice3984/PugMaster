@@ -18,8 +18,8 @@ export default class GuildSettings {
         private guild: Discord.Guild,
         private _id: bigint,
         private _prefix: string,
-        private _blacklistRole: bigint,
-        private _whitelistRole: bigint,
+        private _denylistRole: bigint,
+        private _allowlistRole: bigint,
         private _promotionDelay: number,
         private _lastPromote: Date | null,
         private _globalExpireTime: number | null,
@@ -78,9 +78,9 @@ export default class GuildSettings {
             return errors;
         }
 
-        const dbColumnNames = ['global_whitelist_role', 'global_blacklist_role',
+        const dbColumnNames = ['global_allowlist_role', 'global_denylist_role',
             'server_id', 'warn_ban_time', 'warn_ban_time_multiplier', 'warn_expiration_time']
-        const keyNames = ['whitelist', 'blacklist', 'server', 'warn_bantime',
+        const keyNames = ['allowlist', 'denylist', 'server', 'warn_bantime',
             'warn_bantime_multiplier', 'warn_expiration'];
 
         for (const property of properties) {
@@ -99,7 +99,7 @@ export default class GuildSettings {
             }
 
             // Get the role ids
-            if (value !== 'none' && ['whitelist', 'blacklist'].includes(key)) {
+            if (value !== 'none' && ['allowlist', 'denylist'].includes(key)) {
                 value = Util.getRole(this.guild, value).id;
             }
 
@@ -125,8 +125,8 @@ export default class GuildSettings {
                 case 'report_expire': this._reportExpireTime = +value; break;
                 case 'trust_time': this._trustTime = value ? +value : null; break;
                 case 'explicit_trust': this._explicitTrust = value ? value === '1' ? true : false : null; break;
-                case 'whitelist': this._whitelistRole = value ? BigInt(value) : null; break;
-                case 'blacklist': this._blacklistRole = value ? BigInt(value) : null; break;
+                case 'allowlist': this._allowlistRole = value ? BigInt(value) : null; break;
+                case 'denylist': this._denylistRole = value ? BigInt(value) : null; break;
                 case 'promotion_delay': this._promotionDelay = value ? +value : null; break;
                 case 'server': this._defaultServer = value ? +value : null; break;
                 case 'start_message': this._startMessage = value; break;
@@ -211,12 +211,12 @@ export default class GuildSettings {
         return this._lastPromote;
     }
 
-    public get whitelistRole(): bigint {
-        return this._whitelistRole;
+    public get allowlistRole(): bigint {
+        return this._allowlistRole;
     }
 
-    public get blacklistRole(): bigint {
-        return this._blacklistRole;
+    public get denylistRole(): bigint {
+        return this._denylistRole;
     }
 
     public get prefix(): string {

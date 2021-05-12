@@ -128,7 +128,7 @@
                 <td>1000 to 5000</td>
               </tr>
               <tr>
-                <td>whitelist<span class="help-article__red">*</span></td>
+                <td>allowlist<span class="help-article__red">*</span></td>
                 <td>Only allow players with this role to add</td>
                 <td>
                   <div class="help-article__type help-article__type--mention">
@@ -138,7 +138,7 @@
                 <td>Role mention, id or name</td>
               </tr>
               <tr>
-                <td>blacklist<span class="help-article__red">*</span></td>
+                <td>denylist<span class="help-article__red">*</span></td>
                 <td>Disallow players with this role to add</td>
                 <td>
                   <div class="help-article__type help-article__type--mention">

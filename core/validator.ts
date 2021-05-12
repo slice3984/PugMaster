@@ -13,7 +13,7 @@ export namespace Validator {
     export namespace Pickup {
         export function areValidKeys(...keys) {
             const validKeys = ['name', 'enabled', 'players', 'teams', 'default', 'mappool', 'mapvote', 'afkcheck', 'captain_selection',
-                'pickmode', 'rated', 'max_rank_rating_cap', 'whitelist', 'blacklist', 'promotion', 'captain', 'server', 'max_rank_rating_cap'];
+                'pickmode', 'rated', 'max_rank_rating_cap', 'allowlist', 'denylist', 'promotion', 'captain', 'server', 'max_rank_rating_cap'];
             const invalidKeys = keys.filter(key => !validKeys.includes(key));
 
             return invalidKeys;
@@ -225,11 +225,11 @@ export namespace Validator {
                             break;
                         }
                         break;
-                    case 'whitelist':
-                        const whitelistRole = Util.getRole(guild, value);
+                    case 'allowlist':
+                        const allowlistRole = Util.getRole(guild, value);
 
-                        if (!whitelistRole) {
-                            errors.push({ type: 'whitelist', errorMessage: 'Can\'t find the given role' });
+                        if (!allowlistRole) {
+                            errors.push({ type: 'allowlist', errorMessage: 'Can\'t find the given role' });
                             break;
                         }
 
@@ -237,18 +237,18 @@ export namespace Validator {
                             pickupSettings = await PickupModel.getPickupSettings(BigInt(guild.id), pickup);
                         }
 
-                        if ([pickupSettings.blacklistRole ? pickupSettings.blacklistRole.toString() : null,
+                        if ([pickupSettings.denylistRole ? pickupSettings.denylistRole.toString() : null,
                         pickupSettings.promotionRole ? pickupSettings.promotionRole.toString() : null,
-                        pickupSettings.captainRole ? pickupSettings.captainRole.toString() : null].includes(whitelistRole.id)) {
-                            errors.push({ type: 'blacklist', errorMessage: 'Can\'t set the same roles for different pickup specific roles' });
+                        pickupSettings.captainRole ? pickupSettings.captainRole.toString() : null].includes(allowlistRole.id)) {
+                            errors.push({ type: 'denylist', errorMessage: 'Can\'t set the same roles for different pickup specific roles' });
                             break;
                         }
                         break;
-                    case 'blacklist':
-                        const blacklistRole = Util.getRole(guild, value);
+                    case 'denylist':
+                        const denylistRole = Util.getRole(guild, value);
 
-                        if (!blacklistRole) {
-                            errors.push({ type: 'blacklist', errorMessage: 'Can\'t find the given role' });
+                        if (!denylistRole) {
+                            errors.push({ type: 'denylist', errorMessage: 'Can\'t find the given role' });
                             break;
                         }
 
@@ -256,10 +256,10 @@ export namespace Validator {
                             pickupSettings = await PickupModel.getPickupSettings(BigInt(guild.id), pickup);
                         }
 
-                        if ([pickupSettings.whitelistRole ? pickupSettings.whitelistRole.toString() : null,
+                        if ([pickupSettings.allowlistRole ? pickupSettings.allowlistRole.toString() : null,
                         pickupSettings.promotionRole ? pickupSettings.promotionRole.toString() : null,
-                        pickupSettings.captainRole ? pickupSettings.captainRole.toString() : null].includes(blacklistRole.id)) {
-                            errors.push({ type: 'blacklist', errorMessage: 'Can\'t set the same roles for different pickup specific roles' });
+                        pickupSettings.captainRole ? pickupSettings.captainRole.toString() : null].includes(denylistRole.id)) {
+                            errors.push({ type: 'denylist', errorMessage: 'Can\'t set the same roles for different pickup specific roles' });
                             break;
                         }
                         break;
@@ -274,10 +274,10 @@ export namespace Validator {
                         if (!pickupSettings) {
                             pickupSettings = await PickupModel.getPickupSettings(BigInt(guild.id), pickup);
                         }
-                        if ([pickupSettings.blacklistRole ? pickupSettings.blacklistRole.toString() : null,
-                        pickupSettings.whitelistRole ? pickupSettings.whitelistRole.toString() : null,
+                        if ([pickupSettings.denylistRole ? pickupSettings.denylistRole.toString() : null,
+                        pickupSettings.allowlistRole ? pickupSettings.allowlistRole.toString() : null,
                         pickupSettings.captainRole ? pickupSettings.captainRole.toString() : null].includes(promotionRole.id)) {
-                            errors.push({ type: 'blacklist', errorMessage: 'Can\'t set the same roles for different pickup specific roles' });
+                            errors.push({ type: 'denylist', errorMessage: 'Can\'t set the same roles for different pickup specific roles' });
                             break;
                         }
                         break;
@@ -292,10 +292,10 @@ export namespace Validator {
                         if (!pickupSettings) {
                             pickupSettings = await PickupModel.getPickupSettings(BigInt(guild.id), pickup);
                         }
-                        if ([pickupSettings.blacklistRole ? pickupSettings.blacklistRole.toString() : null,
+                        if ([pickupSettings.denylistRole ? pickupSettings.denylistRole.toString() : null,
                         pickupSettings.promotionRole ? pickupSettings.promotionRole.toString() : null,
-                        pickupSettings.whitelistRole ? pickupSettings.whitelistRole.toString() : null].includes(captainRole.id)) {
-                            errors.push({ type: 'blacklist', errorMessage: 'Can\'t set the same roles for different pickup specific roles' });
+                        pickupSettings.allowlistRole ? pickupSettings.allowlistRole.toString() : null].includes(captainRole.id)) {
+                            errors.push({ type: 'denylist', errorMessage: 'Can\'t set the same roles for different pickup specific roles' });
                             break;
                         }
                         break;
@@ -401,7 +401,7 @@ export namespace Validator {
 
     export namespace Guild {
         export function areValidKeys(...keys) {
-            const validKeys = ['prefix', 'global_expire', 'report_expire', 'trust_time', 'explicit_trust', 'whitelist', 'blacklist', 'promotion_delay', 'server',
+            const validKeys = ['prefix', 'global_expire', 'report_expire', 'trust_time', 'explicit_trust', 'allowlist', 'denylist', 'promotion_delay', 'server',
                 'start_message', 'sub_message', 'notify_message', 'iteration_time', 'afk_time', 'afk_check_iterations', 'picking_iterations', 'map_vote_iterations', 'max_avg_elo_variance',
                 'warn_streaks', 'warns_until_ban', 'warn_streak_expiration', 'warn_expiration', 'warn_bantime', 'warn_bantime_multiplier', 'captain_selection_iterations', 'max_rank_rating_cap'];
 
@@ -491,36 +491,36 @@ export namespace Validator {
                             break;
                         }
                         break;
-                    case 'whitelist':
-                        const whitelistRole = Util.getRole(guild, value);
+                    case 'allowlist':
+                        const allowlistRole = Util.getRole(guild, value);
 
-                        if (!whitelistRole) {
+                        if (!allowlistRole) {
                             errors.push({ type: key, errorMessage: 'Can\'t find the given role' });
                             break;
                         }
 
-                        if (BigInt(whitelistRole.id) === guildSettings.whitelistRole) {
-                            errors.push({ type: key, errorMessage: 'The given role is already set as whitelist role' });
+                        if (BigInt(allowlistRole.id) === guildSettings.allowlistRole) {
+                            errors.push({ type: key, errorMessage: 'The given role is already set as allowlist role' });
                         }
 
-                        if ([guildSettings.whitelistRole, guildSettings.blacklistRole].includes(BigInt(whitelistRole.id))) {
+                        if ([guildSettings.allowlistRole, guildSettings.denylistRole].includes(BigInt(allowlistRole.id))) {
                             errors.push({ type: key, errorMessage: 'Can\'t use the same role twice in server settings' });
                             break;
                         }
                         break;
-                    case 'blacklist':
-                        const blacklistRole = Util.getRole(guild, value);
+                    case 'denylist':
+                        const denylistRole = Util.getRole(guild, value);
 
-                        if (!blacklistRole) {
+                        if (!denylistRole) {
                             errors.push({ type: key, errorMessage: 'Can\'t find the given role' });
                             break;
                         }
 
-                        if (BigInt(blacklistRole.id) === guildSettings.blacklistRole) {
-                            errors.push({ type: key, errorMessage: 'The given role is already set as blacklist role' });
+                        if (BigInt(denylistRole.id) === guildSettings.denylistRole) {
+                            errors.push({ type: key, errorMessage: 'The given role is already set as denylist role' });
                         }
 
-                        if ([guildSettings.whitelistRole, guildSettings.blacklistRole].includes(BigInt(blacklistRole.id))) {
+                        if ([guildSettings.allowlistRole, guildSettings.denylistRole].includes(BigInt(denylistRole.id))) {
                             errors.push({ type: key, errorMessage: 'Can\'t use the same role twice in server settings' });
                             break;
                         }

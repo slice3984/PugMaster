@@ -1,6 +1,6 @@
 <template>
   <header>
-    <h1>PickupBot</h1>
+    <h1>PugMaster</h1>
     <nav>
       <base-link to="/">Home</base-link>
       <!-- Temp fix: fake id for guild param
@@ -30,6 +30,14 @@ header {
 
   & h1 {
     font-size: 2.5rem;
+    color: #ffffff;
+    text-shadow: 2px 2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000,
+      -2px -2px 0 #000, 2px 0px 0 #000, 0px 2px 0 #000, -2px 0px 0 #000,
+      0px -2px 0 #000;
+  }
+
+  & img {
+    width: 5rem;
   }
 }
 

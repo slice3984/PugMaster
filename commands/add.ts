@@ -65,26 +65,26 @@ const command: Command = {
                 const guildSettings = bot.getGuild(message.guild.id);
 
                 // Pickup settings
-                if (pickupSettings.whitelistRole) {
-                    if (!userRoles.has(pickupSettings.whitelistRole.toString())) {
+                if (pickupSettings.allowlistRole) {
+                    if (!userRoles.has(pickupSettings.allowlistRole.toString())) {
                         invalidPickups.push(id);
                         continue;
                     }
-                } else if (pickupSettings.blacklistRole) {
-                    if (userRoles.has(pickupSettings.blacklistRole.toString())) {
+                } else if (pickupSettings.denylistRole) {
+                    if (userRoles.has(pickupSettings.denylistRole.toString())) {
                         invalidPickups.push(id);
                         continue;
                     }
                 }
 
                 // Guild defaults
-                if (guildSettings.whitelistRole) {
-                    if (!userRoles.has(guildSettings.whitelistRole.toString())) {
+                if (guildSettings.allowlistRole) {
+                    if (!userRoles.has(guildSettings.allowlistRole.toString())) {
                         invalidPickups.push(id);
                         continue;
                     }
-                } else if (guildSettings.blacklistRole) {
-                    if (userRoles.has(guildSettings.blacklistRole.toString())) {
+                } else if (guildSettings.denylistRole) {
+                    if (userRoles.has(guildSettings.denylistRole.toString())) {
                         invalidPickups.push(id);
                     }
                 }
@@ -123,7 +123,7 @@ const command: Command = {
                 const invalidPickupNames = [...activeAndDefaultPickups].filter(pickup => invalidPickups.includes(pickup.configId))
                     .map(pickup => pickup.name);
 
-                message.channel.send(Util.formatMessage('error', `${message.author}, you are not allowed to add to ${invalidPickupNames.join(', ')} (Whitelist / Blacklist)`));
+                message.channel.send(Util.formatMessage('error', `${message.author}, you are not allowed to add to ${invalidPickupNames.join(', ')} (Allowlist / Denylist)`));
             }
 
             if (validPickups.length === 0) {
@@ -168,7 +168,7 @@ const command: Command = {
                 const invalidPickupNames = validPickups.filter(pickup => invalidPickups.includes(pickup.id))
                     .map(pickup => pickup.name);
 
-                message.channel.send(Util.formatMessage('error', `${message.author}, you are not allowed to add to ${invalidPickupNames.join(', ')} (Whitelist / Blacklist)`));
+                message.channel.send(Util.formatMessage('error', `${message.author}, you are not allowed to add to ${invalidPickupNames.join(', ')} (Allowlist / Denylist)`));
             }
 
             validPickups = validPickups.filter(pickup => !invalidPickups.includes(pickup.id));

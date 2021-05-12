@@ -367,8 +367,8 @@ export default class PickupModel {
             pickMode: settings.pick_mode,
             rated: Boolean(settings.is_rated),
             maxRankRatingCap: settings.max_rank_rating_cap ? settings.max_rank_rating_cap : null,
-            whitelistRole: settings.whitelist_role ? settings.whitelist_role.toString() : null,
-            blacklistRole: settings.blacklist_role ? settings.blacklist_role.toString() : null,
+            allowlistRole: settings.allowlist_role ? settings.allowlist_role.toString() : null,
+            denylistRole: settings.denylist_role ? settings.denylist_role.toString() : null,
             promotionRole: settings.promotion_role ? settings.promotion_role.toString() : null,
             captainRole: settings.captain_role ? settings.captain_role.toString() : null,
             serverId: settings.server_id ? settings.server_id : null
@@ -403,8 +403,8 @@ export default class PickupModel {
             mapPoolId: settings.mappool_id ? settings.mappool_id : null,
             afkCheck: Boolean(settings.afk_check),
             pickMode: settings.pick_mode,
-            whitelistRole: settings.whitelist_role ? settings.whitelist_role.toString() : null,
-            blacklistRole: settings.blacklist_role ? settings.blacklist_role.toString() : null,
+            allowlistRole: settings.allowlist_role ? settings.allowlist_role.toString() : null,
+            denylistRole: settings.denylist_role ? settings.denylist_role.toString() : null,
             promotionRole: settings.promotion_role ? settings.promotion_role.toString() : null,
             captainRole: settings.captain_role ? settings.captain_role.toString() : null,
             serverId: settings.server_id ? settings.server_id : null

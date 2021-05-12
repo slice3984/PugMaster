@@ -48,9 +48,9 @@ const command: Command = {
         if (params.length > 2) {
             const value = params[2];
 
-            const dbColumnNames = ['is_enabled', 'player_count', 'team_count', 'is_default_pickup', 'is_rated', 'afk_check', 'pick_mode', 'whitelist_role',
-                'blacklist_role', 'promotion_role', 'captain_role', 'server_id', 'mappool_id', 'map_vote', 'server_id'];
-            const keyNames = ['enabled', 'players', 'teams', 'default', 'rated', 'afkcheck', 'pickmode', 'whitelist', 'blacklist', 'promotion', 'captain', 'server', 'mappool', 'mapvote', 'server'];
+            const dbColumnNames = ['is_enabled', 'player_count', 'team_count', 'is_default_pickup', 'is_rated', 'afk_check', 'pick_mode', 'allowlist_role',
+                'denylist_role', 'promotion_role', 'captain_role', 'server_id', 'mappool_id', 'map_vote', 'server_id'];
+            const keyNames = ['enabled', 'players', 'teams', 'default', 'rated', 'afkcheck', 'pickmode', 'allowlist', 'denylist', 'promotion', 'captain', 'server', 'mappool', 'mapvote', 'server'];
             let dbColumn = keyNames.includes(key) ? dbColumnNames[keyNames.indexOf(key)] : key;
 
             const keyisValid = Validator.Pickup.areValidKeys(key);
@@ -85,7 +85,7 @@ const command: Command = {
             const currentValue = pickupSettings[dbColumn];
 
             // Get role names for the given role string
-            if (['whitelist', 'blacklist', 'promotion', 'captain'].includes(key)) {
+            if (['allowlist', 'denylist', 'promotion', 'captain'].includes(key)) {
                 const newRole = Util.getRole(message.guild, value);
                 const oldRole = currentValue ? Util.getRole(message.guild, currentValue) : null;
 
@@ -138,8 +138,8 @@ const command: Command = {
 
             const mapPoolName = settings.mapPoolId ? await MappoolModel.getPoolName(BigInt(message.guild.id), settings.mapPoolId) : '-';
             const serverName = settings.serverId ? await (await ServerModel.getServer(BigInt(message.guild.id), settings.serverId)).name : '-';
-            const whitelistRole = settings.whitelistRole ? Util.getRole(message.guild, settings.whitelistRole.toString()) : null;
-            const blacklistRole = settings.blacklistRole ? Util.getRole(message.guild, settings.blacklistRole.toString()) : null;
+            const allowlistRole = settings.allowlistRole ? Util.getRole(message.guild, settings.allowlistRole.toString()) : null;
+            const denylistRole = settings.denylistRole ? Util.getRole(message.guild, settings.denylistRole.toString()) : null;
             const promotionRole = settings.promotionRole ? Util.getRole(message.guild, settings.promotionRole.toString()) : null;
             const captainRole = settings.captainRole ? Util.getRole(message.guild, settings.captainRole.toString()) : null;
 
@@ -158,8 +158,8 @@ const command: Command = {
                 'Map pool': mapPoolName,
                 'Map vote': `${settings.mapvote ? 'enabled' : 'disabled'}`,
                 '\u200B ': '\u200B',
-                'Whitelist role': `${whitelistRole ? whitelistRole.name : '-'}`,
-                'Blacklist role': `${blacklistRole ? blacklistRole.name : '-'}`,
+                'Allowlist role': `${allowlistRole ? allowlistRole.name : '-'}`,
+                'Denylist role': `${denylistRole ? denylistRole.name : '-'}`,
                 'Promotion role': `${promotionRole ? promotionRole.name : '-'}`,
                 'Captain role': `${captainRole ? captainRole.name : '-'}`
             }

@@ -39,8 +39,8 @@ const command: Command = {
             const reportExpiretime = Util.formatTime(settings.reportExpireTime);
             const trustTime = settings.trustTime ? Util.formatTime(settings.trustTime) : 'disabled';
             const explicitTrust = settings.explicitTrust ? 'enabled' : 'disabled';
-            const whitelistRole = settings.whitelistRole ? Util.getRole(message.guild, settings.whitelistRole.toString()) : null;
-            const blacklistRole = settings.blacklistRole ? Util.getRole(message.guild, settings.blacklistRole.toString()) : null;
+            const allowlistRole = settings.allowlistRole ? Util.getRole(message.guild, settings.allowlistRole.toString()) : null;
+            const denylistRole = settings.denylistRole ? Util.getRole(message.guild, settings.denylistRole.toString()) : null;
             const promotionDelay = Util.formatTime(settings.promotionDelay);
             const defaultServer = settings.defaultServer ? await (await ServerModel.getServer(BigInt(message.guild.id), settings.defaultServer)).name : '-';
             const startMessage = settings.startMessage || '-';
@@ -91,8 +91,8 @@ const command: Command = {
                     'Promotion delay': promotionDelay,
                     '\u200B': '\u200B',
                     'Default Server': defaultServer,
-                    'Default Whitelist': `${whitelistRole ? whitelistRole.name : '-'}`,
-                    'Default Blacklist': `${blacklistRole ? blacklistRole.name : '-'}`,
+                    'Default Allowlist': `${allowlistRole ? allowlistRole.name : '-'}`,
+                    'Default Denylist': `${denylistRole ? denylistRole.name : '-'}`,
                     '\u200B ': '\u200B',
                     'Iteration time': iterationTime,
                     'AFK check iterations': afkCheckIterations,

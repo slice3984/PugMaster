@@ -18,7 +18,7 @@
     - Ability to rate, unrate & rerate pickups as admin
 	- Individual ratings per pickup
 - Ban & warns system
-    - Role based whitelist / blacklist system for all pickups or specific pickups
+    - Role based allowlist / denylist system for all pickups or specific pickups
     - Ban command for timed or permanent bans
     - Streak based warn system
 - Website

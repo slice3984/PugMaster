@@ -103,8 +103,8 @@ export interface PickupSettings {
     pickMode: 'no_teams' | 'manual' | 'random' | 'elo' | 'autopick';
     rated: boolean;
     maxRankRatingCap: number;
-    whitelistRole: string | null;
-    blacklistRole: string | null;
+    allowlistRole: string | null;
+    denylistRole: string | null;
     promotionRole: string | null;
     captainRole: string | null;
     serverId: number | null;

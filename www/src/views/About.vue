@@ -13,7 +13,7 @@
             <li>
               Trueskill rating system
               <ul>
-                <li>Trueskill based player ratings</li>
+                <li>Individual ratings per pickup</li>
                 <li>Ability for captains to report losses and draws</li>
                 <li>Ability to rate, unrate & rerate pickups as admin</li>
               </ul>
@@ -22,9 +22,6 @@
               Top lists / pickup history & individual player
               <base-link to="/stats" mode="bold">stats</base-link>
             </li>
-            <!-- <!-<li>Lorem ipsum, dolor sit amet consectetur adipisicing.</li>
-            <li>Lorem ipsum, dolor sit amet consectetur adipisicing.</li>
-            <li>Lorem ipsum, dolor sit amet consectetur adipisicing.</li> -->
           </ul>
         </div>
         <div class="features__divider"></div>
@@ -43,7 +40,7 @@
             <li>
               Ban & warns system
               <ul>
-                <li>Role based whitelist / blacklist system</li>
+                <li>Role based allowlist / denylist system</li>
                 <li>Ban command for timed or permanent bans</li>
                 <li>Streak based warn system</li>
               </ul>

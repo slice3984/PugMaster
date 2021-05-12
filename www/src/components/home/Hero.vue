@@ -8,9 +8,17 @@
         <base-link mode="bold" to="/about">more.</base-link>
       </p>
     </div>
-    <div id="invite">
-      <h2>Invite to your server</h2>
-      <base-link link to="#">https://discord.gg/123456</base-link>
+    <div id="links">
+      <base-link link to="#" target="_blank" class="link link--invite"
+        >Invite to your Server</base-link
+      >
+      <base-link
+        link
+        to="https://discord.gg/GeBz3jeU4x"
+        target="_blank"
+        class="link link--join"
+        >Join our Discord</base-link
+      >
     </div>
   </div>
 </template>
@@ -23,7 +31,7 @@
   transform: translate(-50%, -50%);
 }
 
-#invite {
+#links {
   text-align: center;
 
   & h2 {
@@ -32,6 +40,31 @@
 
   & a {
     font-size: 2rem;
+  }
+
+  & .link {
+    color: $white;
+    padding: 1rem;
+    border-radius: 3px;
+    margin-right: 1rem;
+
+    &:hover {
+      transition: all 200ms;
+    }
+
+    &--invite {
+      background-color: $blue;
+      &:hover {
+        background-color: $blue-2;
+      }
+    }
+
+    &--join {
+      background-color: $red-2;
+      &:hover {
+        background-color: darken($red-2, 5);
+      }
+    }
   }
 }
 

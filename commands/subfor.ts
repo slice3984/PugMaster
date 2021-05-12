@@ -122,23 +122,23 @@ const command: Command = {
 const roleCheck = (pickupSettings: PickupSettings, guildSettings: GuildSettings, message: Discord.Message, pickupId): boolean => {
     const userRoles = message.member.roles.cache;
 
-    if (pickupSettings.whitelistRole) {
-        if (!userRoles.has(pickupSettings.whitelistRole.toString())) {
+    if (pickupSettings.allowlistRole) {
+        if (!userRoles.has(pickupSettings.allowlistRole.toString())) {
             return false;
         }
-    } else if (pickupSettings.blacklistRole) {
-        if (userRoles.has(pickupSettings.blacklistRole.toString())) {
+    } else if (pickupSettings.denylistRole) {
+        if (userRoles.has(pickupSettings.denylistRole.toString())) {
             return false;
         }
     }
 
     // Guild defaults
-    if (guildSettings.whitelistRole) {
-        if (!userRoles.has(guildSettings.whitelistRole.toString())) {
+    if (guildSettings.allowlistRole) {
+        if (!userRoles.has(guildSettings.allowlistRole.toString())) {
             return false;
         }
-    } else if (guildSettings.blacklistRole) {
-        if (userRoles.has(guildSettings.blacklistRole.toString())) {
+    } else if (guildSettings.denylistRole) {
+        if (userRoles.has(guildSettings.denylistRole.toString())) {
             return false;
         }
     }
