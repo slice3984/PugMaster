@@ -4,7 +4,7 @@ const config = require('../config.json');
 const port = config.webserver.port;
 
 module.exports = {
-  publicPath: '/pickup',
+  publicPath: '/pm',
   outputDir: path.resolve(__dirname, "../dist/www/"),
   lintOnSave: false,
   devServer: {

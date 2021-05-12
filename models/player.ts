@@ -43,10 +43,10 @@ export default class PlayerModel {
                     // Delete older nicks if necessary
                     await db.execute(`
                     DELETE pn FROM player_nicks pn
-                    JOIN (SELECT updated_at FROM player_nicks
+                    JOIN (SELECT id FROM player_nicks
                         WHERE player_id = ?
-                        ORDER BY updated_at DESC LIMIT 1 OFFSET 1
-                    ) AS tlimit ON pn.updated_at < tlimit.updated_at
+                        ORDER BY updated_at DESC LIMIT 1 OFFSET 5
+                    ) AS toRemove ON pn.id = toRemove.id
                     `, [nickAndId[0][0].id])
                 });
             }
@@ -288,7 +288,7 @@ export default class PlayerModel {
         SELECT COUNT(w.id) as warnCount FROM warns w
         JOIN players p ON w.player_id = p.id
         WHERE w.guild_id = ? AND p.user_id = ?
-        AND DATE_ADD(w.warned_at, INTERVAL (? / 1000) SECOND) > CURRENT_DATE()
+        AND DATE_ADD(w.warned_at, INTERVAL (? / 1000) SECOND) > CURRENT_DATE() AND is_active = 1
         `, [guildId, playerId, guildSettings.warnStreakExpiration]);
 
         return warnsInStreak[0][0].warnCount;

@@ -1,6 +1,6 @@
 export default async (route: string, data: Object) => {
     const port = location.port;
-    let subFolder = 'pickup'; // Set to null if not hosted in any sub directory
+    let subFolder = 'pm'; // Set to null if not hosted in any sub directory
 
     if (port) {
         // Running in dev mode
