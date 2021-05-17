@@ -145,6 +145,11 @@ export default class CommandHandler {
         const guildSettings = this.bot.getGuild(message.guild.id);
 
         const errorHandler = (err) => {
+            // Insufficient permissions, in this case to send messages
+            if (err.code === 50013) {
+                // Nothing to do, ignore the exception
+                return;
+            }
             message.channel.send(Util.formatMessage('error', 'Something went wrong executing this command'));
             Logger.logError(`Error in executing '${cmd}' command, args: ${args.length ? args.join(', ') : '-'}`, err, false, message.guild.id, message.guild.name);
         }

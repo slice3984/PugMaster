@@ -51,4 +51,4 @@
 - Mysql server
 - Node.js runtime
 
-**Instance of a hosted bot can be found here: [PugMaster](https://slice.sh/pugmaster/)**
+**Instance of a hosted bot can be found here: [PugMaster](https://slice.sh/pm/)**

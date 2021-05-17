@@ -1,6 +1,8 @@
+import { DiscordAPIError } from 'discord.js';
 import Bot from './core/bot';
 import ConfigTool from './core/configTool';
 import { checkDb, createTables } from './core/dbInit';
+import Logger from './core/logger';
 import webserver from './webserver';
 
 
@@ -21,6 +23,17 @@ import webserver from './webserver';
             await createTables();
             console.log('Tables successfully created');
         }
+
+        process.on('unhandledRejection', (err: DiscordAPIError) => {
+            // Insufficient permissions
+            if (err.code === 50013) {
+                // Nothing to do, ignore the exception
+                return;
+            }
+
+            Logger.logError('Discord.js/Unknown error', err, false);
+            return;
+        });
 
         // Starting discord bot
         const bot = Bot.getInstance();

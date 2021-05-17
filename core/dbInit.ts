@@ -61,7 +61,7 @@ export const createTables = () => new Promise(async (res, _req) => {
     CREATE TABLE IF NOT EXISTS guild_channels (
       guild_id BIGINT NOT NULL,
       channel_id BIGINT NOT NULL,
-      channel_type ENUM('pickup', 'pickup-info', 'listen') NOT NULL,
+      channel_type ENUM('pickup', 'listen') NOT NULL,
       INDEX guild_id_idx (guild_id ASC) VISIBLE,
       UNIQUE(guild_id, channel_id, channel_type),
       CONSTRAINT fk_guild_channels
