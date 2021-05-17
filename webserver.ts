@@ -50,5 +50,5 @@ export default (bot: Bot) => {
     app.use(express.static(path.join(__dirname, 'www')));
 
     server.listen(port);
-    console.log(`Started webserver on port ${port}`)
+    console.log(`\nStarted webserver on port ${port}`)
 }

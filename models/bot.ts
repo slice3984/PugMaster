@@ -33,4 +33,26 @@ export default class BotModel {
         }
         return;
     }
+
+    static async getAmountOfPendingPickups(): Promise<{ guilds: number; amount: number }> {
+        const data: any = await db.execute(`
+        SELECT COUNT(*) AS amount from state_pickup
+        WHERE stage != 'fill'
+        GROUP BY guild_id
+        `);
+
+        if (!data[0].length) {
+            return null;
+        }
+
+        let guilds = 0;
+        let amount = 0;
+
+        data[0].forEach(row => {
+            guilds++;
+            amount += row.amount;
+        });
+
+        return { guilds, amount };
+    }
 }

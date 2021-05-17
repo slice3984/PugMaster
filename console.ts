@@ -4,6 +4,7 @@ import inquirer_autocomplete from 'inquirer-autocomplete-prompt';
 import Bot from "./core/bot";
 import Logger from "./core/logger";
 import Util from "./core/util";
+import BotModel from "./models/bot";
 import GuildModel from "./models/guild";
 import PickupModel from "./models/pickup";
 
@@ -26,7 +27,7 @@ export default class Console {
                 type: 'list',
                 name: 'menu',
                 message: 'Select option',
-                choices: ['Guild options', 'broadcast']
+                choices: ['Guild options', 'Broadcast', 'Status']
             }
         ]);
 
@@ -58,7 +59,7 @@ export default class Console {
                 this.showGuildMenu();
 
                 break;
-            case 'broadcast':
+            case 'Broadcast':
                 const message = await inquirer.prompt([
                     {
                         type: 'input',
@@ -81,6 +82,12 @@ export default class Console {
                 }
 
                 console.log(`Broadcasted message: ${message.message}`);
+                this.showMenu();
+                break;
+            case 'Status':
+                const pendingAmount = await BotModel.getAmountOfPendingPickups();
+                console.log(`Connected guilds: ${this.bot.getClient().guilds.cache.size}`);
+                console.log(`Pending pickups: ${pendingAmount ? `${pendingAmount.guilds} guild(s) with ${pendingAmount.amount} pending pickup(s)` : '-'}`);
                 this.showMenu();
                 break;
             default:
