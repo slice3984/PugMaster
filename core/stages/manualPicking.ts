@@ -52,13 +52,23 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
                     captains.push({ id: player.id, nick: player.nick, rating: player.rating });
                 })
 
-                captains.forEach(cap => {
-                    shuffledPlayers.splice(shuffledPlayers.findIndex(p => p.id === cap.id), 1);
-                })
+                removeCaptainsFromPlayers(captains);
             }
 
             // In case of captain selection the stage changed, revert to manual picking
             await PickupModel.setPending(BigInt(guild.id), pickupSettings.id, 'picking_manual');
+        }
+
+        function removeCaptainsFromPlayers(captains: { id: string }[]) {
+            captains.forEach(cap => {
+                const indexToRemove = shuffledPlayers.findIndex(p => p.id === cap.id);
+
+                if (indexToRemove < 0) {
+                    return;
+                }
+
+                shuffledPlayers.splice(indexToRemove, 1);
+            });
         }
 
         const playerGotCaptainRole = async (playerId) => {
@@ -115,6 +125,8 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
                         diff = Number.MAX_SAFE_INTEGER;
                         cap = null;
                     }
+
+                    removeCaptainsFromPlayers(captains);
                 }
             } else {
                 for (const player of shuffledPlayers) {
@@ -186,10 +198,7 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
                     captains = newCaptains;
                 }
 
-                // Remove captains from players
-                captains.forEach(cap => {
-                    shuffledPlayers.splice(shuffledPlayers.findIndex(p => p.id === cap.id), 1);
-                })
+                removeCaptainsFromPlayers(captains);
             }
 
         }
@@ -205,7 +214,7 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
                     nick: player.nick
                 });
 
-                shuffledPlayers.splice(shuffledPlayers.findIndex(p => p.id === player.id), 1);
+                removeCaptainsFromPlayers(captains);
 
                 if (captains.length === maxCaps) {
                     break;
@@ -217,7 +226,7 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
         if (captains.length < maxCaps) {
             for (const player of shuffledPlayers) {
                 captains.push(player);
-                shuffledPlayers.splice(shuffledPlayers.findIndex(p => p === player), 1);
+                removeCaptainsFromPlayers(captains);
 
                 if (captains.length === maxCaps) {
                     break;
