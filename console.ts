@@ -54,7 +54,7 @@ export default class Console {
 
                 ]);
 
-                this.guild = this.bot.getClient().guilds.cache.get(answer.guild.split(' ').pop());
+                this.guild = this.bot.getClient().guilds.cache.get(answer.guild.split(' ').pop() as Discord.Snowflake);
                 this.pickupChannel = await Util.getPickupChannel(this.guild);
                 this.showGuildMenu();
 

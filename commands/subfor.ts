@@ -123,22 +123,22 @@ const roleCheck = (pickupSettings: PickupSettings, guildSettings: GuildSettings,
     const userRoles = message.member.roles.cache;
 
     if (pickupSettings.allowlistRole) {
-        if (!userRoles.has(pickupSettings.allowlistRole.toString())) {
+        if (!userRoles.has(pickupSettings.allowlistRole.toString() as Discord.Snowflake)) {
             return false;
         }
     } else if (pickupSettings.denylistRole) {
-        if (userRoles.has(pickupSettings.denylistRole.toString())) {
+        if (userRoles.has(pickupSettings.denylistRole.toString() as Discord.Snowflake)) {
             return false;
         }
     }
 
     // Guild defaults
     if (guildSettings.allowlistRole) {
-        if (!userRoles.has(guildSettings.allowlistRole.toString())) {
+        if (!userRoles.has(guildSettings.allowlistRole.toString() as Discord.Snowflake)) {
             return false;
         }
     } else if (guildSettings.denylistRole) {
-        if (userRoles.has(guildSettings.denylistRole.toString())) {
+        if (userRoles.has(guildSettings.denylistRole.toString() as Discord.Snowflake)) {
             return false;
         }
     }

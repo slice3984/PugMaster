@@ -18,7 +18,7 @@ export default class CommandHandler {
 
     private async gotPermission(member: Discord.GuildMember, cmd) {
         // Admin
-        if (member.hasPermission(Discord.Permissions.FLAGS.ADMINISTRATOR)) {
+        if (member.permissions.has([Discord.Permissions.FLAGS.ADMINISTRATOR])) {
             return true;
         }
 

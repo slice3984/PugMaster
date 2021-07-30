@@ -28,7 +28,7 @@ const command: Command = {
                 .addFields(
                     { name: 'Pickup', value: pickups.map(pickup => pickup.name).join('\n'), inline: true },
                     { name: 'Players', value: pickups.map(pickup => `${pickup.added} / ${pickup.max}`).join('\n'), inline: true },
-                    { name: 'Rated', value: pickups.map(pickup => `${pickup.rated ? 'Yes' : 'No'}`), inline: true }
+                    { name: 'Rated', value: pickups.map(pickup => `${pickup.rated ? 'Yes' : 'No'}`).join('\n'), inline: true }
                 );
         }
 

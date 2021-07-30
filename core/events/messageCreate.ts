@@ -6,7 +6,7 @@ import { GuildMemberExtended } from '../types';
 const commandHandler = new CommandHandler(Bot.getInstance());
 
 module.exports = async (bot: Bot, message: Discord.Message) => {
-    if (message.channel.type === 'dm' || !message.member || message.member.user.bot) {
+    if (message.channel.type === 'DM' || !message.member || message.member.user.bot) {
         return;
     }
 

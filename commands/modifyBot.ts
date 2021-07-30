@@ -136,7 +136,7 @@ const command: Command = {
                     )
                     .setFooter(`${config.webserver.domain}/help/botvariables`, botAvatarUrl);
 
-                message.channel.send(settingsEmbed);
+                message.channel.send({ embeds: [settingsEmbed] });
             }
         }
     }

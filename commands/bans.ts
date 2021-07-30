@@ -90,7 +90,7 @@ const command: Command = {
             .addFields(fieldData)
             .setFooter(`Limited to 10 bans${bans.length > 10 ? ', one or more active bans not displayed' : ''}`, botAvatarUrl);
 
-        message.channel.send(bansCardEmbed);
+        message.channel.send({ embeds: [bansCardEmbed] });
     }
 }
 

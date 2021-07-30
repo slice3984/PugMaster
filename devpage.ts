@@ -95,6 +95,7 @@ export default class DevPage {
                     }
                 } as Discord.Presence;
 
+                // @ts-ignore
                 this.botInstance.getClient().emit('presenceUpdate', oldPresence, newPresence);
             });
 
@@ -106,6 +107,7 @@ export default class DevPage {
                     guild: this.botInstance.getClient().guilds.cache.get(data.guild)
                 } as Discord.GuildMember;
 
+                // @ts-ignore
                 this.botInstance.getClient().emit('guildMemberRemove', member);
             });
 
@@ -127,7 +129,7 @@ export default class DevPage {
     }
 
     private async getInitData(guildId: string) {
-        const guildObj = this.botInstance.getClient().guilds.cache.get(guildId);
+        const guildObj = this.botInstance.getClient().guilds.cache.get(guildId as Discord.Snowflake);
         const id = guildObj.id;
         const name = guildObj.name;
         const fakeUsers = await DevModel.getFakeUsers(BigInt(guildId));
@@ -159,7 +161,7 @@ export default class DevPage {
     private async addToPickup(guildId: string, userId: string, configId: number) {
         const fakeUser = {
             id: userId,
-            guild: this.botInstance.getClient().guilds.cache.get(guildId)
+            guild: this.botInstance.getClient().guilds.cache.get(guildId as Discord.Snowflake)
         } as Discord.GuildMember;
 
         await PickupState.addPlayer(fakeUser, configId);
@@ -191,7 +193,7 @@ export default class DevPage {
         }
 
         await StatsModel.storePickup({
-            guild: Bot.getInstance().getClient().guilds.cache.get(guildId),
+            guild: Bot.getInstance().getClient().guilds.cache.get(guildId as Discord.Snowflake),
             pickupConfigId: configId,
             teams
         })

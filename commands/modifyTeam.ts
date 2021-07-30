@@ -36,7 +36,7 @@ const command: Command = {
                     { name: 'Name', value: currentTeams.map(t => t.name).join('\n'), inline: true }
                 );
 
-            return message.channel.send(teamsEmbed);
+            return message.channel.send({ embeds: [teamsEmbed] });
         }
 
         let validTeams: { teamId: string; newName: string }[] = [];

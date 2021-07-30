@@ -3,6 +3,7 @@ import Util from '../core/util';
 import StatsModel from '../models/stats';
 import PickupModel from '../models/pickup';
 import GuildModel from '../models/guild';
+import { Snowflake } from 'discord.js';
 
 const command: Command = {
     cmd: 'sub',
@@ -35,7 +36,7 @@ const command: Command = {
         let role;
 
         if (pickupSettings.promotionRole) {
-            role = message.guild.roles.cache.get(pickupSettings.promotionRole.toString());
+            role = message.guild.roles.cache.get(pickupSettings.promotionRole.toString() as Snowflake);
 
             if (!role) {
                 return message.channel.send(Util.formatMessage('error', `Stored promotion role for pickup **${lastGame.name}** not found`));

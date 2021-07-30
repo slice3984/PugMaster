@@ -75,7 +75,7 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
             const playerObj = await Util.getUser(guild, playerId) as Discord.GuildMember;
 
             if (playerObj) {
-                if (playerObj.roles && playerObj.roles.cache.has(captainRole)) {
+                if (playerObj.roles && playerObj.roles.cache.has(captainRole as Discord.Snowflake)) {
                     return true;
                 } else {
                     return false;
@@ -134,7 +134,7 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
 
                     // TODO: Check if members & roles are fetched correct now
                     if (playerObj) {
-                        if (playerObj.roles && playerObj.roles.cache.has(captainRole)) {
+                        if (playerObj.roles && playerObj.roles.cache.has(captainRole as Discord.Snowflake)) {
                             captains.push(player);
                         }
                     }
@@ -370,7 +370,7 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
 
 export const abortPickingStagePickup = async (guildId: string, playerId: string) => {
     const bot = Bot.getInstance();
-    const guild = bot.getClient().guilds.cache.get(guildId);
+    const guild = bot.getClient().guilds.cache.get(guildId as Discord.Snowflake);
     const guildSettings = bot.getGuild(guildId);
     const allPlayers = [];
     const pickupChannel = await Util.getPickupChannel(guild);

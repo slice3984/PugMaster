@@ -2,7 +2,7 @@ import { Command } from '../core/types';
 import Util from '../core/util';
 import GuildModel from '../models/guild';
 import PickupModel from '../models/pickup';
-import { GuildMember } from 'discord.js';
+import { GuildMember, Snowflake } from 'discord.js';
 
 const command: Command = {
     cmd: 'promote',
@@ -38,7 +38,7 @@ const command: Command = {
             return message.channel.send(Util.formatMessage('error', `No promotion role set for **${pickupSettings.name}**, not able to promote it`));
         }
 
-        const role = message.guild.roles.cache.get(promotionRole.toString());
+        const role = message.guild.roles.cache.get(promotionRole.toString() as Snowflake);
 
         if (!role) {
             return message.channel.send(Util.formatMessage('error', `Stored promotion role for pickup **${pickupSettings.name}** not found`));
@@ -56,7 +56,7 @@ const command: Command = {
 
             try {
                 for (const player of players) {
-                    const member = message.guild.members.cache.get(player.id.toString());
+                    const member = message.guild.members.cache.get(player.id.toString() as Snowflake);
 
                     if (member) {
                         if (member.roles.cache.has(role.id)) {

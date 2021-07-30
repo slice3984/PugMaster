@@ -60,7 +60,7 @@ const command: Command = {
             .addFields(fieldData)
             .setFooter(`${config.webserver.domain}/commands/${cmd.cmd}`, botAvatarUrl)
 
-        message.channel.send(helpCardEmbed);
+        message.channel.send({ embeds: [helpCardEmbed] });
     }
 }
 

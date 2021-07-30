@@ -29,14 +29,12 @@ export default class Bot {
         // Creating new bot instance
         this.client = new Discord.Client({
             presence: {
-                activity: {
+                activities: [{
                     name: ConfigTool.getConfig().webserver.domain,
                     type: 'PLAYING'
-                }
+                }]
             },
-            ws: {
-                intents: ['GUILDS', 'GUILD_MESSAGES', 'GUILD_PRESENCES', 'GUILD_MEMBERS', 'GUILD_MESSAGE_REACTIONS']
-            }
+            intents: ['GUILDS', 'GUILD_MESSAGES', 'GUILD_PRESENCES', 'GUILD_MEMBERS', 'GUILD_MESSAGE_REACTIONS']
         });
 
         this.client.login(ConfigTool.getConfig().bot.token);
@@ -46,7 +44,6 @@ export default class Bot {
             await this.loadConnectedGuildsSettings();
 
             const connectedGuilds = [...this.guilds.keys()];
-
             // Clear pending pickups
             if (connectedGuilds.length) {
                 const guildsWithPendingPickups = await GuildModel.getGuildsWithPendingPickups(...connectedGuilds);
@@ -55,7 +52,7 @@ export default class Bot {
                     await GuildModel.clearPendingPickups();
 
                     guildsWithPendingPickups.forEach(async guildId => {
-                        const guildObj = this.client.guilds.cache.get(guildId);
+                        const guildObj = this.client.guilds.cache.get(guildId as Discord.Snowflake);
 
                         if (guildObj) {
                             const pickupChannel = await this.getPickupChannel(guildObj);
@@ -71,6 +68,8 @@ export default class Bot {
             // TODO: Refresh state
             await this.registerCommands();
             await this.registerEventListeners();
+            console.log('EVENTS FIXED')
+
             this.mainLoop();
             this.secondaryLoop();
             new Console(this);
@@ -250,11 +249,11 @@ export default class Bot {
 
             if (guildsToShowStatus.size > 0) {
                 for (const guild of guildsToShowStatus) {
-                    const pickups = Array.from((await PickupModel.getActivePickups(BigInt(guild))).values())
+                    const pickups = Array.from((await PickupModel.getActivePickups(BigInt(guild as string))).values())
                         .sort((a, b) => b.players.length - a.players.length);
 
                     try {
-                        const guildObj = this.client.guilds.cache.get(guild as string);
+                        const guildObj = this.client.guilds.cache.get(guild as Discord.Snowflake);
                         const pickupChannel = await this.getPickupChannel(guildObj);
 
                         let msg = '';
@@ -360,7 +359,6 @@ export default class Bot {
         const disabledCommands = storedCommands
             .filter(command => command.disabled)
             .map(command => command.name);
-
 
         const register = async (dir = 'commands') => {
             const files = await fs.promises.readdir(path.join(__dirname, '/../', dir));

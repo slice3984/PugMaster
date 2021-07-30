@@ -1212,7 +1212,7 @@ export default class StatsModel {
     }
 
     // Pass ids as strings because bigints can't be serialized
-    static async swapPlayers(guildId: bigint, pickupId: number, firstPlayer: { team: String, id: String }, secondPlayer: { team: String, id: String }) {
+    static async swapPlayers(guildId: bigint, pickupId: number, firstPlayer: { team: string, id: string }, secondPlayer: { team: string, id: string }) {
         const playerOne: any = await db.execute(`
         SELECT id FROM players
         WHERE guild_id = ? AND user_id = ?

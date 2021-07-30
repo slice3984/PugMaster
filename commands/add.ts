@@ -3,6 +3,7 @@ import Util from '../core/util';
 import PickupModel from '../models/pickup';
 import PlayerModel from '../models/player';
 import PickupState from '../core/pickupState';
+import { Snowflake } from 'discord.js';
 
 const command: Command = {
     cmd: 'add',
@@ -66,12 +67,12 @@ const command: Command = {
 
                 // Pickup settings
                 if (pickupSettings.allowlistRole) {
-                    if (!userRoles.has(pickupSettings.allowlistRole.toString())) {
+                    if (!userRoles.has(pickupSettings.allowlistRole.toString() as Snowflake)) {
                         invalidPickups.push(id);
                         continue;
                     }
                 } else if (pickupSettings.denylistRole) {
-                    if (userRoles.has(pickupSettings.denylistRole.toString())) {
+                    if (userRoles.has(pickupSettings.denylistRole.toString() as Snowflake)) {
                         invalidPickups.push(id);
                         continue;
                     }
@@ -79,12 +80,12 @@ const command: Command = {
 
                 // Guild defaults
                 if (guildSettings.allowlistRole) {
-                    if (!userRoles.has(guildSettings.allowlistRole.toString())) {
+                    if (!userRoles.has(guildSettings.allowlistRole.toString() as Snowflake)) {
                         invalidPickups.push(id);
                         continue;
                     }
                 } else if (guildSettings.denylistRole) {
-                    if (userRoles.has(guildSettings.denylistRole.toString())) {
+                    if (userRoles.has(guildSettings.denylistRole.toString() as Snowflake)) {
                         invalidPickups.push(id);
                     }
                 }

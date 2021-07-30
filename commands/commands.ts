@@ -15,7 +15,7 @@ const command: Command = {
         const config = ConfigTool.getConfig();
 
         // All permissions granted as admin
-        const isAdmin = message.member.hasPermission(Discord.Permissions.FLAGS.ADMINISTRATOR);
+        const isAdmin = message.member.permissions.has([Discord.Permissions.FLAGS.ADMINISTRATOR]);
         const disabledCommands = bot.getGuild(message.guild.id).disabledCommands;
         const allCommands = bot.getCommandNames();
         const availableCommands = allCommands.filter(command => !disabledCommands.includes(command));
@@ -48,7 +48,7 @@ const command: Command = {
             .addField('\u200B', grantedCommands.join(', '))
             .setFooter('*Commands which require permissions', botAvatarUrl)
 
-        message.channel.send(commandsCardEmbed);
+        message.channel.send({ embeds: [commandsCardEmbed] });
     }
 }
 

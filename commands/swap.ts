@@ -26,11 +26,11 @@ const command: Command = {
         const playerTwo = await Util.getUser(message.guild, params[1]) as Discord.GuildMember;
 
         if (!playerOne || !playerTwo) {
-            return message.channel.send(Util.formatMessage('error', `${message.activity}, given players not found`));
+            return message.channel.send(Util.formatMessage('error', `${message.author}, given players not found`));
         }
 
         // Make sure they are added to the pickup and in different teams
-        const teams: { name: String, playerId: String }[] = [];
+        const teams: { name: string, playerId: string }[] = [];
 
         const teamPlayerOne = latestUnratedPickup.teams.find(t => t.players.map(p => p.id).includes(playerOne.id));
 

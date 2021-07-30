@@ -181,7 +181,7 @@ export default class PickupState {
             });
         }
 
-        const guild = Bot.getInstance().getClient().guilds.cache.get(guildId.toString());
+        const guild = Bot.getInstance().getClient().guilds.cache.get(guildId.toString() as Discord.Snowflake);
         if (guild) {
             const pickupChannel = await Util.getPickupChannel(guild);
             if (pickupChannel) {
@@ -234,7 +234,7 @@ export default class PickupState {
         }
 
         if (showStatus) {
-            const guild = Bot.getInstance().getClient().guilds.cache.get(guildId.toString());
+            const guild = Bot.getInstance().getClient().guilds.cache.get(guildId.toString() as Discord.Snowflake);
             const pickupChannel = await Util.getPickupChannel(guild);
             const pickups = Array.from((await PickupModel.getActivePickups(bigIntGuildId)).values())
                 .sort((a, b) => b.players.length - a.players.length);

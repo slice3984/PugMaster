@@ -89,14 +89,15 @@ export const mapVote = async (guild: Discord.Guild, config: PickupStartConfigura
             }
         }
 
-        const collected = await currentMessage.awaitReactions((reaction, user) => {
-            if (!availableReactions.includes(reaction.emoji.name) ||
-                reaction.me ||
-                !players.includes(user.id)) {
-                return false;
-            }
-            return true;
-        }, { time: iterationTime });
+        const collected = await currentMessage.awaitReactions({
+            filter: (reaction, user) => {
+                if (!availableReactions.includes(reaction.emoji.name) ||
+                    !players.includes(user.id)) {
+                    return false;
+                }
+                return true;
+            }, time: iterationTime
+        });
 
         // Aborted, server leave or admin action
         if (!guildSettings.pickupsInMapVoteStage.has(pickupSettings.id)) {
@@ -166,7 +167,7 @@ export const mapVote = async (guild: Discord.Guild, config: PickupStartConfigura
 
 export const abortMapVoteStagePickup = async (guildId: string, playerId: string) => {
     const bot = Bot.getInstance();
-    const guild = bot.getClient().guilds.cache.get(guildId);
+    const guild = bot.getClient().guilds.cache.get(guildId as Discord.Snowflake);
     const guildSettings = bot.getGuild(guildId);
     const allPlayers = [];
     const pickupChannel = await Util.getPickupChannel(guild);

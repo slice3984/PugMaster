@@ -30,13 +30,8 @@ const afkCheckStage = async (guild: Discord.Guild, pickupConfigId: number, first
             const user = (await Util.getUser(guild, id.toString()) as Discord.GuildMember);
 
             if (user) {
-                let messageTimestamp = user.lastMessage ? (await user.lastMessage.fetch()).createdTimestamp : null;
-
-                // Attempt to use the added lastMessageTimestamp property in case the message cache got cleared
-                if (!messageTimestamp) {
-                    const extendedGuildMember = (user as GuildMemberExtended);
-                    messageTimestamp = 'lastMessageTimestamp' in extendedGuildMember ? extendedGuildMember.lastMessageTimestamp : null;
-                }
+                const extendedGuildMember = (user as GuildMemberExtended);
+                const messageTimestamp = 'lastMessageTimestamp' in extendedGuildMember ? extendedGuildMember.lastMessageTimestamp : null;
 
                 if (messageTimestamp && ((messageTimestamp + guildSettings.afkTime) < timestamp)) {
                     afkPlayers.push(user);
@@ -58,18 +53,12 @@ const afkCheckStage = async (guild: Discord.Guild, pickupConfigId: number, first
         const afkPlayersDb = await GuildModel.getAfks(BigInt(guild.id), ...playerIds);
 
         for (const id of playerIds) {
-            const user = (await Util.getUser(guild, id.toString()) as Discord.GuildMember);
+            const user = (await Util.getUser(guild, id.toString()) as Discord.GuildMember) as GuildMemberExtended;
 
             if (user) {
                 if (afkPlayersDb.includes(user.id)) {
                     // Maybe the player wrote a message, if thats the case add to ready players
-                    let messageTimestamp = user.lastMessage ? (await user.lastMessage.fetch()).createdTimestamp : null;
-
-                    // Attempt to use the added lastMessageTimestamp property in case the message cache got cleared
-                    if (!messageTimestamp) {
-                        const extendedGuildMember = (user as GuildMemberExtended);
-                        messageTimestamp = 'lastMessageTimestamp' in extendedGuildMember ? extendedGuildMember.lastMessageTimestamp : null;
-                    }
+                    const messageTimestamp = 'lastMessageTimestamp' in user ? user.lastMessageTimestamp : null;
 
                     if (messageTimestamp && ((messageTimestamp + guildSettings.afkTime) > timestamp)) {
                         readyPlayers.push(user);

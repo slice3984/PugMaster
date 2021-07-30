@@ -74,7 +74,7 @@ const command: Command = {
         const rankCardEmbed = new Discord.MessageEmbed()
             .setColor('#126e82')
             .setTitle(`Ranking - ${players.players[0].currentNick}`)
-            .addField('Rated games ', ratings.pickupCount)
+            .addField('Rated games ', ratings.pickupCount.toString())
             .addFields(
                 { name: 'Pickup / Rank', value: pickupNames.join('\n'), inline: true },
                 { name: 'W / D / L', value: playerGames.join('\n'), inline: true },
@@ -82,7 +82,7 @@ const command: Command = {
             )
             .setFooter('Active in last 14 days / 10 games required to be ranked', botAvatarUrl);
 
-        message.channel.send(rankCardEmbed);
+        message.channel.send({ embeds: [rankCardEmbed] });
     }
 }
 

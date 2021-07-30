@@ -24,10 +24,10 @@ export default class Util {
         const bot = Bot.getInstance();
 
         try {
-            let user: Discord.User | Discord.GuildMember = await guild.members.fetch(id);
+            let user: Discord.User | Discord.GuildMember = await guild.members.fetch(id as Discord.Snowflake);
 
             if (!user && !onlyGuildMembers) {
-                user = await bot.getClient().users.fetch(id);
+                user = await bot.getClient().users.fetch(id as Discord.Snowflake);
                 return user;
             }
 
@@ -45,10 +45,10 @@ export default class Util {
                 // By name
                 return guild.roles.cache.find(role => role.name.toLowerCase() == identifier.toLowerCase());
             } else {
-                return guild.roles.cache.get(identifier);
+                return guild.roles.cache.get(identifier as Discord.Snowflake);
             }
         } else {
-            return guild.roles.cache.get(id[1]);
+            return guild.roles.cache.get(id[1] as Discord.Snowflake);
         }
     }
 
@@ -64,10 +64,10 @@ export default class Util {
                 // By name
                 return guild.channels.cache.find(chan => chan.name.toLowerCase() === identifier.toLowerCase());
             } else {
-                return guild.channels.cache.get(identifier);
+                return guild.channels.cache.get(identifier as Discord.Snowflake);
             }
         } else {
-            return guild.channels.cache.get(id[1]);
+            return guild.channels.cache.get(id[1] as Discord.Snowflake);
         }
     }
 

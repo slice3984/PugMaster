@@ -37,7 +37,7 @@ const command: Command = {
                     { name: 'Enabled', value: enabledPickups.length ? enabledPickups.map(p => `**${p.name}**`).join(', ') : 'No enabled pickups', inline: false },
                     { name: 'Disabled', value: disabledPickups.length ? disabledPickups.map(p => `**${p.name}**`).join(', ') : 'No disabled pickups', inline: false }
                 );
-            message.channel.send(pickupsCardEmbed);
+            message.channel.send({ embeds: [pickupsCardEmbed] });
             return;
         } else if (params.length >= 2) {
             key = params[1].toLowerCase();
@@ -183,7 +183,7 @@ const command: Command = {
                 )
                 .setFooter(`${config.webserver.domain}/help/pickupvariables`, botAvatarUrl);
 
-            message.channel.send(settingsEmbed);
+            message.channel.send({ embeds: [settingsEmbed] });
         }
     }
 }

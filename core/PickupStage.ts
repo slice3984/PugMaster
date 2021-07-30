@@ -194,7 +194,7 @@ export default class PickupStage {
 
             if (dmMessage.length) {
                 for (const playerId of playersToDm) {
-                    const member = config.guild.members.cache.get(playerId);
+                    const member = config.guild.members.cache.get(playerId as Discord.Snowflake);
                     if (member) {
                         try {
                             // In case the player blocked the bot

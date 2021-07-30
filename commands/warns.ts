@@ -77,7 +77,7 @@ const command: Command = {
             .addFields(fieldData)
             .setFooter(`Limited to 10 warns${warns.length > 10 ? ', one or more active warns not displayed' : ''}`, botAvatarUrl);
 
-        message.channel.send(warnsCardEmbed);
+        message.channel.send({ embeds: [warnsCardEmbed] });
     }
 }
 

@@ -1,3 +1,4 @@
+import { Snowflake } from 'discord.js';
 import { Command } from '../core/types';
 import Util from '../core/util';
 import PickupModel from '../models/pickup';
@@ -29,14 +30,14 @@ const command: Command = {
 
         const userRoleIds = message.member.roles.cache.map(role => role.id);
 
-        pickupsToUnsubscribe = pickupsToUnsubscribe.filter(pickup => userRoleIds.includes(pickup.promotionRole));
+        pickupsToUnsubscribe = pickupsToUnsubscribe.filter(pickup => userRoleIds.includes(pickup.promotionRole as Snowflake));
 
         if (!pickupsToUnsubscribe.length) {
             return message.channel.send(Util.formatMessage('error', `${message.author}, you are already not subscribed to the given valid pickups`));
         }
 
         try {
-            await message.member.roles.remove(pickupsToUnsubscribe.map(pickup => pickup.promotionRole.toString()));
+            await message.member.roles.remove(pickupsToUnsubscribe.map(pickup => pickup.promotionRole.toString() as Snowflake));
         } catch (_err) {
             return message.channel.send(Util.formatMessage('error', 'Not able to remove one or multiple roles, are the required permission given, do the roles exist?'));
         }

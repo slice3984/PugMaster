@@ -1,3 +1,4 @@
+import { Snowflake } from 'discord.js';
 import { Command } from '../core/types';
 import Util from '../core/util';
 import PickupModel from '../models/pickup';
@@ -29,14 +30,14 @@ const command: Command = {
 
         const userRoleIds = message.member.roles.cache.map(role => role.id);
 
-        pickupsToSubscribe = pickupsToSubscribe.filter(pickup => !userRoleIds.includes(pickup.promotionRole));
+        pickupsToSubscribe = pickupsToSubscribe.filter(pickup => !userRoleIds.includes(pickup.promotionRole as Snowflake));
 
         if (!pickupsToSubscribe.length) {
             return message.channel.send(Util.formatMessage('error', `${message.author}, you are already subscribed to the given valid pickups`));
         }
 
         pickupsToSubscribe.filter(pickup => {
-            if (message.guild.roles.cache.get(pickup.promotionRole.toString())) {
+            if (message.guild.roles.cache.get(pickup.promotionRole.toString() as Snowflake)) {
                 return true;
             } else {
                 return false;
@@ -48,7 +49,7 @@ const command: Command = {
         }
 
         try {
-            await message.member.roles.add(pickupsToSubscribe.map(pickup => pickup.promotionRole.toString()))
+            await message.member.roles.add(pickupsToSubscribe.map(pickup => pickup.promotionRole.toString() as Snowflake))
         } catch (_err) {
             return message.channel.send(Util.formatMessage('error', 'Not able to set one or multiple roles, are the required permission given, do the roles exist?'));
         }

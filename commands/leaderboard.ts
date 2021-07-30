@@ -96,7 +96,7 @@ const command: Command = {
                 { name: 'Rating', value: playerRatings.join('\n'), inline: true },
             ).setFooter('Player skill uncertainty taken into account for ranking.\nActive in last 14 days / 10 games required to be ranked', botAvatarUrl)
 
-        message.channel.send(leaderboardEmbed);
+        message.channel.send({ embeds: [leaderboardEmbed] });
     }
 }
 

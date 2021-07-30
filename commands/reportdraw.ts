@@ -111,7 +111,12 @@ const command: Command = {
 
 const rateMatch = async (message: Discord.Message, pickup: RateablePickup) => {
     const toSend = await Rating.rateMatch(message.guild.id, pickup);
-    message.channel.send(toSend);
+
+    if (toSend instanceof Discord.MessageEmbed) {
+        message.channel.send({ embeds: [toSend] });
+    } else {
+        message.channel.send(toSend);
+    }
 }
 
 module.exports = command;
