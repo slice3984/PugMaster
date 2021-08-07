@@ -22,7 +22,7 @@ export default class CommandHandler {
             return true;
         }
 
-        const userRoleIds = member.roles.cache.keyArray().map(strId => BigInt(strId));
+        const userRoleIds = member.roles.cache.map(strId => BigInt(strId.id));
 
         if (userRoleIds.length > 0) {
             // Check if one of the user roles got the required permission

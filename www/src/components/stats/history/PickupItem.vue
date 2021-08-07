@@ -170,7 +170,7 @@ export default defineComponent({
       createToast,
     } = useToast();
 
-    const localDate = new Date(props.date).toLocaleDateString(undefined, {
+    const localDate = new Date(props.date as string).toLocaleDateString(undefined, {
       weekday: "short",
       year: "numeric",
       month: "2-digit",

@@ -68,7 +68,6 @@ export default class Bot {
             // TODO: Refresh state
             await this.registerCommands();
             await this.registerEventListeners();
-            console.log('EVENTS FIXED')
 
             this.mainLoop();
             this.secondaryLoop();

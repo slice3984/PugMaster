@@ -1,4 +1,4 @@
-import Discord from 'discord.js';
+import Discord, { MessageEmbed } from 'discord.js';
 import { Command } from '../core/types';
 import PickupModel from '../models/pickup';
 
@@ -32,7 +32,11 @@ const command: Command = {
                 );
         }
 
-        message.channel.send(toSend);
+        if (toSend instanceof MessageEmbed) {
+            message.channel.send({ embeds: [toSend] });
+        } else {
+            message.channel.send(toSend);
+        }
     }
 }
 

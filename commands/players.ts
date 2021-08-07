@@ -61,7 +61,7 @@ const command: Command = {
 
             const playerObj = await Util.getUser(message.guild, player.id.toString()) as Discord.GuildMember;
 
-            if (playerObj) {
+            if (playerObj && playerObj.presence) {
                 switch (playerObj.presence.status) {
                     case 'online': online.push({ nick: playerObj.displayName, amount: player.amount }); break;
                     case 'idle': afk.push({ nick: playerObj.displayName, amount: player.amount }); break;
@@ -71,7 +71,7 @@ const command: Command = {
         }
 
         if (!online.length && !afk.length && !dnd.length) {
-            return message.reply(`${message.author}, no online pickup players found`);
+            return message.channel.send(Util.formatMessage('info', `${message.author}, no online pickup players found`));
         }
 
         const formatArray = arr => arr.map(player => `\`${player.nick}\` (${player.amount})`);

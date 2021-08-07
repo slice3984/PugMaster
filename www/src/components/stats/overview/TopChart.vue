@@ -206,7 +206,6 @@ export default defineComponent({
           categories: labels,
         },
         yaxis: {
-          // @ts-ignore
           max: Math.max(...amounts),
           title: {
             text: yAxsisTitle,

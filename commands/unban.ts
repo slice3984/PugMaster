@@ -54,7 +54,7 @@ const command: Command = {
                     }
                 }
             }
-            return message.reply(`revoked ${isBanned.player}'s ban${issuer}`);
+            return message.channel.send(Util.formatMessage('success', `Revoked **${isBanned.player}'s** ban${issuer}`));
         } else {
             const isBanned = await PlayerModel.isPlayerBanned(BigInt(message.guild.id), BigInt(player.id));
 
