@@ -50,16 +50,13 @@ const command: Command = {
         const afk = [];
         const dnd = [];
 
-        const addedPlayers = await GuildModel.getAllAddedPlayers(false, BigInt(message.guild.id));
+        const addedPlayers: any[] = await GuildModel.getAllAddedPlayers(false, BigInt(message.guild.id));
 
-        for (const player of players) {
+        const memberObjs = await Util.getGuildMembers(message.guild, players
+            .filter(p => !addedPlayers.includes(p.id)).map(p => p.id));
 
-            // Skip added players
-            if (addedPlayers.includes(player.id)) {
-                continue;
-            }
-
-            const playerObj = await Util.getUser(message.guild, player.id.toString()) as Discord.GuildMember;
+        players.forEach(player => {
+            const playerObj = memberObjs.find(m => m.id === player.id);
 
             if (playerObj && playerObj.presence) {
                 switch (playerObj.presence.status) {
@@ -68,7 +65,7 @@ const command: Command = {
                     case 'dnd': dnd.push({ nick: playerObj.displayName, amount: player.amount }); break;
                 }
             }
-        }
+        });
 
         if (!online.length && !afk.length && !dnd.length) {
             return message.channel.send(Util.formatMessage('info', `${message.author}, no online pickup players found`));

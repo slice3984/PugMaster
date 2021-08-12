@@ -103,7 +103,7 @@ export default class PickupState {
             pickupsToCancel.push({
                 name: pending.name,
                 id: pending.pickupConfigId,
-                playerIds: pending.teams[0].players.map(player => player.id)
+                playerIds: pending.players.map(player => player.id)
             })
         } else if (pickupIds.length > 1) {
             let pendingMap = await GuildModel.getPendingPickups(BigInt(guildId));
@@ -124,7 +124,7 @@ export default class PickupState {
             pending.forEach(pickup => pickupsToCancel.push({
                 name: pickup.name,
                 id: pickup.pickupConfigId,
-                playerIds: pickup.teams[0].players.map(player => player.id)
+                playerIds: pickup.players.map(player => player.id)
             }));
         }
 
@@ -145,7 +145,7 @@ export default class PickupState {
                         return false;
                     }
 
-                    const players = pickup.teams[0].players.map(player => player.id);
+                    const players = pickup.players.map(player => player.id);
                     return players.some(id => playerIds.includes(id));
                 });
 
@@ -156,7 +156,7 @@ export default class PickupState {
             pending.forEach(pickup => pickupsToCancel.push({
                 name: pickup.name,
                 id: pickup.pickupConfigId,
-                playerIds: pickup.teams[0].players.map(player => player.id)
+                playerIds: pickup.players.map(player => player.id)
             }));
         }
 

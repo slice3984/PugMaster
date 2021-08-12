@@ -117,7 +117,7 @@ const afkCheckStage = async (guild: Discord.Guild, pickupConfigId: number, first
             await afkCheckStage(guild, pickupConfigId);
         } catch (err) {
             Logger.logError('AFK check failed in timeout', err, false, guild.id, guild.name);
-            await GuildModel.removeAfks(null, BigInt(guild.id), ...pendingPickup.teams[0].players.map(p => p.id));
+            await GuildModel.removeAfks(null, BigInt(guild.id), ...pendingPickup.players.map(p => p.id));
 
             // Don't attempt to start when players got removed
             const pickup = await PickupModel.getActivePickup(BigInt(guild.id), pickupConfigId);

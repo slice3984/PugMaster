@@ -28,7 +28,7 @@ const captainSelectionStage = (guild: Discord.Guild, pickup: PendingPickup) =>
             return resolve([]);
         }
 
-        for (const player of pickup.playersLeft) {
+        for (const player of pickup.players) {
             const playerObj = await Util.getUser(guild, player.id) as Discord.GuildMember;
 
             if (playerObj) {
@@ -66,7 +66,7 @@ const captainSelectionStage = (guild: Discord.Guild, pickup: PendingPickup) =>
                 }
 
             } else {
-                if (pickup.playersLeft.map(p => p.id).includes(userId)) {
+                if (pickup.players.map(p => p.id).includes(userId)) {
                     return `<@${userId}>, only players with captain role are able to cap`;
                 } else {
                     return `<@${userId}>, you are not added to this pickup`;
@@ -140,7 +140,7 @@ export const abortCaptainSelectionStagePickup = async (guildId: string, playerId
 
 
         guildSettings.pickupsInMapVoteStage.delete(pendingPickup.pickupConfigId);
-        await PickupModel.updatePlayerAddTimes(BigInt(guild.id), ...pendingPickup.playersLeft.map(p => p.id));
+        await PickupModel.updatePlayerAddTimes(BigInt(guild.id), ...pendingPickup.players.map(p => p.id));
 
         await PickupModel.abortPendingPickingPickup(BigInt(guild.id), pending.pickupConfigId, BigInt(playerId));
 

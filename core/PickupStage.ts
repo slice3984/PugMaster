@@ -13,6 +13,7 @@ import { ratedTeams } from './stages/ratedTeams';
 import { autopick } from './stages/autopick';
 import MappoolModel from '../models/mappool';
 import { mapVote } from './stages/mapVote';
+import Bot from './bot';
 
 export default class PickupStage {
     private constructor() { }
@@ -92,8 +93,10 @@ export default class PickupStage {
             try {
                 switch (stage) {
                     case 'manual':
+                        const guildSettings = Bot.getInstance().getGuild(config.guild.id);
+
+                        guildSettings.pendingPickingPickups.delete(config.pickupConfigId);
                         errorStr = 'manual team picking';
-                        await PickupModel.clearTeams(BigInt(config.guild.id), pickupSettings.id);
                         break;
                     case 'random':
                         errorStr = 'random team generation';
@@ -103,7 +106,7 @@ export default class PickupStage {
                         break;
                     case 'autopick':
                         errorStr = 'autopick mode';
-                        await PickupModel.clearTeams(BigInt(config.guild.id), pickupSettings.id);
+                        guildSettings.pendingPickingPickups.delete(config.pickupConfigId);
                 }
 
                 Logger.logError(`error occured in ${stage} for pickup ${pickupSettings.name}`, null, false, config.guild.id, config.guild.name);

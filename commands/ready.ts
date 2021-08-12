@@ -33,7 +33,7 @@ const command: Command = {
         }
 
         const playerAddedTo = pendingPickups.filter(pendingPickup => {
-            const players = pendingPickup.teams[0].players.map(player => player.id);
+            const players = pendingPickup.players.map(player => player.id);
             return players.includes(message.author.id);
         });
 
@@ -42,7 +42,7 @@ const command: Command = {
         }
         const readiedUpPickups = [];
         for (const pendingPickup of playerAddedTo) {
-            const addedPlayers = pendingPickup.teams[0].players.map(player => player.id);
+            const addedPlayers = pendingPickup.players.map(player => player.id);
 
             // Check if there is more than one afk player
             const afkPlayers = await GuildModel.getAfks(BigInt(message.guild.id), ...addedPlayers);

@@ -555,27 +555,6 @@ export const createTables = () => new Promise(async (res, _req) => {
           ON UPDATE CASCADE)
           ENGINE = InnoDB;
       `,
-    `
-      CREATE TABLE IF NOT EXISTS state_teams (
-        guild_id BIGINT NOT NULL,
-        pickup_config_id INT NOT NULL,
-        player_id BIGINT NOT NULL,
-        team VARCHAR(2) NULL,
-        is_captain TINYINT NULL DEFAULT 0,
-        captain_turn TINYINT NULL DEFAULT 0,
-        INDEX fk_state_teams_pickup_config_id_idx (pickup_config_id ASC) VISIBLE,
-        CONSTRAINT fk_state_teams_guild_id
-          FOREIGN KEY (guild_id)
-          REFERENCES guilds (guild_id)
-          ON DELETE CASCADE
-          ON UPDATE CASCADE,
-        CONSTRAINT fk_state_teams_pickup_config_id
-          FOREIGN KEY (pickup_config_id)
-          REFERENCES pickup_configs (id)
-          ON DELETE CASCADE
-          ON UPDATE CASCADE)
-          ENGINE = InnoDB;
-      `
   ];
 
   const conn = await db.getConnection();

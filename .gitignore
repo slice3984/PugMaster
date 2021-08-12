@@ -109,3 +109,6 @@ dist
 
 # Bot config
 config.json
+
+# Test command
+commands/test.ts

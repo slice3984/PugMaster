@@ -169,7 +169,6 @@ export const abortMapVoteStagePickup = async (guildId: string, playerId: string)
     const bot = Bot.getInstance();
     const guild = bot.getClient().guilds.cache.get(guildId as Discord.Snowflake);
     const guildSettings = bot.getGuild(guildId);
-    const allPlayers = [];
     const pickupChannel = await Util.getPickupChannel(guild);
 
     let pendingPickup: PendingPickup | null;
@@ -193,14 +192,9 @@ export const abortMapVoteStagePickup = async (guildId: string, playerId: string)
 
         guildSettings.pickupsInMapVoteStage.delete(pendingPickup.pickupConfigId);
 
-        // Players already in team
-        allPlayers.push(...pendingPickup.teams.flatMap(t => t.players).map(p => p.id));
-
-        // Left players
-        allPlayers.push(...pendingPickup.playersLeft.map(p => p.id));
+        const allPlayers = pendingPickup.players.map(p => p.id);
 
         await PickupModel.updatePlayerAddTimes(BigInt(guild.id), ...allPlayers);
-
         await PickupModel.abortPendingPickingPickup(BigInt(guild.id), pending.pickupConfigId, BigInt(playerId));
 
         if (pickupChannel) {

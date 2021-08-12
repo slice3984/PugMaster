@@ -26,11 +26,9 @@ const command: Command = {
             const pendingPickup = pendingPickups.get(message.guild.id)
                 .find(pending => {
                     return pending.stage === 'captain_selection'
-                        && (pending.teams.find(team => team.players
+                        && (pending.players
                             .map(p => p.id)
                             .includes(message.member.id))
-                            || pending.playersLeft.map(p => p.id).includes(message.member.id)
-                        )
                 });
 
             if (!pendingPickup) {

@@ -1,4 +1,4 @@
-import Discord from 'discord.js';
+import { Guild, GuildMember, InteractionCollector, Message, MessageCollector, MessageComponentInteraction, MessageEmbed, ThreadChannel } from 'discord.js';
 import { Rating } from 'ts-trueskill';
 import Bot from './bot';
 
@@ -71,7 +71,7 @@ export interface Command {
     perms: boolean;
     global: boolean;
     defaults?: DefaultValue[];
-    exec: (bot: Bot, message: Discord.Message, params: any[], defaults?: any[]) => any;
+    exec: (bot: Bot, message: Message, params: any[], defaults?: any[]) => any;
 }
 
 export interface CommandArgument {
@@ -136,21 +136,25 @@ export interface PendingPickup {
     pickupConfigId: number;
     name: string;
     maxPlayers: number;
+    players: {
+        id: string;
+        nick: string;
+        rating: Rating | null
+    }[],
     amountPlayersAdded: number; // Required in case of player removes / auto removes
     pendingSince: Date;
     currentIteration: number;
     stage: 'afk_check' | 'picking_manual' | 'mapvote' | 'captain_selection';
-    teams: [
-        {
-            name: string,
-            players: [
-                {
-                    id: string, nick: string, isCaptain: boolean, captainTurn: boolean, rating: Rating
-                }
-            ]
-        }
-    ];
-    playersLeft: [{ id: string, nick: string, isCaptain: boolean, captainTurn: boolean, rating: Rating }] // Only required for manual picking
+}
+
+export interface PendingPickingTeam {
+    team: string;
+    teamAlias: string | null;
+    captain: { id: string; nick: string },
+    players: {
+        id: string;
+        nick: string;
+    }[]
 }
 
 export interface ActivePickup {
@@ -256,7 +260,7 @@ export interface PlayerSearchResult {
     knownAs: string | null;
 }
 
-export interface GuildMemberExtended extends Discord.GuildMember {
+export interface GuildMemberExtended extends GuildMember {
     lastMessageTimestamp: number;
 }
 
@@ -272,12 +276,42 @@ export interface RatingPickup {
 }
 
 export interface PickupStartConfiguration {
-    guild: Discord.Guild,
+    guild: Guild,
     pickupConfigId: number,
     teams?: bigint[] | bigint[][];
     map?: string;
     captains?: bigint[];
     drawProbability?: number;
+}
+
+export interface PendingPickingGuildData {
+    maxPlayers: number;
+    name: string;
+    currentIteration: number;
+    teams: {
+        team: string;
+        teamAlias: string | null;
+        captain: {
+            id: string;
+            nick: string;
+            currentTurn: boolean;
+        },
+        players: {
+            id: string;
+            nick: string;
+        }[];
+    }[];
+    leftPlayers: {
+        id: string;
+        nick: string;
+    }[];
+    iterationTimeout: NodeJS.Timeout;
+    pickupConfigId: number;
+    pickingThread: ThreadChannel;
+    botMessage: Message;
+    messageCollector: MessageCollector;
+    selectMenuCollector: InteractionCollector<MessageComponentInteraction>;
+    optionalMessages: Message | null;
 }
 
 export type PickupStageType = 'no_teams' | 'manual' | 'random' | 'elo' | 'autopick';

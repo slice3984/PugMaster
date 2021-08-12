@@ -37,6 +37,16 @@ export default class Util {
         }
     }
 
+    static async getGuildMembers(guild: Discord.Guild, ids: string[]): Promise<Discord.GuildMember[]> {
+        try {
+            let users = await guild.members.fetch({ user: ids, withPresences: true });
+
+            return users ? [...users.values()] : [];
+        } catch (_) {
+            return null;
+        }
+    }
+
     static getRole(guild: Discord.Guild, identifier: string) {
         let id: string | RegExpMatchArray = identifier.match(/<@&(\d+)>/);
 
@@ -441,22 +451,23 @@ export default class Util {
         return [...new Map(arr.map(obj => [obj[propertyToCheck], obj])).values()];
     }
 
-    static formatMessage(type: 'success' | 'info' | 'warn' | 'error', msg: string) {
+    static getBotEmoji(type: 'success' | 'info' | 'warn' | 'error') {
         const configEmojis = ConfigTool.getConfig().emojis;
-        let icon;
-
-        const successEmoji = configEmojis.success.length ? configEmojis.success : ':white_check_mark:';
-        const infoEmoji = configEmojis.info.length ? configEmojis.info : ":information_source:";
-        const warnEmoji = configEmojis.warn.length ? configEmojis.warn : ":warning:";
-        const errorEmoji = configEmojis.error.length ? configEmojis.error : ":x:";
 
         switch (type) {
-            case 'success': icon = successEmoji; break;
-            case 'info': icon = infoEmoji; break;
-            case 'warn': icon = warnEmoji; break;
-            case 'error': icon = errorEmoji; break;
+            case 'success':
+                return configEmojis.success.length ? configEmojis.success : ':white_check_mark:';
+            case 'info':
+                return configEmojis.info.length ? configEmojis.info : ":information_source:";
+            case 'warn':
+                return configEmojis.warn.length ? configEmojis.warn : ":warning:";
+            case 'error':
+                return configEmojis.error.length ? configEmojis.error : ":x:";
         }
+    }
 
+    static formatMessage(type: 'success' | 'info' | 'warn' | 'error', msg: string) {
+        const icon = this.getBotEmoji(type);
         return `${icon} **|** ${msg}`;
     }
 
