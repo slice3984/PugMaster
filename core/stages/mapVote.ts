@@ -1,4 +1,5 @@
-import Discord from 'discord.js';
+import Discord, { ButtonInteraction, InteractionCollector, Message, MessageActionRow, MessageButton, MessageComponentInteraction, MessageOptions } from 'discord.js';
+import * as progressBar from 'string-progressbar';
 import GuildModel from '../../models/guild';
 import MappoolModel from '../../models/mappool';
 import PickupModel from '../../models/pickup';
@@ -7,20 +8,22 @@ import Bot from '../bot';
 import Logger from '../logger';
 import PickupState from '../pickupState';
 import { PendingPickup, PickupSettings, PickupStartConfiguration } from '../types';
-import Util from '../util';
+import Util, { debounce } from '../util';
 
 export const mapVote = async (guild: Discord.Guild, config: PickupStartConfiguration, pickupSettings: PickupSettings): Promise<{ error: string, map: string | null }> => {
     await PickupModel.setPending(BigInt(guild.id), pickupSettings.id, 'mapvote');
 
+    let gotAborted = false;
     const bot = Bot.getInstance();
     const guildSettings = bot.getGuild(guild.id);
     const iterationTime = guildSettings.iterationTime;
     const iterations = guildSettings.mapvoteIterations;
     let iterationCount = 0;
-    let firstRun = true;
-    let results = [];
-
-    guildSettings.pickupsInMapVoteStage.add(pickupSettings.id);
+    let collector: InteractionCollector<MessageComponentInteraction>;
+    let currentMessage: Message;
+    let results: Map<string, number> = new Map();
+    const votes: { map: string; player: string[] }[] = [];
+    const unvoted: Map<string, string[]> = new Map();
 
     const playedMaps = await StatsModel.getLastPlayedMaps(pickupSettings.id, 3);
 
@@ -35,92 +38,169 @@ export const mapVote = async (guild: Discord.Guild, config: PickupStartConfigura
 
     const players = config.teams.flat(2).map(p => p.toString());
     const voteMaps = Util.shuffleArray(maps).slice(0, 3);
-    const availableReactions = voteMaps.length > 2 ? ['🇦', '🇧', '🇨'] : ['🇦', '🇧'];
 
     const pickupChannel = await Util.getPickupChannel(guild);
 
-    const votes: { map: string; reaction: string; player: string[] }[] = [];
+    voteMaps.forEach(map => {
+        results.set(map, 0);
+        unvoted.set(map, []);
+    });
 
-    for (let i = 0; i < availableReactions.length; i++) {
-        votes.push({
-            map: voteMaps[i],
-            reaction: availableReactions[i],
-            player: []
+    const generateVoteMessage = (): MessageOptions => {
+        // Message part
+        const parts: string[] = [];
+
+        if (iterationCount === 0) {
+            parts.push(`Pickup is about to start - map voting for pickup **${pickupSettings.name}** started - **${Util.formatTime(iterationTime * iterations)} left**`);
+            parts.push(`Please vote: ${players.map(p => `<@${p}>`).join(', ')}\n`)
+        } else {
+            parts.push(`Map voting for pickup **${pickupSettings.name}** in progress - **${Util.formatTime(iterationTime * (iterations - iterationCount))} left**\n`);
+        }
+
+        parts.push(generateResults());
+        parts.push('Please vote using the buttons, you can vote for multiple maps.');
+        parts.push('**You can only vote and unvote once per map.**');
+
+        // Vote buttons
+        const row = new MessageActionRow();
+
+        const buttons = [];
+        voteMaps.forEach(map => {
+            buttons.push(
+                new MessageButton()
+                    .setCustomId(map)
+                    .setLabel(map)
+                    .setStyle('SUCCESS')
+            )
         });
-    }
+
+        row.addComponents(buttons);
+
+        return { content: parts.join('\n'), components: [row] };
+    };
+
+    const updateVoteMessage = async () => {
+        try {
+            const msg = await currentMessage.fetch();
+            currentMessage = await msg.edit(generateVoteMessage());
+        } catch (_) { }
+    };
 
     const generateResults = () => {
-        results = [];
-        for (const vote of votes) {
-            const percentage = Math.round(100 / (players.length / vote.player.length));
-            results.push(`\`${vote.map}\` [${vote.player.length} vote${vote.player.length === 1 ? '' : 's'} / ${percentage}%]`);
+        let resultsStr = '**__Voting results__**\n\n';
+
+        voteMaps.forEach(map => {
+            const mapVote = votes.find(v => v.map === map);
+            let bar;
+
+            if (mapVote && mapVote.player.length) {
+                bar = progressBar.filledBar(players.length, mapVote.player.length, 25, '░', '▓');
+            } else {
+                bar = progressBar.filledBar(players.length, 0, 25, '░', '▓');
+            }
+
+            resultsStr += `${bar[0]} ${bar[1]}% - ${map}\n`;
+        });
+
+        return resultsStr;
+    };
+
+    const removeMessage = async () => {
+        if (collector) {
+            try {
+                collector.stop();
+
+                if (currentMessage) {
+                    const message = await currentMessage.fetch();
+                    await message.delete();
+                }
+            } catch (_) { }
         }
     }
 
     const showVote = async () => {
-        let voteMessage;
+        // Clear previous vote message
+        await removeMessage();
 
-        if (firstRun) {
-            firstRun = false;
-            voteMessage = `Pickup is about to start - map voting for pickup **${pickupSettings.name}** started - **${Util.formatTime(iterationTime * iterations)} left**\n` +
-                `Please react accordingly to vote for your desired maps:\n` +
-                `${players.map(p => `<@${p}>`).join(', ')}\n` +
-                `Maps: ${availableReactions.map((r, idx) => `${r} ${voteMaps[idx]}`).join(' - ')}`;
-        } else {
-            generateResults();
-            voteMessage = `Map voting for pickup **${pickupSettings.name}** in progress - **${Util.formatTime(iterationTime * (iterations - iterationCount))} left**\n` +
-                `Results so far: ${results.join(' - ')}\n` +
-                `Please react with ${availableReactions.join(', ')} if you didn't vote yet`;
-        }
+        let voteMessage: MessageOptions;
+        const row = new MessageActionRow();
 
-        const currentMessage = await pickupChannel.send(voteMessage);
-
-        for (const reaction of availableReactions) {
-            try {
-                await currentMessage.react(reaction);
-            } catch (err) {
-                if (pickupChannel) {
-                    pickupChannel.send('**Can\'t react to generated vote message, permissions missing?**');
-                    return {
-                        map: null,
-                        error: 'permissions'
-                    };
-                }
-            }
-        }
-
-        const collected = await currentMessage.awaitReactions({
-            filter: (reaction, user) => {
-                if (!availableReactions.includes(reaction.emoji.name) ||
-                    !players.includes(user.id)) {
-                    return false;
-                }
-                return true;
-            }, time: iterationTime
+        const buttons = [];
+        voteMaps.forEach(map => {
+            buttons.push(
+                new MessageButton()
+                    .setCustomId(map)
+                    .setLabel(map)
+                    .setStyle('SUCCESS')
+            )
         });
 
+        row.addComponents(buttons);
+
+        voteMessage = generateVoteMessage();
+
+        currentMessage = await pickupChannel.send(voteMessage);
+
+        collector = currentMessage.createMessageComponentCollector();
+
+        const updateDebounceFunc = debounce(updateVoteMessage, 2000);
+
+        // Handle votes
+        collector.on('collect', async (i: ButtonInteraction) => {
+            let modifiedVotes = true;
+
+            if (!players.includes(i.user.id)) {
+                return await i.deferUpdate();
+            }
+
+            const mapVotes = votes.find(v => v.map === i.customId);
+
+            if (!mapVotes) {
+                votes.push({
+                    map: i.customId,
+                    player: [i.user.id]
+                });
+            } else {
+                // Check if the player already voted
+                const playerIdx = mapVotes.player.findIndex(p => p === i.user.id);
+
+                if (playerIdx > -1) {
+                    // Remove vote, add to unvotes
+                    mapVotes.player.splice(playerIdx, 1);
+                    unvoted.get(i.customId).push(i.user.id);
+                } else {
+                    // Only vote in case of first vote for this map
+                    if (!unvoted.get(i.customId).includes(i.user.id)) {
+                        mapVotes.player.push(i.user.id);
+                    } else {
+                        modifiedVotes = false;
+                    }
+                }
+            }
+
+            // Refresh results
+            if (modifiedVotes) {
+                updateDebounceFunc();
+            }
+
+            await i.deferUpdate();
+        });
+
+        const abortCb = async () => {
+            gotAborted = true;
+            await removeMessage();
+        }
+
+        guildSettings.pickupsInMapVoteStage.set(pickupSettings.id, abortCb);
+
+        await delay(guildSettings.iterationTime);
+
         // Aborted, server leave or admin action
-        if (!guildSettings.pickupsInMapVoteStage.has(pickupSettings.id)) {
+        if (gotAborted) {
             return {
                 map: null,
                 error: 'aborted'
             };
-        }
-
-        for (const [reactionName, reaction] of collected.entries()) {
-            for (const [userId, user] of reaction.users.cache) {
-                // Initial bot reaction & votes of not added players
-                if (userId === reaction.client.user.id || !players.includes(userId)) {
-                    continue;
-                }
-
-                const vote = votes.find(vote => vote.reaction === reactionName);
-
-                // Discard a vote if the player already voted for this map
-                if (!vote.player.includes(userId)) {
-                    vote.player.push(userId);
-                }
-            }
         }
 
         return {
@@ -138,14 +218,26 @@ export const mapVote = async (guild: Discord.Guild, config: PickupStartConfigura
     }
 
     // Vote done, determinate winner and show results
+    await removeMessage();
+    const calcPercentage = (voteCount: number) => Math.round(100 / (players.length / voteCount));
+
     let resultsStr = `**__Map voting done for pickup ${pickupSettings.name}__**\n**Results: **`;
     let winnerMap;
 
-    generateResults();
-    resultsStr += results.join(' - ');
+    voteMaps.forEach(map => {
+        if (!votes.find(vote => vote.map === map)) {
+            votes.push({
+                map,
+                player: []
+            })
+        }
+    });
 
     const sortedResults = votes.sort((v1, v2) => v2.player.length - v1.player.length);
     const winners = sortedResults.filter(vote => vote.player.length === sortedResults[0].player.length);
+
+    resultsStr += sortedResults
+        .map(result => `\`${result.map}\` [${result.player.length} vote${result.player.length > 1 || !result.player.length ? 's' : ''} / ${calcPercentage(result.player.length)}%]`).join(' - ');
 
     // Multiple winners
     if (winners.length > 1) {
@@ -159,11 +251,14 @@ export const mapVote = async (guild: Discord.Guild, config: PickupStartConfigura
     await pickupChannel.send(resultsStr);
 
     guildSettings.pickupsInMapVoteStage.delete(pickupSettings.id);
+
     return {
         error: null,
         map: winnerMap
     };
 }
+
+const delay = (ms) => new Promise((resolve, reject) => setTimeout(resolve, ms));
 
 export const abortMapVoteStagePickup = async (guildId: string, playerId: string) => {
     const bot = Bot.getInstance();
@@ -190,7 +285,12 @@ export const abortMapVoteStagePickup = async (guildId: string, playerId: string)
 
         pendingPickup = pending;
 
-        guildSettings.pickupsInMapVoteStage.delete(pendingPickup.pickupConfigId);
+        const mapVoteAbortCb = guildSettings.pickupsInMapVoteStage.get(pendingPickup.pickupConfigId);
+
+        if (mapVoteAbortCb) {
+            await mapVoteAbortCb();
+            guildSettings.pickupsInMapVoteStage.delete(pendingPickup.pickupConfigId);
+        }
 
         const allPlayers = pendingPickup.players.map(p => p.id);
 

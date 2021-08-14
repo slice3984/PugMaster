@@ -138,10 +138,7 @@ export const abortCaptainSelectionStagePickup = async (guildId: string, playerId
         const updateCb = guildSettings.captainSelectionUpdateCbs.get(pendingPickup.pickupConfigId);
         updateCb(null, true);
 
-
-        guildSettings.pickupsInMapVoteStage.delete(pendingPickup.pickupConfigId);
         await PickupModel.updatePlayerAddTimes(BigInt(guild.id), ...pendingPickup.players.map(p => p.id));
-
         await PickupModel.abortPendingPickingPickup(BigInt(guild.id), pending.pickupConfigId, BigInt(playerId));
 
         if (pickupChannel) {

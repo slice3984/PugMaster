@@ -484,3 +484,12 @@ export default class Util {
         return rank;
     }
 }
+
+export const debounce = (func: Function, delay: number) => {
+    let timeout;
+    return (...args) => {
+        const context = this;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(context, args), delay);
+    };
+};

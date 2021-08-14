@@ -9,7 +9,7 @@ import Logger from './logger';
 // Only storing frequently accessed data and sync with db
 export default class GuildSettings {
     pendingPickups = new Map();
-    pickupsInMapVoteStage = new Set();
+    pickupsInMapVoteStage: Map<number, () => void> = new Map();
     captainSelectionUpdateCbs: Map<number, (userId: string, abort?: boolean) => string | void> = new Map();
     pendingPickingPickups: Map<number, PendingPickingGuildData> = new Map();
     lastCommandExecutions: Map<Discord.GuildMember, { count: number; timestamp: number }> = new Map();
