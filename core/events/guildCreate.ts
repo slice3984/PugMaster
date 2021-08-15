@@ -18,5 +18,23 @@ module.exports = async (bot: Bot, guild: Discord.Guild) => {
     }
 
     const settings = await GuildModel.getGuildSettings(guild);
+    const guildCommands = bot.getCommands();
+
+    for (const command of guildCommands) {
+        if (!command.applicationCommand || command.applicationCommand.global) {
+            continue;
+        }
+
+        try {
+            const applicationCommand = await guild.commands.create({
+                name: command.cmd,
+                description: command.shortDesc,
+                options: await command.applicationCommand.getOptions(guild)
+            });
+
+            settings.applicationCommands.set(command.cmd, applicationCommand);
+        } catch (_) { }
+    }
+
     bot.addGuild(settings);
 }

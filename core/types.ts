@@ -1,4 +1,4 @@
-import { Guild, GuildMember, InteractionCollector, Message, MessageCollector, MessageComponentInteraction, MessageEmbed, ThreadChannel } from 'discord.js';
+import { ApplicationCommandOptionData, CommandInteraction, Guild, GuildMember, InteractionCollector, Message, MessageCollector, MessageComponentInteraction, MessageEmbed, ThreadChannel } from 'discord.js';
 import { Rating } from 'ts-trueskill';
 import Bot from './bot';
 
@@ -62,6 +62,10 @@ interface DefaultValue {
 
 export interface Command {
     cmd: string;
+    applicationCommand?: {
+        global: boolean;
+        getOptions?: (guild: Guild) => ApplicationCommandOptionData[]
+    },
     cooldown?: number;
     category: 'pickup' | 'info' | 'admin';
     aliases?: string[];
@@ -71,7 +75,7 @@ export interface Command {
     perms: boolean;
     global: boolean;
     defaults?: DefaultValue[];
-    exec: (bot: Bot, message: Message, params: any[], defaults?: any[]) => any;
+    exec: (bot: Bot, input: Message, params: any[], defaults?: any[], interaction?: CommandInteraction) => any;
 }
 
 export interface CommandArgument {

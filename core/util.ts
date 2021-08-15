@@ -483,6 +483,26 @@ export default class Util {
 
         return rank;
     }
+
+    static send = async (input: Discord.Message | Discord.CommandInteraction,
+        type: 'success' | 'info' | 'warn' | 'error', message: string, includeAuthor = true) => {
+
+        if (includeAuthor) {
+            if (input instanceof Discord.Message) {
+                message = `${input.author}, ${message}`;
+            } else {
+                message = `${input.member.toString()}, ${message}`;
+            }
+        }
+
+        const msg = type ? Util.formatMessage(type, message) : message;
+
+        if (input instanceof Discord.Message) {
+            await input.channel.send(msg);
+        } else {
+            await input.reply(msg);
+        }
+    }
 }
 
 export const debounce = (func: Function, delay: number) => {

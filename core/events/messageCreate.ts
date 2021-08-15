@@ -3,7 +3,7 @@ import Bot from '../bot';
 import CommandHandler from '../commandHandler';
 import { GuildMemberExtended } from '../types';
 
-const commandHandler = new CommandHandler(Bot.getInstance());
+const commandHandler = CommandHandler.getInstance();
 
 module.exports = async (bot: Bot, message: Discord.Message) => {
     if (message.channel.type === 'DM' || !message.member || message.member.user.bot) {

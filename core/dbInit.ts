@@ -97,19 +97,18 @@ export const createTables = () => new Promise(async (res, _req) => {
       command_name VARCHAR(20) NOT NULL,
       INDEX guild_id_idx (guild_id ASC) VISIBLE,
       INDEX command_name_idx (command_name ASC) VISIBLE,
-      UNIQUE INDEX guild_id_UNIQUE (guild_id ASC) VISIBLE,
-      UNIQUE INDEX command_name_UNIQUE (command_name ASC) VISIBLE,
-      CONSTRAINT fk_guild_disabled_commands
-        FOREIGN KEY (guild_id)
-        REFERENCES guilds (guild_id)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
+      UNIQUE(guild_id, command_name),
       CONSTRAINT command_name
         FOREIGN KEY (command_name)
         REFERENCES commands (name)
         ON DELETE CASCADE
-        ON UPDATE CASCADE)      
-        ENGINE = InnoDB;
+        ON UPDATE CASCADE,
+      CONSTRAINT fk_guild_disabled_commands
+        FOREIGN KEY (guild_id)
+        REFERENCES guilds (guild_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE)
+        ENGINE = InnoDB
         `,
     `
     CREATE TABLE IF NOT EXISTS guild_command_settings (

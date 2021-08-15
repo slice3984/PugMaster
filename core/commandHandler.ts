@@ -8,12 +8,21 @@ import Util from './util';
 import GuildSettings from './guildSettings';
 
 export default class CommandHandler {
+    private static instance: CommandHandler;
     private bot: Bot;
     private config: Config;
 
-    constructor(bot: Bot) {
-        this.bot = bot;
+    private constructor() {
+        this.bot = Bot.getInstance();
         this.config = ConfigTool.getConfig();
+    }
+
+    static getInstance(): CommandHandler {
+        if (!CommandHandler.instance) {
+            CommandHandler.instance = new CommandHandler();
+        }
+
+        return this.instance;
     }
 
     private async gotPermission(member: Discord.GuildMember, cmd) {
@@ -32,8 +41,8 @@ export default class CommandHandler {
         return false;
     }
 
-    private isCommandAvailable(message: Discord.Message, cmd: string) {
-        const guild = this.bot.getGuild(message.guild.id);
+    private isCommandAvailable(input: Discord.Message | Discord.CommandInteraction, cmd: string) {
+        const guild = this.bot.getGuild(input.guild.id);
 
         // Check if its a valid command
         const isValid = this.bot.doesCommandExist(cmd);
@@ -55,10 +64,10 @@ export default class CommandHandler {
         if (cmd === 'pickup') {
             return true;
         }
-        if (guild.channels.has(BigInt(message.channel.id))) {
+        if (guild.channels.has(BigInt(input.channel.id))) {
             if (this.bot.getCommand(cmd).global) {
                 return true;
-            } else if (guild.channels.get(BigInt(message.channel.id)) === 'pickup') {
+            } else if (guild.channels.get(BigInt(input.channel.id)) === 'pickup') {
                 return true;
             } else {
                 return false;
@@ -68,8 +77,8 @@ export default class CommandHandler {
         return false;
     }
 
-    private handleGuildCommandCooldown(message: Discord.Message, cmd: string, guildSettings: GuildSettings): boolean {
-        const messageTimestamp = message.createdTimestamp;
+    private handleGuildCommandCooldown(input: Discord.Message | Discord.CommandInteraction, cmd: string, guildSettings: GuildSettings): boolean {
+        const messageTimestamp = input.createdTimestamp;
         const command = this.bot.getCommand(cmd);
         const cmdCooldownTime = command.cooldown * 1000; // Given in seconds
         const cooldownTimes = guildSettings.commandCooldowns;
@@ -78,7 +87,12 @@ export default class CommandHandler {
         if (commandTime) {
             if (commandTime + cmdCooldownTime > messageTimestamp) {
                 const timeLeft = (commandTime + cmdCooldownTime) - messageTimestamp;
-                message.channel.send(Util.formatMessage('info', `${message.author}, you can execute this command again in **${Util.formatTime(timeLeft)}**`));
+
+                if (input instanceof Discord.CommandInteraction) {
+                    input.reply({ content: 'You can execute this command again in **${Util.formatTime(timeLeft)}**', ephemeral: true });
+                } else {
+                    input.channel.send(Util.formatMessage('info', `${input.author}, you can execute this command again in **${Util.formatTime(timeLeft)}**`));
+                }
                 return false;
             }
         }
@@ -87,18 +101,27 @@ export default class CommandHandler {
         return true;
     }
 
-    private handleFloodProtection(message: Discord.Message, command: string, guildSettings: GuildSettings): boolean {
+    private handleFloodProtection(input: Discord.Message | Discord.CommandInteraction, command: string, guildSettings: GuildSettings): boolean {
         const floodDelay = +this.config.settings.FLOOD_PROTECTION_DELAY;
         const floodMaxCommands = +this.config.settings.FLOOD_PROTECTION_MAX_COMMANDS;
         const floodTimeout = +this.config.settings.FLOOD_TIMEOUT_TIME;
 
         const commandExecutionsTimes = guildSettings.lastCommandExecutions;
-        const lastUserCommandTimes = commandExecutionsTimes.get(message.member);
-        const messageTimestamp = message.createdTimestamp;
+
+        let memberId;
+
+        if (input instanceof Discord.CommandInteraction) {
+            memberId = (input.member as Discord.GuildMember).id;
+        } else {
+            memberId = input.member.id;
+        }
+
+        const lastUserCommandTimes = commandExecutionsTimes.get(memberId);
+        const messageTimestamp = input.createdTimestamp;
 
         if (messageTimestamp) {
             if (!lastUserCommandTimes) {
-                commandExecutionsTimes.set(message.member, { count: 1, timestamp: messageTimestamp });
+                commandExecutionsTimes.set(memberId, { count: 1, timestamp: messageTimestamp });
                 return true;
             } else {
                 // If the message count already reached the max count, trigger flood protection without message
@@ -135,14 +158,18 @@ export default class CommandHandler {
                     return false;
                 }
 
-                message.channel.send(Util.formatMessage('error', `${message.author}, too quick, you got timed out for **${Util.formatTime(floodTimeout)}**`));
+                if (input instanceof Discord.CommandInteraction) {
+                    input.reply({ content: `Too quick, you got timed out for **${Util.formatTime(floodTimeout)}**`, ephemeral: true });
+                } else {
+                    input.channel.send(Util.formatMessage('error', `${input.author}, too quick, you got timed out for **${Util.formatTime(floodTimeout)}**`));
+                }
                 return false;
             }
         }
     }
 
-    async execute(message: Discord.Message, cmd: string, args: any[] = []) {
-        const guildSettings = this.bot.getGuild(message.guild.id);
+    async execute(input: Discord.Message | Discord.CommandInteraction, cmd: string, args: any[] = []) {
+        const guildSettings = this.bot.getGuild(input.guild.id);
 
         const errorHandler = (err) => {
             // Insufficient permissions, in this case to send messages
@@ -150,55 +177,88 @@ export default class CommandHandler {
                 // Nothing to do, ignore the exception
                 return;
             }
-            message.channel.send(Util.formatMessage('error', 'Something went wrong executing this command'));
-            Logger.logError(`Error in executing '${cmd}' command, args: ${args.length ? args.join(', ') : '-'}`, err, false, message.guild.id, message.guild.name);
+            input.channel.send(Util.formatMessage('error', 'Something went wrong executing this command'));
+
+            if (input instanceof Discord.CommandInteraction) {
+                Logger.logError(`Error in executing '${cmd}' system command, args: ${args.length ? args.join(', ') : '-'}`, err, false, input.guild.id, input.guild.name);
+            } else {
+                Logger.logError(`Error in executing '${cmd}' command, args: ${args.length ? args.join(', ') : '-'}`, err, false, input.guild.id, input.guild.name);
+            }
         }
 
-        if (!this.isCommandAvailable(message, cmd)) {
+        if (!this.isCommandAvailable(input, cmd)) {
             return;
         }
 
-        if (!this.handleFloodProtection(message, cmd, guildSettings)) {
+        if (!this.handleFloodProtection(input, cmd, guildSettings)) {
             return;
         }
 
-        const guild = this.bot.getGuild(message.guild.id);
+        const guild = this.bot.getGuild(input.guild.id);
         const command = this.bot.getCommand(cmd)
 
-        if (command.perms && !(await this.gotPermission(message.member, this.bot.getCommand(cmd).cmd))) {
+        let member;
+        if (input instanceof Discord.CommandInteraction) {
+            member = input.member as Discord.GuildMember;
+        } else {
+            member = input.member;
+        }
+
+        if (command.perms && !(await this.gotPermission(member, this.bot.getCommand(cmd).cmd))) {
             if (cmd === 'pickup') {
                 // Don't display any message in case of the pickup command to avoid output in non bot managed channels
                 return;
             }
-            return message.channel.send(Util.formatMessage('error', `${message.author}, insufficient permissions to execute this command`));
+
+            if (input instanceof Discord.CommandInteraction) {
+                return input.reply('insufficient permissions to execute this command');
+            } else {
+                return input.channel.send(Util.formatMessage('error', `${input.author}, insufficient permissions to execute this command`));
+            }
         }
+
 
         // Test if required args are given
         const requiredArgs = command.args ? command.args.filter(arg => arg.required).length : 0;
-        if (requiredArgs > args.length) {
-            let reply = `${message.author}, arguments are missing, usage: ${guild.prefix}${command.cmd} `;
-            command.args.forEach(arg => reply += `**${arg.name}** `);
-            return message.channel.send(Util.formatMessage('info', reply));
+
+        if (input instanceof Discord.Message) {
+            if (requiredArgs > args.length) {
+                let reply = `${input.author}, arguments are missing, usage: ${guild.prefix}${command.cmd} `;
+                command.args.forEach(arg => reply += `**${arg.name}** `);
+                return input.channel.send(Util.formatMessage('info', reply));
+            }
         }
 
-        if (!this.handleGuildCommandCooldown(message, cmd, guildSettings)) {
+        if (!this.handleGuildCommandCooldown(input, cmd, guildSettings)) {
             return;
         }
 
         if (guild.commandSettings.has(command.cmd)) {
             try {
-                await command.exec(this.bot, message, args, guild.commandSettings.get(command.cmd));
+                if (input instanceof Discord.CommandInteraction) {
+                    await command.exec(this.bot, null, args, guild.commandSettings.get(command.cmd), input);
+                } else {
+                    await command.exec(this.bot, input, args, guild.commandSettings.get(command.cmd));
+                }
             } catch (err) { errorHandler(err) }
         } else {
             const defaults = command.defaults ? command.defaults.map(def => def.value) : null;
 
             if (defaults) {
                 try {
-                    await command.exec(this.bot, message, args, defaults);
+                    if (input instanceof Discord.CommandInteraction) {
+                        await command.exec(this.bot, null, args, defaults, input);
+                    } else {
+                        await command.exec(this.bot, input, args, defaults);
+                    }
                 } catch (err) { errorHandler(err) }
             } else {
                 try {
-                    await command.exec(this.bot, message, args);
+                    if (input instanceof Discord.CommandInteraction) {
+                        await command.exec(this.bot, null, args, [], input);
+                    } else {
+                        await command.exec(this.bot, input, args);
+                    }
                 } catch (err) { errorHandler(err) }
             }
         }

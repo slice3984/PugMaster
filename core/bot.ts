@@ -353,11 +353,16 @@ export default class Bot {
 
     private async registerCommands() {
         let commands = 0;
+        let globalApplicationCommandsCount = 0;
+        let guildApplicationCommands = 0;
+
         const commandFiles = [];
         const storedCommands = await BotModel.getStoredCommands();
         const disabledCommands = storedCommands
             .filter(command => command.disabled)
             .map(command => command.name);
+
+        const globalApplicationCommands = await this.client.application.commands.fetch();
 
         const register = async (dir = 'commands') => {
             const files = await fs.promises.readdir(path.join(__dirname, '/../', dir));
@@ -379,6 +384,54 @@ export default class Bot {
                         BotModel.storeCommands(module.cmd);
                     }
 
+                    // Register it as application command if required
+                    if (module.applicationCommand) {
+                        if (module.applicationCommand.global) {
+                            // Only create if not created yet
+                            const fetchedCommand = globalApplicationCommands.find(c => c.name === module.cmd);
+
+                            const registerApplicationCommand = async () => {
+                                try {
+                                    await this.client.application.commands.create({
+                                        name: module.cmd,
+                                        description: module.shortDesc,
+                                        options: await module.applicationCommand.getOptions(null)
+                                    });
+
+                                    globalApplicationCommandsCount++;
+                                } catch (_) { }
+                            }
+
+                            if (fetchedCommand) {
+                                // Passed register flag, create anyway
+                                if (process.argv.length > 2 && process.argv[2] === 'register') {
+                                    await registerApplicationCommand();
+                                }
+                            } else {
+                                await registerApplicationCommand();
+                            }
+                        } else {
+                            for (const [id, guild] of this.client.guilds.cache.entries()) {
+                                const guildSettings = this.getGuild(id);
+
+                                // Skip when permissions are missing
+                                try {
+                                    if (!guildSettings.disabledCommands.includes(module.cmd)) {
+                                        const applicationCommand = await guild.commands.create({
+                                            name: module.cmd,
+                                            description: module.shortDesc,
+                                            options: await module.applicationCommand.getOptions(guild)
+                                        });
+
+                                        this.getGuild(id).applicationCommands.set(module.cmd, applicationCommand);
+                                    }
+
+                                    guildApplicationCommands++;
+                                } catch (_) { }
+                            }
+                        }
+                    }
+
                     commands++;
                     this.commands.set(module.cmd, module);
                 }
@@ -388,13 +441,43 @@ export default class Bot {
         await register();
 
         // Remove not used commands
-        const toRemoveFromDb = storedCommands
-            .filter(command => !commandFiles.includes(command.name))
-            .map(command => command.name);
+        const unusedCommands = storedCommands.filter(command => !commandFiles.includes(command.name));
+        const toRemoveFromDb = unusedCommands.map(command => command.name);
 
+        // Remove from application commands
+        // Guild commands
+        for (const [id, guild] of this.client.guilds.cache.entries()) {
+            let registeredGuildCommands;
+
+            // Unable to fetch when permissions are missing
+            try {
+                registeredGuildCommands = await guild.commands.fetch();
+            } catch (_) { continue; }
+
+            for (const cmd of unusedCommands) {
+                const guildCommand = registeredGuildCommands.find(c => c.name === cmd.name);
+
+                if (guildCommand) {
+                    try {
+                        await guildCommand.delete();
+                    } catch (_) { }
+                }
+            }
+        }
+
+        // Global commands
+        try {
+            for (const cmd of unusedCommands) {
+                const globalCommand = globalApplicationCommands.find(c => c.name === cmd.name);
+
+                if (globalCommand) {
+                    await globalCommand.delete();
+                }
+            }
+        } catch (_) { }
         await BotModel.removeCommands(...toRemoveFromDb);
 
-        console.log(`Loaded ${commands} commands`)
+        console.log(`Loaded ${commands} commands (${globalApplicationCommandsCount} global / ${globalApplicationCommandsCount} guild application commands)`);
     }
 
     async loadConnectedGuildsSettings() {
@@ -473,6 +556,10 @@ export default class Bot {
                 return command;
             }
         }
+    }
+
+    getCommands() {
+        return [...this.commands.values()];
     }
 
     getCommandNames() {

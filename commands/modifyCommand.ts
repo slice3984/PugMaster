@@ -16,15 +16,15 @@ const command: Command = {
     global: true,
     perms: true,
     exec: async (bot, message, params) => {
-        let command = params[0].toLowerCase();
+        let passedName = params[0].toLowerCase();
         const operation = params[1].toLowerCase();
 
-        if (!bot.doesCommandExist(command)) {
-            return message.channel.send(Util.formatMessage('error', `Unknown command **${command}**`));
+        if (!bot.doesCommandExist(passedName)) {
+            return message.channel.send(Util.formatMessage('error', `Unknown command **${passedName}**`));
         }
 
         const guildSettings = bot.getGuild(message.guild.id);
-        command = bot.getCommand(command);
+        const command = bot.getCommand(passedName);
 
         if (params.length === 2) {
             if (!['show', 'enable', 'disable'].includes(operation)) {
@@ -40,6 +40,20 @@ const command: Command = {
                     return message.channel.send(Util.formatMessage('error', `Command **${command.cmd}** is already disabled`));
                 }
 
+                if (command.applicationCommand) {
+                    const applicationCommand = guildSettings.applicationCommands.get(command.cmd);
+
+                    if (applicationCommand) {
+                        try {
+                            await applicationCommand.delete();
+                            guildSettings.applicationCommands.delete(command.cmd);
+                        } catch (_) {
+                            await message.channel.send(Util.formatMessage('error', `Unable to remove slash command for **${command.cmd}**, permissions missing?`));
+                        }
+                    }
+                }
+
+
                 guildSettings.disableCommand(command.cmd);
                 return message.channel.send(Util.formatMessage('success', `Disabled command **${command.cmd}**`));
             }
@@ -50,6 +64,23 @@ const command: Command = {
                 }
 
                 guildSettings.enableCommand(command.cmd);
+
+                // application command
+                if (command.applicationCommand) {
+                    if (!command.applicationCommand.global) {
+                        try {
+                            guildSettings.applicationCommands.set(command.cmd, await message.guild.commands.create({
+                                name: command.cmd,
+                                description: command.shortDesc,
+                                options: await command.applicationCommand.getOptions(message.guild)
+                            }));
+
+                        } catch (_) {
+                            await message.channel.send(Util.formatMessage('error', `Unable to register slash command for **${command.cmd}**, permissions missing?`));
+                        }
+                    }
+                }
+
                 return message.channel.send(Util.formatMessage('success', `Enabled command **${command.cmd}**`));
             }
 

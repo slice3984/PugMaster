@@ -1,4 +1,4 @@
-import Discord from 'discord.js';
+import Discord, { ApplicationCommand } from 'discord.js';
 import { ChannelType, ValidationError, Command, PendingPickingGuildData } from "./types";
 import { Validator } from "./validator";
 import GuildModel from '../models/guild';
@@ -12,8 +12,9 @@ export default class GuildSettings {
     pickupsInMapVoteStage: Map<number, () => void> = new Map();
     captainSelectionUpdateCbs: Map<number, (userId: string, abort?: boolean) => string | void> = new Map();
     pendingPickingPickups: Map<number, PendingPickingGuildData> = new Map();
-    lastCommandExecutions: Map<Discord.GuildMember, { count: number; timestamp: number }> = new Map();
+    lastCommandExecutions: Map<string, { count: number; timestamp: number }> = new Map();
     commandCooldowns: Map<string, number> = new Map();
+    applicationCommands: Map<string, ApplicationCommand> = new Map();
 
     constructor(
         private guild: Discord.Guild,
