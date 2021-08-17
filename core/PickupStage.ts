@@ -93,10 +93,16 @@ export default class PickupStage {
             try {
                 switch (stage) {
                     case 'manual':
+                    case 'autopick':
                         const guildSettings = Bot.getInstance().getGuild(config.guild.id);
+                        const pendingPickup = guildSettings.pendingPickingPickups.get(config.pickupConfigId);
 
-                        guildSettings.pendingPickingPickups.delete(config.pickupConfigId);
-                        errorStr = 'manual team picking';
+                        if (pendingPickup) {
+                            pendingPickup.messageCollector.stop();
+                            pendingPickup.selectMenuCollector.stop();
+                            guildSettings.pendingPickingPickups.delete(config.pickupConfigId);
+                        }
+                        errorStr = stage === 'manual' ? 'manual team picking' : 'autopick mode';
                         break;
                     case 'random':
                         errorStr = 'random team generation';
@@ -104,9 +110,6 @@ export default class PickupStage {
                     case 'elo':
                         errorStr = 'rating based team generation';
                         break;
-                    case 'autopick':
-                        errorStr = 'autopick mode';
-                        guildSettings.pendingPickingPickups.delete(config.pickupConfigId);
                 }
 
                 Logger.logError(`error occured in ${stage} for pickup ${pickupSettings.name}`, null, false, config.guild.id, config.guild.name);
@@ -151,6 +154,12 @@ export default class PickupStage {
                 }
             }
             await PickupStage.startPickup(config, aboutToStart);
+
+            // Update add application command
+            const bot = Bot.getInstance();
+            await bot.getGuild(config.guild.id).updateEnabledPickups();
+            await bot.updateGuildApplicationCommand('add', config.guild);
+            await bot.updateGuildApplicationCommand('remove', config.guild);
         } catch (err) {
             await PickupModel.resetPickup(BigInt(config.guild.id), pickupSettings.id);
             Logger.logError(`exception occured in error handling at stage ${stage} for pickup ${pickupSettings.name}`, err, false, config.guild.id, config.guild.name);

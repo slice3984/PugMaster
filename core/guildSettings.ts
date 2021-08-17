@@ -5,6 +5,7 @@ import GuildModel from '../models/guild';
 import Util from './util';
 import ServerModel from '../models/server';
 import Logger from './logger';
+import PickupModel from '../models/pickup';
 
 // Only storing frequently accessed data and sync with db
 export default class GuildSettings {
@@ -14,6 +15,17 @@ export default class GuildSettings {
     pendingPickingPickups: Map<number, PendingPickingGuildData> = new Map();
     lastCommandExecutions: Map<string, { count: number; timestamp: number }> = new Map();
     commandCooldowns: Map<string, number> = new Map();
+    // Worth to store in memoyry, used for multiple application commands
+    gotEnabledPickups: boolean = true;
+    enabledPickups: {
+        pickupConfigId: number;
+        name: string;
+        rated: boolean;
+        gotPromotionRole: boolean;
+        gotCaptainRole: boolean;
+        amount: number;
+        playerCount: number
+    }[] = [];
     applicationCommands: Map<string, ApplicationCommand> = new Map();
 
     constructor(
@@ -310,5 +322,18 @@ export default class GuildSettings {
         } catch (err) {
             Logger.logError('Something went wrong resetting the state', err, true, this.guild.id, this.guild.name);
         }
+    }
+
+    public async updateEnabledPickups() {
+        this.enabledPickups = await PickupModel.getSortedEnabledPickups(BigInt(this.guild.id));
+        this.gotEnabledPickups = this.enabledPickups.length ? true : false;
+    }
+
+    public async getEnabledPickups() {
+        if (!this.enabledPickups.length && this.gotEnabledPickups) {
+            await this.updateEnabledPickups();
+        }
+
+        return this.enabledPickups;
     }
 }

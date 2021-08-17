@@ -101,7 +101,7 @@ const command: Command = {
             }
 
             await message.channel.send(msg);
-            PickupState.removePlayer(message.guild.id, player.id);
+            PickupState.removePlayer(message.guild.id, player.id, null);
         } else {
             const reason = params.slice(1).join(' ');
 

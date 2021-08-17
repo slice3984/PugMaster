@@ -542,7 +542,13 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
                 await manualPicking(guild, pickupConfigId, false, startCallback);
             } catch (err) {
                 clearTimeout(guildData.iterationTimeout);
-                guildSettings.pendingPickingPickups.delete(pickupConfigId);
+                const pendingPickingPickup = guildSettings.pendingPickingPickups.get(pickupConfigId);
+
+                if (pendingPickingPickup) {
+                    pendingPickingPickup.messageCollector.stop();
+                    pendingPickingPickup.selectMenuCollector.stop();
+                    guildSettings.pendingPickingPickups.delete(pickupConfigId);
+                }
                 Logger.logError('manual picking failed in picking timeout', err, false, guild.id, guild.name);
                 const pickupSettings = await PickupModel.getPickupSettings(BigInt(guild.id), pickupConfigId);
                 return startCallback(true, 'manual', pickupSettings, {
@@ -658,9 +664,9 @@ const generateTeamLog = async (
         rows[0] = { name: '\u200B', value: `Team **${teamName}**`, inline: true };
         rows[1] = { name: '\u200B', value: `Captain: **${team.captain.nick}**`, inline: true };
         rows[2] = { name: '\u200B', value: `\u200B`, inline: true };
-        rows[3] = { name: '\u200B', value: '', inline: true };
-        rows[4] = { name: '\u200B', value: '', inline: true };
-        rows[5] = { name: '\u200B', value: '', inline: true };
+        rows[3] = { name: '\u200B', value: '\u200B', inline: true };
+        rows[4] = { name: '\u200B', value: '\u200B', inline: true };
+        rows[5] = { name: '\u200B', value: '\u200B', inline: true };
 
         let colIdx = 3;
         for (let i = 0; i < playersPerTeam; i++) {

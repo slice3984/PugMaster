@@ -6,7 +6,7 @@ import { GuildMember } from 'discord.js';
 const command: Command = {
     cmd: 'ao',
     applicationCommand: {
-        global: false,
+        global: true,
         getOptions: () => {
             return [
                 {

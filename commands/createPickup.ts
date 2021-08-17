@@ -4,6 +4,7 @@ import PickupModel from '../models/pickup';
 
 const command: Command = {
     cmd: 'create_pickups',
+    cooldown: 10,
     category: 'admin',
     shortDesc: 'Creates one or multiple pickups',
     desc: 'Creates one or multiple pickups',
@@ -71,6 +72,12 @@ const command: Command = {
         }
 
         await PickupModel.createPickups(BigInt(message.guild.id), ...validPickups);
+
+        // Update application commands
+        await bot.getGuild(message.guild.id).updateEnabledPickups();
+        await bot.updateGuildApplicationCommand('add', message.guild);
+        await bot.updateGuildApplicationCommand('remove', message.guild);
+
         message.channel.send(Util.formatMessage('success', `Created **${validPickups.length}** pickup${validPickups.length > 1 ? 's' : ''} (${validPickups.map(pickup => `**${pickup.name}**`).join(', ')})`));
     }
 };

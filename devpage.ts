@@ -164,11 +164,11 @@ export default class DevPage {
             guild: this.botInstance.getClient().guilds.cache.get(guildId as Discord.Snowflake)
         } as Discord.GuildMember;
 
-        await PickupState.addPlayer(fakeUser, configId);
+        await PickupState.addPlayer(fakeUser, null, configId);
     }
 
     private async removeFromPickup(guildId: string, userId: string, configId: number) {
-        await PickupState.removePlayer(guildId, userId, true, configId);
+        await PickupState.removePlayer(guildId, userId, null, true, configId);
     }
 
     private async fakeStart(guildId: string, configId: number) {

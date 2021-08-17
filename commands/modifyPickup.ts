@@ -119,6 +119,14 @@ const command: Command = {
                 }
 
                 await PickupModel.modifyPickup(BigInt(message.guild.id), pickupOrOperation, dbColumn, value);
+
+                if (key === 'enabled') {
+                    // Update application commands
+                    await bot.getGuild(message.guild.id).updateEnabledPickups();
+                    await bot.updateGuildApplicationCommand('add', message.guild);
+                    await bot.updateGuildApplicationCommand('remove', message.guild);
+                }
+
                 message.channel.send(Util.formatMessage('success', `Updated pickup **${pickupOrOperation}**, set **${key}** to **${value}**`));
             }
         } else {

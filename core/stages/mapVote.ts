@@ -21,6 +21,7 @@ export const mapVote = async (guild: Discord.Guild, config: PickupStartConfigura
     let iterationCount = 0;
     let collector: InteractionCollector<MessageComponentInteraction>;
     let currentMessage: Message;
+    let modifiedVotes = false;
     let results: Map<string, number> = new Map();
     const votes: { map: string; player: string[] }[] = [];
     const unvoted: Map<string, string[]> = new Map();
@@ -40,6 +41,8 @@ export const mapVote = async (guild: Discord.Guild, config: PickupStartConfigura
     const voteMaps = Util.shuffleArray(maps).slice(0, 3);
 
     const pickupChannel = await Util.getPickupChannel(guild);
+
+    await PickupState.removePlayersExclude(guild.id, [config.pickupConfigId], players);
 
     voteMaps.forEach(map => {
         results.set(map, 0);
@@ -143,11 +146,8 @@ export const mapVote = async (guild: Discord.Guild, config: PickupStartConfigura
 
         collector = currentMessage.createMessageComponentCollector();
 
-        const updateDebounceFunc = debounce(updateVoteMessage, 2000);
-
         // Handle votes
         collector.on('collect', async (i: ButtonInteraction) => {
-            let modifiedVotes = true;
 
             if (!players.includes(i.user.id)) {
                 return await i.deferUpdate();
@@ -160,6 +160,7 @@ export const mapVote = async (guild: Discord.Guild, config: PickupStartConfigura
                     map: i.customId,
                     player: [i.user.id]
                 });
+                modifiedVotes = true;
             } else {
                 // Check if the player already voted
                 const playerIdx = mapVotes.player.findIndex(p => p === i.user.id);
@@ -168,19 +169,14 @@ export const mapVote = async (guild: Discord.Guild, config: PickupStartConfigura
                     // Remove vote, add to unvotes
                     mapVotes.player.splice(playerIdx, 1);
                     unvoted.get(i.customId).push(i.user.id);
+                    modifiedVotes = true;
                 } else {
                     // Only vote in case of first vote for this map
                     if (!unvoted.get(i.customId).includes(i.user.id)) {
                         mapVotes.player.push(i.user.id);
-                    } else {
-                        modifiedVotes = false;
+                        modifiedVotes = true;
                     }
                 }
-            }
-
-            // Refresh results
-            if (modifiedVotes) {
-                updateDebounceFunc();
             }
 
             await i.deferUpdate();
@@ -188,12 +184,21 @@ export const mapVote = async (guild: Discord.Guild, config: PickupStartConfigura
 
         const abortCb = async () => {
             gotAborted = true;
+            clearInterval(refreshInterval);
             await removeMessage();
         }
+
+        const refreshInterval = setInterval(async () => {
+            if (modifiedVotes) {
+                modifiedVotes = false;
+                await updateVoteMessage();
+            }
+        }, 2000);
 
         guildSettings.pickupsInMapVoteStage.set(pickupSettings.id, abortCb);
 
         await delay(guildSettings.iterationTime);
+        clearInterval(refreshInterval);
 
         // Aborted, server leave or admin action
         if (gotAborted) {

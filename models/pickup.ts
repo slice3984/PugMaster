@@ -158,6 +158,41 @@ export default class PickupModel {
         return pickups;
     }
 
+    static async getSortedEnabledPickups(guildId: bigint):
+        Promise<{
+            pickupConfigId: number;
+            name: string;
+            rated: boolean;
+            gotPromotionRole: boolean;
+            gotCaptainRole: boolean;
+            amount: number;
+            playerCount: number
+
+        }[]> {
+        const results = [];
+
+        const data: any = await db.execute(`
+        SELECT pc.id, pc.name, pc.is_enabled, pc.is_rated, pc.promotion_role, pc.captain_role, COUNT(p.id) as amount, pc.player_count FROM pickups p
+        RIGHT JOIN pickup_configs pc ON p.pickup_config_id = pc.id
+        WHERE pc.guild_id = ? AND pc.is_enabled = 1
+        GROUP BY pc.id ORDER BY amount DESC 
+        `, [guildId]);
+
+        data[0].forEach(row => {
+            results.push({
+                pickupConfigId: row.id,
+                name: row.name,
+                rated: Boolean(row.is_rated),
+                gotPromotionRole: Boolean(row.promotion_role),
+                gotCaptainRole: Boolean(row.captain_role),
+                amount: row.amount,
+                playerCount: row.player_count
+            });
+        });
+
+        return results;
+    }
+
     static async getAddedPlayers() {
         const players: any = await db.query(`
         SELECT player_id, guild_id FROM state_pickup_players

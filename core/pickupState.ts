@@ -1,4 +1,4 @@
-import Discord from 'discord.js';
+import Discord, { CommandInteraction } from 'discord.js';
 import Bot from './bot';
 import PickupModel from '../models/pickup';
 import GuildModel from '../models/guild';
@@ -13,7 +13,7 @@ import { abortCaptainSelectionStagePickup } from './stages/captainSelection';
 export default class PickupState {
     private constructor() { }
 
-    static async addPlayer(member: Discord.GuildMember, ...pickupIds: number[]) {
+    static async addPlayer(member: Discord.GuildMember, interaction: CommandInteraction, ...pickupIds: number[]) {
         const activePickups = await PickupModel.getActivePickups(BigInt(member.guild.id));
         const pickupChannel = await Util.getPickupChannel(member.guild);
 
@@ -37,6 +37,10 @@ export default class PickupState {
                 // Pickup is about to start
                 if (pickup.maxPlayers === pickup.players.length + 1) {
                     try {
+                        if (interaction) {
+                            await Util.send(interaction, 'success', `added to **${pickup.name}**, about to start`);
+                        }
+
                         await PickupStage.handle(member.guild, +pickup.configId);
                     } catch (err) {
                         Logger.logError('handling the pickup failed in PickupState', err, false, member.guild.id, member.guild.name);
@@ -84,7 +88,11 @@ export default class PickupState {
         });
 
         if (pickupChannel) {
-            pickupChannel.send(msg);
+            if (interaction) {
+                interaction.reply(msg);
+            } else {
+                pickupChannel.send(msg);
+            }
         }
 
         return;
@@ -190,7 +198,7 @@ export default class PickupState {
         }
     }
 
-    static async removePlayer(guildId: string, playerId: string, showStatus = true, ...pickupIds: number[]) {
+    static async removePlayer(guildId: string, playerId: string, interaction: CommandInteraction, showStatus = true, ...pickupIds: number[]) {
         const bigIntGuildId = BigInt(guildId);
         const bigIntPlayerId = BigInt(playerId);
 
@@ -215,7 +223,12 @@ export default class PickupState {
         let isAddedToAnyPickup;
         if (pickupIds.length === 0) {
             isAddedToAnyPickup = await PickupModel.isPlayerAdded(bigIntGuildId, bigIntPlayerId);
+
             if (isAddedToAnyPickup.length === 0) {
+                if (interaction) {
+                    await Util.send(interaction, 'error', 'you are not added to any pickup');
+                }
+
                 return;
             }
 
@@ -276,11 +289,19 @@ export default class PickupState {
                 });
 
                 if (!msg.length) {
-                    return pickupChannel.send('No active pickups');
+                    if (interaction) {
+                        return interaction.reply('No active pickups');
+                    } else {
+                        return pickupChannel.send('No active pickups');
+                    }
                 }
 
                 if (pickupChannel) {
-                    pickupChannel.send(msg)
+                    if (interaction) {
+                        interaction.reply(msg)
+                    } else {
+                        pickupChannel.send(msg)
+                    }
                 }
 
                 return;
@@ -297,7 +318,7 @@ export default class PickupState {
         await GuildModel.resetPlayerStates(BigInt(guildId), ...playerIds);
     }
 
-    // Used for manual picking removes
+    // Used for manual picking / map vote removes
     static async removePlayersExclude(guildId: string, toExclude: number[], playerIds: string[]) {
         await PickupState.handlePendingAfkPickups(guildId, null, playerIds);
         await PickupModel.removePlayersExclude(BigInt(guildId), toExclude, ...playerIds.map(id => BigInt(id)));

@@ -86,7 +86,7 @@ const command: Command = {
                 }
             }
             await message.channel.send(Util.formatMessage('success', msg));
-            await PickupState.removePlayer(message.guild.id, player.id);
+            await PickupState.removePlayer(message.guild.id, player.id, null);
         } else {
             const regex = /^\s*(?<time>(?:\d+[mhdw]\s+)*\d+[mhdw])\s*(?<reason>.*?)$/g;
             const merged = params.slice(1).join(' ');
@@ -142,7 +142,7 @@ const command: Command = {
             }
 
             await message.channel.send(Util.formatMessage('success', msg));
-            await PickupState.removePlayer(message.guild.id, player.id);
+            await PickupState.removePlayer(message.guild.id, player.id, null);
         }
     }
 }

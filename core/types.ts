@@ -64,7 +64,7 @@ export interface Command {
     cmd: string;
     applicationCommand?: {
         global: boolean;
-        getOptions?: (guild: Guild) => ApplicationCommandOptionData[]
+        getOptions?: (guild: Guild) => (ApplicationCommandOptionData[] | Promise<ApplicationCommandOptionData[]>)
     },
     cooldown?: number;
     category: 'pickup' | 'info' | 'admin';

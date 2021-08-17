@@ -573,4 +573,21 @@ export default class Bot {
     isAnyPickupPending() {
         return this.anyPickupPending;
     }
+
+    async updateGuildApplicationCommand(cmd: string, guild: Discord.Guild) {
+        const guildSettings = this.getGuild(guild.id);
+        const botCommand = this.getCommand(cmd);
+        const guildApplicationCommand = guildSettings.applicationCommands?.get(cmd);
+
+        if (guildApplicationCommand) {
+            try {
+                await guildApplicationCommand.edit(
+                    {
+                        ...guildApplicationCommand,
+                        options: await botCommand.applicationCommand.getOptions(guild)
+                    }
+                )
+            } catch (e) { }
+        }
+    }
 }
