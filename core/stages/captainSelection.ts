@@ -55,21 +55,22 @@ const captainSelectionStage = (guild: Discord.Guild, pickup: PendingPickup) =>
             if (availableCaptains.map(c => c.id).includes(userId)) {
                 if (captains.map(c => c.id).includes(userId)) {
                     captains.splice(captains.findIndex(c => c.id === userId), 1);
-                    return `<@${userId}>, you are not a captain for this pickup anymore`;
+                    return Util.formatMessage('success', `<@${userId}>, you are not a captain for pickup **${pickupSettings.name}** anymore`);
                 }
 
                 captains.push(availableCaptains.find(c => c.id === userId));
                 if (captains.length === pickupSettings.teamCount || availableCaptains.length === captains.length) {
                     done();
                 } else {
-                    return `<@${userId}>, assigned you as captain for this pickup`;
+                    return Util.formatMessage('success', `<@${userId}>, assigned you as captain for pickup **${pickupSettings.name}**`);
                 }
 
             } else {
                 if (pickup.players.map(p => p.id).includes(userId)) {
-                    return `<@${userId}>, only players with captain role are able to cap`;
+                    return Util.formatMessage('error', `<@${userId}>, only players with captain role are able to cap`);
+
                 } else {
-                    return `<@${userId}>, you are not added to this pickup`;
+                    return Util.formatMessage('error', `<@${userId}>, you are not added to pickup **${pickupSettings.name}**`);
                 }
             }
         }

@@ -5,6 +5,22 @@ import Util from '../core/util';
 
 const command: Command = {
     cmd: 'bans',
+    applicationCommand: {
+        global: true,
+        getOptions: () => {
+            return [
+                {
+                    name: 'perm',
+                    description: 'Show permanent bans',
+                    type: 'STRING',
+                    choices: [{
+                        name: 'true',
+                        value: 'perm'
+                    }]
+                }
+            ]
+        },
+    },
     category: 'info',
     shortDesc: 'List banned players',
     desc: 'List banned players',
@@ -19,7 +35,9 @@ const command: Command = {
     ],
     global: true,
     perms: false,
-    exec: async (bot, message, params, defaults) => {
+    exec: async (bot, message, params, defaults, interaction) => {
+        const guild = interaction ? interaction.guild : message.guild;
+
         let displayPerms = false;
         const displayIssuers = defaults[0] === 'true';
         let bans;
@@ -31,17 +49,17 @@ const command: Command = {
 
         if (params.length > 0) {
             if (params[0].toLowerCase() !== 'perm') {
-                return message.channel.send(Util.formatMessage('error', `${message.author}, did you mean perm?`));
+                return await Util.send(message ? message : interaction, 'error', 'did you mean perm?');
             }
 
             displayPerms = true;
-            bans = await GuildModel.getBans(BigInt(message.guild.id), 'perms_only', 11);
+            bans = await GuildModel.getBans(BigInt(guild.id), 'perms_only', 11);
         } else {
-            bans = await GuildModel.getBans(BigInt(message.guild.id), 'timed', 11);
+            bans = await GuildModel.getBans(BigInt(guild.id), 'timed', 11);
         }
 
         if (!bans.length) {
-            return message.channel.send(Util.formatMessage('info', `${message.author}, no ${displayPerms ? 'permbans' : 'bans'} found`));
+            return await Util.send(message ? message : interaction, 'info', `no ${displayPerms ? 'permbans' : 'bans'} found`);
         }
 
         bans.forEach((ban, index) => {
@@ -82,7 +100,7 @@ const command: Command = {
             ]
         }
 
-        const botAvatarUrl = message.guild.client.user.avatarURL();
+        const botAvatarUrl = guild.client.user.avatarURL();
 
         const bansCardEmbed = new Discord.MessageEmbed()
             .setColor('#126e82')
@@ -90,7 +108,11 @@ const command: Command = {
             .addFields(fieldData)
             .setFooter(`Limited to 10 bans${bans.length > 10 ? ', one or more active bans not displayed' : ''}`, botAvatarUrl);
 
-        message.channel.send({ embeds: [bansCardEmbed] });
+        if (interaction) {
+            interaction.reply({ embeds: [bansCardEmbed] });
+        } else {
+            message.channel.send({ embeds: [bansCardEmbed] });
+        }
     }
 }
 

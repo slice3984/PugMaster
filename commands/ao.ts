@@ -14,7 +14,7 @@ const command: Command = {
                     description: 'Show your ao status',
                     type: 'STRING',
                     choices: [{
-                        name: 'show',
+                        name: 'true',
                         value: 'show'
                     }],
                 }

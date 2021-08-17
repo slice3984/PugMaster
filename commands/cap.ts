@@ -1,3 +1,4 @@
+import { GuildMember } from 'discord.js';
 import Bot from '../core/bot';
 import { Command } from '../core/types';
 import Util from '../core/util';
@@ -6,29 +7,35 @@ import PickupModel from '../models/pickup';
 
 const command: Command = {
     cmd: 'cap',
+    applicationCommand: {
+        global: true,
+    },
     category: 'pickup',
     shortDesc: 'Become a captain of a pickup, call again to uncap',
     desc: 'Become a captain of a pickup, call again to uncap',
     global: false,
     perms: false,
-    exec: async (bot, message, params) => {
-        const guildSettings = Bot.getInstance().getGuild(message.guild.id);
+    exec: async (bot, message, params, defaults, interaction) => {
+        const guild = interaction ? interaction.guild : message.guild;
+        const member = interaction ? interaction.member as GuildMember : message.member;
 
-        const addedToCapSelectionPickup = await PickupModel.isPlayerAddedToPendingPickup(BigInt(message.guild.id), BigInt(message.member.id), 'captain_selection');
+        const guildSettings = Bot.getInstance().getGuild(guild.id);
+
+        const addedToCapSelectionPickup = await PickupModel.isPlayerAddedToPendingPickup(BigInt(guild.id), BigInt(member.id), 'captain_selection');
 
         if (!addedToCapSelectionPickup) {
-            return message.channel.send(Util.formatMessage('error', `${message.author}, you are not added to any pickup in captain selection stage`));
+            return Util.send(message ? message : interaction, 'error', 'you are not added to any pickup in captain selection stage');
         }
 
-        const pendingPickups = await GuildModel.getPendingPickups(BigInt(message.guild.id));
+        const pendingPickups = await GuildModel.getPendingPickups(BigInt(guild.id));
 
         if (pendingPickups) {
-            const pendingPickup = pendingPickups.get(message.guild.id)
+            const pendingPickup = pendingPickups.get(guild.id)
                 .find(pending => {
                     return pending.stage === 'captain_selection'
                         && (pending.players
                             .map(p => p.id)
-                            .includes(message.member.id))
+                            .includes(member.id))
                 });
 
             if (!pendingPickup) {
@@ -41,10 +48,18 @@ const command: Command = {
                 return;
             }
 
-            const msg = updateCb(message.author.id, false);
+            const msg = updateCb(member.id, false);
 
             if (msg) {
-                message.channel.send(msg);
+                if (interaction) {
+                    interaction.reply(msg);
+                } else {
+                    message.channel.send(msg);
+                }
+            } else {
+                if (interaction) {
+                    Util.send(interaction, 'success', `assigned you as captain for pickup **${pendingPickup.name}**, about to start`);
+                }
             }
 
             return;

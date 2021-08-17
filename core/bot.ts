@@ -365,6 +365,10 @@ export default class Bot {
         const globalApplicationCommands = await this.client.application.commands.fetch();
 
         const register = async (dir = 'commands') => {
+            if (process.argv.length > 2 && process.argv[2] === 'register') {
+                console.log('Forced global application command creation enabled');
+            }
+
             const files = await fs.promises.readdir(path.join(__dirname, '/../', dir));
 
             for (let file of files) {
@@ -392,12 +396,17 @@ export default class Bot {
 
                             const registerApplicationCommand = async () => {
                                 try {
-                                    await this.client.application.commands.create({
+                                    const infoObj = {
                                         name: module.cmd,
                                         description: module.shortDesc,
-                                        options: await module.applicationCommand.getOptions(null)
-                                    });
+                                        options: undefined
+                                    };
 
+                                    if ('getOptions' in module.applicationCommand) {
+                                        infoObj.options = await module.applicationCommand.getOptions(null)
+                                    }
+
+                                    await this.client.application.commands.create(infoObj);
                                     globalApplicationCommandsCount++;
                                 } catch (_) { }
                             }
