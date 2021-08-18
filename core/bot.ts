@@ -373,6 +373,7 @@ export default class Bot {
 
             for (let file of files) {
                 let stat = await fs.promises.lstat(path.join(__dirname, '/../', dir, file));
+
                 if (stat.isDirectory()) {
                     register(path.join(dir, file));
                 } else {
@@ -383,66 +384,68 @@ export default class Bot {
                         continue;
                     }
 
-                    // Command not in db, store it
-                    if (!storedCommands.some(command => command.name == module.cmd)) {
-                        BotModel.storeCommands(module.cmd);
-                    }
+                    commands++;
+                    this.commands.set(module.cmd, module);
+                }
+            }
 
-                    // Register it as application command if required
-                    if (module.applicationCommand) {
-                        if (module.applicationCommand.global) {
-                            // Only create if not created yet
-                            const fetchedCommand = globalApplicationCommands.find(c => c.name === module.cmd);
+            for (const [_, command] of this.commands) {
+                // Command not in db, store it
+                if (!storedCommands.some(c => c.name == command.cmd)) {
+                    BotModel.storeCommands(command.cmd);
+                }
 
-                            const registerApplicationCommand = async () => {
-                                try {
-                                    const infoObj = {
-                                        name: module.cmd,
-                                        description: module.shortDesc,
-                                        options: undefined
-                                    };
+                // Register it as application command if required
+                if (command.applicationCommand) {
+                    if (command.applicationCommand.global) {
+                        // Only create if not created yet
+                        const fetchedCommand = globalApplicationCommands.find(c => c.name === command.cmd);
 
-                                    if ('getOptions' in module.applicationCommand) {
-                                        infoObj.options = await module.applicationCommand.getOptions(null)
-                                    }
+                        const registerApplicationCommand = async () => {
+                            try {
+                                const infoObj = {
+                                    name: command.cmd,
+                                    description: command.shortDesc,
+                                    options: undefined
+                                };
 
-                                    await this.client.application.commands.create(infoObj);
-                                    globalApplicationCommandsCount++;
-                                } catch (_) { }
-                            }
-
-                            if (fetchedCommand) {
-                                // Passed register flag, create anyway
-                                if (process.argv.length > 2 && process.argv[2] === 'register') {
-                                    await registerApplicationCommand();
+                                if ('getOptions' in command.applicationCommand) {
+                                    infoObj.options = await command.applicationCommand.getOptions(null)
                                 }
-                            } else {
+
+                                await this.client.application.commands.create(infoObj);
+                                globalApplicationCommandsCount++;
+                            } catch (_) { }
+                        }
+
+                        if (fetchedCommand) {
+                            // Passed register flag, create anyway
+                            if (process.argv.length > 2 && process.argv[2] === 'register') {
                                 await registerApplicationCommand();
                             }
                         } else {
-                            for (const [id, guild] of this.client.guilds.cache.entries()) {
-                                const guildSettings = this.getGuild(id);
+                            await registerApplicationCommand();
+                        }
+                    } else {
+                        for (const [id, guild] of this.client.guilds.cache.entries()) {
+                            const guildSettings = this.getGuild(id);
 
-                                // Skip when permissions are missing
-                                try {
-                                    if (!guildSettings.disabledCommands.includes(module.cmd)) {
-                                        const applicationCommand = await guild.commands.create({
-                                            name: module.cmd,
-                                            description: module.shortDesc,
-                                            options: await module.applicationCommand.getOptions(guild)
-                                        });
+                            // Skip when permissions are missing
+                            try {
+                                if (!guildSettings.disabledCommands.includes(command.cmd)) {
+                                    const applicationCommand = await guild.commands.create({
+                                        name: command.cmd,
+                                        description: command.shortDesc,
+                                        options: await command.applicationCommand.getOptions(guild)
+                                    });
 
-                                        this.getGuild(id).applicationCommands.set(module.cmd, applicationCommand);
-                                    }
+                                    this.getGuild(id).applicationCommands.set(command.cmd, applicationCommand);
+                                }
 
-                                    guildApplicationCommands++;
-                                } catch (_) { }
-                            }
+                                guildApplicationCommands++;
+                            } catch (_) { }
                         }
                     }
-
-                    commands++;
-                    this.commands.set(module.cmd, module);
                 }
             }
         };

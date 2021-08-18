@@ -150,6 +150,12 @@ const command: Command = {
                 currentSettings[index] = isNumeric ? +value : value;
 
                 await guildSettings.modifyCommand(command, currentSettings);
+
+                // In case of expire command, update
+                if (command.cmd === 'expire') {
+                    await bot.updateGuildApplicationCommand('expire', message.guild);
+                }
+
                 message.channel.send(Util.formatMessage('success', `Modified command **${command.cmd}**, set **${operation}** to ${type === 'time' ? `**${Util.formatTime(+value)}**` : `**${value}**`}`));
 
             } else {

@@ -2,12 +2,59 @@ import { Command } from '../core/types';
 import PlayerModel from '../models/player';
 import Util from '../core/util';
 import PickupModel from '../models/pickup';
+import Bot from '../core/bot';
+import { GuildMember } from 'discord.js';
 
 const command: Command = {
     cmd: 'expire',
     category: 'pickup',
-    shortDesc: 'Set or show the amount of time after you get removed from all pickups',
-    desc: 'Set or show the amount of time after you get removed from all pickups',
+    applicationCommand: {
+        global: false,
+        getOptions: (guild) => {
+            const bot = Bot.getInstance();
+            let defaultMaxExpire = command.defaults[0].value as number;
+            const customMaxExpire = bot.getGuild(guild.id).commandSettings.get('expire');
+
+            // In minutes
+            const maxExpireTime = customMaxExpire ? customMaxExpire / 1000 / 60 : defaultMaxExpire / 1000 / 60;
+
+            const choices = [{ name: 'Clear expire', value: 'none' }];
+
+            const expireTimes = [
+                { minutes: 5, value: '5m', desc: '5 minutes' },
+                { minutes: 10, value: '10m', desc: '10 minutes' },
+                { minutes: 15, value: '15m', desc: '15 minutes' },
+                { minutes: 30, value: '30m', desc: '30 minutes' },
+                { minutes: 60, value: '1h', desc: '1 hour' },
+                { minutes: 120, value: '2h', desc: '2 hours' },
+                { minutes: 360, value: '6h', desc: '6 hours' },
+            ];
+
+            for (let i = 0; i < expireTimes.length; i++) {
+                const time = expireTimes[i];
+
+                if (time.minutes > maxExpireTime) {
+                    break;
+                }
+
+                choices.push({
+                    name: time.desc,
+                    value: time.value
+                });
+            }
+
+            return [
+                {
+                    name: 'time',
+                    description: 'Time until you get removed from all pickups',
+                    type: 'STRING',
+                    choices
+                }
+            ]
+        }
+    },
+    shortDesc: 'Set, remove or show the amount of time after you get removed from all pickups',
+    desc: 'Set, remove or show the amount of time after you get removed from all pickups',
     args: [
         { name: '[time]...', desc: 'time-short', required: false }
     ],
@@ -19,38 +66,42 @@ const command: Command = {
     ],
     global: false,
     perms: false,
-    exec: async (bot, message, params, defaults) => {
+    exec: async (bot, message, params, defaults, interaction) => {
+        const guild = interaction ? interaction.guild : message.guild;
+        const member = interaction ? interaction.member as GuildMember : message.member;
+
         if (!params.length) {
-            const expireDate = await PlayerModel.getExpires(BigInt(message.guild.id), BigInt(message.member.id));
+            const expireDate = await PlayerModel.getExpires(BigInt(guild.id), BigInt(member.id));
             if (!expireDate) {
-                return message.channel.send(Util.formatMessage('info', `${message.author}, no expire set`));
+                return Util.send(message ? message : interaction, 'info', 'no expire set');
             }
 
             const expiresIn = (expireDate[0].getTime() - new Date().getTime());
-            return message.channel.send(Util.formatMessage('info', `${message.author}, **${Util.formatTime(expiresIn)}** left until removal`));
+            return Util.send(message ? message : interaction, 'info', `**${Util.formatTime(expiresIn)}** left until removal`);
         }
 
         if (params[0].toLowerCase() === 'none') {
-            const expireDate = await PlayerModel.getExpires(BigInt(message.guild.id), BigInt(message.member.id));
+            const expireDate = await PlayerModel.getExpires(BigInt(guild.id), BigInt(member.id));
 
             if (!expireDate) {
-                return message.channel.send(Util.formatMessage('error', `${message.author}, you did not set any expire`));
+                return Util.send(message ? message : interaction, 'error', 'you did not set any expire');
             }
 
-            await PlayerModel.removeExpires(BigInt(message.guild.id), message.member.id);
-            return message.channel.send(Util.formatMessage('success', `${message.author}, your expire got removed`));
+            await PlayerModel.removeExpires(BigInt(guild.id), member.id);
+            return Util.send(message ? message : interaction, 'success', 'your expire got removed');
+
         }
 
-        const isAddedToAnyPickup = await PickupModel.isPlayerAdded(BigInt(message.guild.id), BigInt(message.member.id));
+        const isAddedToAnyPickup = await PickupModel.isPlayerAdded(BigInt(guild.id), BigInt(member.id));
 
         if (isAddedToAnyPickup.length === 0) {
-            return message.channel.send(Util.formatMessage('error', `${message.author}, you are not added to any pickup, no expire set`));
+            return Util.send(message ? message : interaction, 'error', 'you are not added to any pickup, no expire set');
         }
 
-        const isInPickingStage = await PickupModel.isPlayerAddedToPendingPickup(BigInt(message.guild.id), BigInt(message.member.id), 'picking_manual');
+        const isInPickingStage = await PickupModel.isPlayerAddedToPendingPickup(BigInt(guild.id), BigInt(member.id), 'picking_manual', 'mapvote');
 
         if (isInPickingStage) {
-            return message.channel.send(Util.formatMessage('error', `${message.author}, you are not allowed to use expire when added to a pickup in picking stage`));
+            return Util.send(message ? message : interaction, 'error', 'you are not allowed to use expire when added to a pickup in picking or map vote stage');
         }
 
         const validTime = Util.validateTimeString(params.join(' '), defaults[0], (60 * 1000));
@@ -63,8 +114,8 @@ const command: Command = {
             return message.channel.send(Util.formatMessage('error', `${message.author}, invalid time amounts given`));
         }
 
-        await PlayerModel.setExpire(BigInt(message.guild.id), BigInt(message.member.id), validTime);
-        message.channel.send(Util.formatMessage('success', `${message.author}, you will be removed from all pickups in **${Util.formatTime(validTime)}**`));
+        await PlayerModel.setExpire(BigInt(guild.id), BigInt(member.id), validTime);
+        return Util.send(message ? message : interaction, 'success', `you will be removed from all pickups in **${Util.formatTime(validTime)}**`);
     }
 }
 

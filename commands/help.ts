@@ -1,9 +1,23 @@
 import Discord from 'discord.js';
 import ConfigTool from '../core/configTool';
 import { Command } from '../core/types';
+import Util from '../core/util';
 
 const command: Command = {
     cmd: 'help',
+    applicationCommand: {
+        global: true,
+        getOptions: () => {
+            return [
+                {
+                    name: 'commmand',
+                    description: 'Command to retrieve information for',
+                    type: 'STRING',
+                    required: true
+                }
+            ]
+        }
+    },
     category: 'info',
     aliases: ['h'],
     shortDesc: 'Shows how to use a given command',
@@ -13,15 +27,16 @@ const command: Command = {
     ],
     global: true,
     perms: false,
-    exec: (bot, message, params) => {
+    exec: (bot, message, params, defaults, interaction) => {
+        const guild = interaction ? interaction.guild : message.guild;
         const config = ConfigTool.getConfig();
 
         if (!bot.doesCommandExist(params[0].toLowerCase())) {
-            return message.reply('command not found');
+            return Util.send(message ? message : interaction, 'error', `command **"${params[0]}"** not found`);
         }
 
         const cmd = bot.getCommand(params[0].toLowerCase());
-        const prefix = bot.getGuild(message.guild.id).prefix;
+        const prefix = bot.getGuild(guild.id).prefix;
 
         const fieldData: Discord.EmbedFieldData[] = [];
 
@@ -32,9 +47,6 @@ const command: Command = {
         }
 
         fieldData.push({ name: 'Category', value: cmd.category, inline: true });
-
-
-
         fieldData.push({ name: 'Usage', value: `${prefix}${cmd.cmd} ${cmd.args ? cmd.args.map(arg => arg.name).join(' ') : ''}` })
 
         if (cmd.args) {
@@ -51,7 +63,7 @@ const command: Command = {
             fieldData.push({ name: 'Description', value: argDescs.join('\n'), inline: true });
         }
 
-        const botAvatarUrl = message.guild.client.user.avatarURL();
+        const botAvatarUrl = guild.client.user.avatarURL();
 
         const helpCardEmbed = new Discord.MessageEmbed()
             .setColor('#126e82')
@@ -60,7 +72,11 @@ const command: Command = {
             .addFields(fieldData)
             .setFooter(`${config.webserver.domain}/commands/${cmd.cmd}`, botAvatarUrl)
 
-        message.channel.send({ embeds: [helpCardEmbed] });
+        if (interaction) {
+            interaction.reply({ embeds: [helpCardEmbed] });
+        } else {
+            message.channel.send({ embeds: [helpCardEmbed] });
+        }
     }
 }
 

@@ -77,6 +77,7 @@ const command: Command = {
         await bot.getGuild(message.guild.id).updateEnabledPickups();
         await bot.updateGuildApplicationCommand('add', message.guild);
         await bot.updateGuildApplicationCommand('remove', message.guild);
+        await bot.updateGuildApplicationCommand('ip', message.guild);
 
         message.channel.send(Util.formatMessage('success', `Created **${validPickups.length}** pickup${validPickups.length > 1 ? 's' : ''} (${validPickups.map(pickup => `**${pickup.name}**`).join(', ')})`));
     }
