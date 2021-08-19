@@ -1,4 +1,4 @@
-import Discord from 'discord.js';
+import Discord, { ApplicationCommandOptionData } from 'discord.js';
 import Bot from '../core/bot';
 import ConfigTool from '../core/configTool';
 import { Command } from '../core/types';
@@ -8,6 +8,37 @@ import StatsModel from '../models/stats';
 
 const command: Command = {
     cmd: 'leaderboard',
+    applicationCommand: {
+        global: false,
+        getOptions: async (guild) => {
+            const options = [
+                {
+                    name: 'pickup',
+                    description: 'Pickup to retrieve leaderboard for',
+                    type: 'STRING',
+                    required: true,
+                    choices: []
+                },
+                {
+                    name: 'page',
+                    description: 'Leaderboard page',
+                    type: 'NUMBER',
+                }
+            ]
+
+            const enabledPickups = await Bot.getInstance().getGuild(guild.id).getEnabledPickups();
+            const ratedPickups = enabledPickups.filter(pickup => pickup.rated);
+
+            ratedPickups.forEach(pickup => {
+                options[0].choices.push({
+                    name: pickup.name,
+                    value: pickup.name
+                });
+            });
+
+            return options as ApplicationCommandOptionData[];
+        }
+    },
     category: 'info',
     aliases: ['lb'],
     shortDesc: 'Shows top 10 ratings for a given rated pickup',
@@ -18,36 +49,39 @@ const command: Command = {
     ],
     global: false,
     perms: false,
-    exec: async (bot, message, params) => {
-        const guildSettings = Bot.getInstance().getGuild(message.guild.id);
+    exec: async (bot, message, params, defaults, interaction) => {
+        const guild = interaction ? interaction.guild : message.guild;
+
+        const guildSettings = Bot.getInstance().getGuild(guild.id);
         const emojis = ConfigTool.getConfig().emojis;
         let page;
 
         if (params.length > 1) {
-            if (!/^\d+$/.test(params[1])) {
-                return message.channel.send(Util.formatMessage('error', `${message.author}, leaderboard page has to be a number`));
+            if (!/^\d+$/.test(params[1].toString())) {
+                return Util.send(message ? message : interaction, 'error', 'leaderboard page has to be a number');
             }
 
             page = +params[1] === 1 ? null : +params[1];
         }
 
-        const pickupSettings = await PickupModel.getPickupSettings(BigInt(message.guild.id), params[0], true);
+        const pickupSettings = await PickupModel.getPickupSettings(BigInt(guild.id), params[0], true);
 
         if (!pickupSettings) {
-            return message.channel.send(Util.formatMessage('error', `${message.author}, given pickup not found`));
+            return Util.send(message ? message : interaction, 'error', 'given pickup not found');
         }
 
         if (!pickupSettings.rated) {
-            return message.channel.send(Util.formatMessage('warn', `${message.author}, given pickup is not rated, no leaderboard available`));
+            return Util.send(message ? message : interaction, 'warn', 'given pickup is not rated, no leaderboard available');
         }
 
         const ratings = await StatsModel.getLeaderboardRatings(pickupSettings.id, page ? page : 1);
 
         if (!ratings) {
             if (!page) {
-                return message.channel.send(Util.formatMessage('warn', `${message.author}, there are no ratings stored for this pickup`));
+                return Util.send(message ? message : interaction, 'warn', 'there are no ratings stored for this pickup');
+
             } else {
-                return message.channel.send(Util.formatMessage('warn', `${message.author}, there are no ratings stored for this pickup in general or for this page`));
+                return Util.send(message ? message : interaction, 'warn', 'there are no ratings stored for this pickup in general or for this page');
             }
         }
 
@@ -85,7 +119,7 @@ const command: Command = {
             playerRatings.push(`**${rating}**`);
         });
 
-        const botAvatarUrl = message.guild.client.user.avatarURL();
+        const botAvatarUrl = guild.client.user.avatarURL();
 
         const leaderboardEmbed = new Discord.MessageEmbed()
             .setColor('#126e82')
@@ -96,7 +130,11 @@ const command: Command = {
                 { name: 'Rating', value: playerRatings.join('\n'), inline: true },
             ).setFooter('Player skill uncertainty taken into account for ranking.\nActive in last 14 days / 10 games required to be ranked', botAvatarUrl)
 
-        message.channel.send({ embeds: [leaderboardEmbed] });
+        if (interaction) {
+            interaction.reply({ embeds: [leaderboardEmbed] });
+        } else {
+            message.channel.send({ embeds: [leaderboardEmbed] });
+        }
     }
 }
 

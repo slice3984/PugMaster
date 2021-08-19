@@ -107,11 +107,11 @@ const command: Command = {
         const validTime = Util.validateTimeString(params.join(' '), defaults[0], (60 * 1000));
 
         if (validTime === 'exceeded') {
-            return message.channel.send(Util.formatMessage('error', `${message.author}, max expire time is **${Util.formatTime(defaults[0])}**`));
+            return Util.send(message ? message : interaction, 'error', `max expire time is **${Util.formatTime(defaults[0])}**`);
         } else if (validTime === 'subceeded') {
-            return message.channel.send(Util.formatMessage('error', `${message.author}, min expire time is **1 minute**`));
+            return Util.send(message ? message : interaction, 'error', 'min expire time is **1 minute**');
         } else if (validTime === 'invalid') {
-            return message.channel.send(Util.formatMessage('error', `${message.author}, invalid time amounts given`));
+            return Util.send(message ? message : interaction, 'error', 'invalid time amounts given');
         }
 
         await PlayerModel.setExpire(BigInt(guild.id), BigInt(member.id), validTime);

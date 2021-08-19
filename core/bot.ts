@@ -66,7 +66,9 @@ export default class Bot {
             }
 
             // TODO: Refresh state
+            console.time('Registered guild app commands in');
             await this.registerCommands();
+            console.timeEnd('Registered guild app commands in')
             await this.registerEventListeners();
 
             this.mainLoop();
@@ -354,7 +356,7 @@ export default class Bot {
     private async registerCommands() {
         let commands = 0;
         let globalApplicationCommandsCount = 0;
-        let guildApplicationCommands = 0;
+        let guildApplicationCommandsCount = 0;
 
         const commandFiles = [];
         const storedCommands = await BotModel.getStoredCommands();
@@ -363,6 +365,7 @@ export default class Bot {
             .map(command => command.name);
 
         const globalApplicationCommands = await this.client.application.commands.fetch();
+        globalApplicationCommandsCount += globalApplicationCommands.size;
 
         const register = async (dir = 'commands') => {
             if (process.argv.length > 2 && process.argv[2] === 'register') {
@@ -384,9 +387,36 @@ export default class Bot {
                         continue;
                     }
 
+                    if (module.applicationCommand && !module.applicationCommand.global) {
+                        guildApplicationCommandsCount++;
+                    }
+
                     commands++;
                     this.commands.set(module.cmd, module);
                 }
+            }
+
+            // Set guild application commands, more efficient to set all at once for each guild
+            const guildApplicationCommands = [...this.commands.values()]
+                .filter(command => command.applicationCommand && !command.applicationCommand.global);
+
+            for (const [id, guild] of this.client.guilds.cache.entries()) {
+                const guildSettings = this.getGuild(id);
+
+                try {
+                    const commands = await guild.commands.set(await Promise.all(
+                        guildApplicationCommands
+                            .map(async command => ({
+                                name: command.cmd,
+                                description: command.shortDesc,
+                                options: await command.applicationCommand.getOptions(guild)
+                            }))
+                    ));
+
+                    commands.forEach(command => {
+                        guildSettings.applicationCommands.set(command.name, command);
+                    })
+                } catch (_) { }
             }
 
             for (const [_, command] of this.commands) {
@@ -396,55 +426,34 @@ export default class Bot {
                 }
 
                 // Register it as application command if required
-                if (command.applicationCommand) {
-                    if (command.applicationCommand.global) {
-                        // Only create if not created yet
-                        const fetchedCommand = globalApplicationCommands.find(c => c.name === command.cmd);
+                if (command.applicationCommand && command.applicationCommand.global) {
+                    // Only create if not created yet
+                    const fetchedCommand = globalApplicationCommands.find(c => c.name === command.cmd);
 
-                        const registerApplicationCommand = async () => {
-                            try {
-                                const infoObj = {
-                                    name: command.cmd,
-                                    description: command.shortDesc,
-                                    options: undefined
-                                };
+                    const registerApplicationCommand = async () => {
+                        try {
+                            const infoObj = {
+                                name: command.cmd,
+                                description: command.shortDesc,
+                                options: undefined
+                            };
 
-                                if ('getOptions' in command.applicationCommand) {
-                                    infoObj.options = await command.applicationCommand.getOptions(null)
-                                }
-
-                                await this.client.application.commands.create(infoObj);
-                                globalApplicationCommandsCount++;
-                            } catch (_) { }
-                        }
-
-                        if (fetchedCommand) {
-                            // Passed register flag, create anyway
-                            if (process.argv.length > 2 && process.argv[2] === 'register') {
-                                await registerApplicationCommand();
+                            if ('getOptions' in command.applicationCommand) {
+                                infoObj.options = await command.applicationCommand.getOptions(null)
                             }
-                        } else {
+
+                            await this.client.application.commands.create(infoObj);
+                            globalApplicationCommandsCount++;
+                        } catch (_) { }
+                    }
+
+                    if (fetchedCommand) {
+                        // Passed register flag, create anyway
+                        if (process.argv.length > 2 && process.argv[2] === 'register') {
                             await registerApplicationCommand();
                         }
                     } else {
-                        for (const [id, guild] of this.client.guilds.cache.entries()) {
-                            const guildSettings = this.getGuild(id);
-
-                            // Skip when permissions are missing
-                            try {
-                                if (!guildSettings.disabledCommands.includes(command.cmd)) {
-                                    const applicationCommand = await guild.commands.create({
-                                        name: command.cmd,
-                                        description: command.shortDesc,
-                                        options: await command.applicationCommand.getOptions(guild)
-                                    });
-
-                                    this.getGuild(id).applicationCommands.set(command.cmd, applicationCommand);
-                                }
-
-                                guildApplicationCommands++;
-                            } catch (_) { }
-                        }
+                        await registerApplicationCommand();
                     }
                 }
             }
@@ -489,7 +498,7 @@ export default class Bot {
         } catch (_) { }
         await BotModel.removeCommands(...toRemoveFromDb);
 
-        console.log(`Loaded ${commands} commands (${globalApplicationCommandsCount} global / ${globalApplicationCommandsCount} guild application commands)`);
+        console.log(`Loaded ${commands} commands (${globalApplicationCommandsCount} global / ${guildApplicationCommandsCount} guild application commands)`);
     }
 
     async loadConnectedGuildsSettings() {
@@ -589,7 +598,7 @@ export default class Bot {
     async updateGuildApplicationCommand(cmd: string, guild: Discord.Guild) {
         const guildSettings = this.getGuild(guild.id);
         const botCommand = this.getCommand(cmd);
-        const guildApplicationCommand = guildSettings.applicationCommands?.get(cmd);
+        const guildApplicationCommand = guildSettings.applicationCommands.get(cmd);
 
         if (guildApplicationCommand) {
             try {
@@ -600,6 +609,15 @@ export default class Bot {
                     }
                 )
             } catch (e) { }
+        }
+    }
+
+    async updatePickupDependentApplicationCommands(guild: Discord.Guild) {
+        await this.getGuild(guild.id)?.updateEnabledPickups();
+        const commandsToUpdate = ['add', 'remove', 'ip', 'lastgame', 'leaderboard'];
+
+        for (const command of commandsToUpdate) {
+            await this.updateGuildApplicationCommand(command, guild);
         }
     }
 }

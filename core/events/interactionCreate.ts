@@ -13,6 +13,29 @@ module.exports = async (bot: Bot, i: Interaction) => {
     // Store for afk check, also interactions update activity
     (i.member as GuildMemberExtended).lastMessageTimestamp = i.createdTimestamp;
 
-    const args = i.options?.data?.map(o => o.value);
+    let args = [];
+    const optionData = i.options.data;
+
+    if (optionData.length) {
+        optionData.forEach(option => {
+            if (option.type === 'SUB_COMMAND_GROUP') {
+                option.options.forEach(option => {
+                    // Sub command with options
+                    if (option.options) {
+                        args.push(...option.options.map(o => o.value));
+                    } else {
+                        if (option.value) {
+                            args.push(option.value);
+                        }
+                    }
+                })
+            } else {
+                if (option.value) {
+                    args.push(option.value);
+                }
+            }
+        });
+    }
+
     commandHandler.execute(i, i.commandName, args);
 }

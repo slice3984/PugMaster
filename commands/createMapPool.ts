@@ -33,6 +33,7 @@ const command: Command = {
         await MappoolModel.addMappool(BigInt(message.guild.id), name);
         await MappoolModel.addMapsToPool(BigInt(message.guild.id), name, ...validMaps);
 
+        await bot.updateGuildApplicationCommand('mappool', message.guild);
         message.channel.send(Util.formatMessage('success', `Created map pool **${name}** with the following maps: ${validMaps.map(map => `**${map}**`).join(', ')}`));
     }
 }

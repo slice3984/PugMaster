@@ -30,6 +30,7 @@ const command: Command = {
         }
 
         await MappoolModel.removeMapPools(BigInt(message.guild.id), ...validPools);
+        await bot.updateGuildApplicationCommand('mappool', message.guild);
         message.channel.send(Util.formatMessage('success', `Removed map pool ${validPools.map(pool => `**${pool}**`).join(', ')}`));
     }
 

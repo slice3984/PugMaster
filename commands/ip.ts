@@ -45,7 +45,7 @@ const command: Command = {
         const guild = interaction ? interaction.guild : message.guild;
 
         if (!await (await PickupModel.areValidPickups(BigInt(guild.id), true, pickupName)).length) {
-            return message.channel.send(Util.formatMessage('error', `${message.author}, given pickup not found`));
+            return Util.send(message ? message : interaction, 'error', `pickup **${pickupName}** not found`);
         }
 
         const pickupSettings = await PickupModel.getPickupSettings(BigInt(guild.id), pickupName);

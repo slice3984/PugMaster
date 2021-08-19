@@ -157,9 +157,8 @@ export default class PickupStage {
 
             // Update add application command
             const bot = Bot.getInstance();
-            await bot.getGuild(config.guild.id).updateEnabledPickups();
-            await bot.updateGuildApplicationCommand('add', config.guild);
-            await bot.updateGuildApplicationCommand('remove', config.guild);
+            await bot.updatePickupDependentApplicationCommands(config.guild);
+
         } catch (err) {
             await PickupModel.resetPickup(BigInt(config.guild.id), pickupSettings.id);
             Logger.logError(`exception occured in error handling at stage ${stage} for pickup ${pickupSettings.name}`, err, false, config.guild.id, config.guild.name);
