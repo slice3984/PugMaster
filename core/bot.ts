@@ -406,11 +406,19 @@ export default class Bot {
                 try {
                     const commands = await guild.commands.set(await Promise.all(
                         guildApplicationCommands
-                            .map(async command => ({
-                                name: command.cmd,
-                                description: command.shortDesc,
-                                options: await command.applicationCommand.getOptions(guild)
-                            }))
+                            .map(async command => {
+                                const infoObj = {
+                                    name: command.cmd,
+                                    description: command.shortDesc,
+                                    options: undefined
+                                }
+
+                                if ('getOptions' in command.applicationCommand) {
+                                    infoObj.options = await command.applicationCommand.getOptions(guild)
+                                }
+
+                                return infoObj;
+                            })
                     ));
 
                     commands.forEach(command => {
@@ -597,27 +605,20 @@ export default class Bot {
 
     async updateGuildApplicationCommand(cmd: string, guild: Discord.Guild) {
         const guildSettings = this.getGuild(guild.id);
-        const botCommand = this.getCommand(cmd);
-        const guildApplicationCommand = guildSettings.applicationCommands.get(cmd);
-
-        if (guildApplicationCommand) {
-            try {
-                await guildApplicationCommand.edit(
-                    {
-                        ...guildApplicationCommand,
-                        options: await botCommand.applicationCommand.getOptions(guild)
-                    }
-                )
-            } catch (e) { }
-        }
+        guildSettings.applicationCommandsToUpdate.add(cmd);
+        guildSettings.updateApplicationCommands();
     }
 
     async updatePickupDependentApplicationCommands(guild: Discord.Guild) {
-        await this.getGuild(guild.id)?.updateEnabledPickups();
-        const commandsToUpdate = ['add', 'remove', 'ip', 'lastgame', 'leaderboard'];
+        const guildSettings = await this.getGuild(guild.id);
+        const commandsToUpdate = [
+            'add', 'remove', 'ip', 'lastgame', 'leaderboard', 'players'
+        ];
 
-        for (const command of commandsToUpdate) {
-            await this.updateGuildApplicationCommand(command, guild);
+        if (guildSettings) {
+            await guildSettings.updateEnabledPickups();
+            commandsToUpdate.forEach(command => guildSettings.applicationCommandsToUpdate.add(command));
+            guildSettings.updateApplicationCommands();
         }
     }
 }

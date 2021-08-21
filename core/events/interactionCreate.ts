@@ -29,6 +29,21 @@ module.exports = async (bot: Bot, i: Interaction) => {
                         }
                     }
                 })
+            } else if (option.type === 'SUB_COMMAND') {
+                // If parameterSubCommands is set, we use the sub command itself as argument
+                const command = bot.getCommand(i.commandName);
+
+                if (command.applicationCommand?.parameterSubCommands) {
+                    if (command.applicationCommand.parameterSubCommands.includes(option.name)) {
+                        args.push(option.name);
+                    }
+                } else {
+                    if (option.options) {
+                        option.options.forEach(option => {
+                            args.push(option.value);
+                        });
+                    }
+                }
             } else {
                 if (option.value) {
                     args.push(option.value);

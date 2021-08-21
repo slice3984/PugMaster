@@ -13,42 +13,34 @@ const command: Command = {
         getOptions: async (guild) => {
             const options = [
                 {
-                    description: 'Lastgame by pickup or player',
-                    name: 'for',
-                    type: 'SUB_COMMAND_GROUP',
+                    name: 'latest',
+                    description: 'Latest played pickup in general',
+                    type: 'SUB_COMMAND',
+                },
+                {
+                    name: 'pickup',
+                    description: 'Lastgame for a pickup',
+                    type: 'SUB_COMMAND',
                     options: [
                         {
-                            name: 'latest',
-                            description: 'Latest played pickup',
-                            type: 'SUB_COMMAND'
-                        },
-                        {
                             name: 'pickup',
-                            description: 'Lastgame for a pickup',
-                            type: 'SUB_COMMAND',
-                            options: [
-                                {
-                                    name: 'pickup',
-                                    description: 'Pickup to get lastgame for',
-                                    type: 'STRING',
-                                    required: true,
-                                    choices: []
-                                }
-                            ],
-
-                        },
+                            description: 'Pickup to get lastgame for',
+                            type: 'STRING',
+                            required: true,
+                            choices: []
+                        }
+                    ]
+                },
+                {
+                    name: 'player',
+                    description: 'Lastgame for a player',
+                    type: 'SUB_COMMAND',
+                    options: [
                         {
                             name: 'player',
-                            description: 'Lastgame for a player',
-                            type: 'SUB_COMMAND',
-                            options: [
-                                {
-                                    name: 'player',
-                                    description: 'Player to get lastgame for',
-                                    type: 'USER',
-                                    required: true
-                                }
-                            ]
+                            description: 'Player to get lastgame for',
+                            type: 'USER',
+                            required: true
                         }
                     ]
                 }
@@ -58,10 +50,10 @@ const command: Command = {
 
             enabledPickups.forEach(pickup => {
                 // @ts-ignore
-                options[0].options[1].options[0].choices.push({
+                options[1].options[0].choices.push({
                     name: pickup.name,
                     value: pickup.name
-                })
+                });
             });
 
             return options as ApplicationCommandOptionData[];

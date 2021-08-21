@@ -64,6 +64,7 @@ export interface Command {
     cmd: string;
     applicationCommand?: {
         global: boolean;
+        parameterSubCommands?: string[];
         getOptions?: (guild: Guild) => (ApplicationCommandOptionData[] | Promise<ApplicationCommandOptionData[]>)
     },
     cooldown?: number;

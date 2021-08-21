@@ -2,13 +2,15 @@ import Discord, { ApplicationCommand } from 'discord.js';
 import { ChannelType, ValidationError, Command, PendingPickingGuildData } from "./types";
 import { Validator } from "./validator";
 import GuildModel from '../models/guild';
-import Util from './util';
+import Util, { debounce } from './util';
 import ServerModel from '../models/server';
 import Logger from './logger';
 import PickupModel from '../models/pickup';
+import Bot from './bot';
 
 // Only storing frequently accessed data and sync with db
 export default class GuildSettings {
+    bot: Bot;
     pendingPickups = new Map();
     pickupsInMapVoteStage: Map<number, () => void> = new Map();
     captainSelectionUpdateCbs: Map<number, (userId: string, abort?: boolean) => string | void> = new Map();
@@ -27,6 +29,10 @@ export default class GuildSettings {
         playerCount: number
     }[] = [];
     applicationCommands: Map<string, ApplicationCommand> = new Map();
+    // Debounced function to update guild application commands, avoid API spam
+    // Updates every 30 seconds
+    updateApplicationCommands: () => void;
+    applicationCommandsToUpdate: Set<string> = new Set();
 
     constructor(
         private guild: Discord.Guild,
@@ -61,6 +67,27 @@ export default class GuildSettings {
         private _warnExpiration: number,
         private _warnBanTime: number,
         private _warnBanTimeMultiplier: number) {
+        this.bot = Bot.getInstance();
+
+        this.updateApplicationCommands = debounce(async () => {
+            for (const name of this.applicationCommandsToUpdate) {
+                const applicationCommand = this.applicationCommands.get(name);
+                const command = this.bot.getCommand(name);
+
+                if (applicationCommand && name) {
+                    try {
+                        await applicationCommand.edit(
+                            {
+                                ...applicationCommand,
+                                options: await command.applicationCommand.getOptions(this.guild)
+                            }
+                        )
+                    } catch (_) { }
+                }
+
+                this.applicationCommandsToUpdate.clear();
+            }
+        }, 30 * 1000);
     }
 
     public async modifyProperty(...properties: { key: string, value: string }[]): Promise<ValidationError[]> {
