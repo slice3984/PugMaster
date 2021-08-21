@@ -72,6 +72,12 @@ const command: Command = {
                 }
 
                 await PickupModel.modifyPickup(BigInt(message.guild.id), pickupOrOperation, dbColumn, null);
+
+                if (key === 'promotion') {
+                    await bot.getGuild(message.guild.id).updateEnabledPickups();
+                    await bot.updateGuildApplicationCommand('promote', message.guild);
+                }
+
                 return message.channel.send(Util.formatMessage('success', `Disabled property **${key}** for pickup **${pickupOrOperation}**, using server default if set`));
             }
 
@@ -94,6 +100,12 @@ const command: Command = {
                 }
 
                 await PickupModel.modifyPickup(BigInt(message.guild.id), pickupOrOperation, dbColumn, newRole.id);
+
+                if (key === 'promotion') {
+                    await bot.getGuild(message.guild.id).updateEnabledPickups();
+                    await bot.updateGuildApplicationCommand('promote', message.guild);
+                }
+
                 message.channel.send(Util.formatMessage('success', `Updated pickup **${pickupOrOperation}**, set **${key}** to **${newRole.name}**`));
             } else if (key === 'mappool') {
                 const poolId = await (await MappoolModel.getPools(BigInt(message.guild.id), value))[0].id;

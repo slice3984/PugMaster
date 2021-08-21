@@ -8,6 +8,19 @@ import StatsModel from '../models/stats';
 
 const command: Command = {
     cmd: 'rank',
+    applicationCommand: {
+        global: true,
+        getOptions: () => {
+            return [
+                {
+                    name: 'player',
+                    description: 'Player to get ranks for',
+                    type: 'USER',
+                    required: true
+                }
+            ];
+        }
+    },
     category: 'info',
     shortDesc: 'Shows skill ratings and ranks of a given player',
     desc: 'Shows skill ratings and ranks of a given player',
@@ -16,31 +29,37 @@ const command: Command = {
     ],
     global: false,
     perms: false,
-    exec: async (bot, message, params) => {
-        const guildSettings = Bot.getInstance().getGuild(message.guild.id);
+    exec: async (bot, message, params, defaults, interaction) => {
+        const guild = interaction ? interaction.guild : message.guild;
+
+        const guildSettings = Bot.getInstance().getGuild(guild.id);
         const config = ConfigTool.getConfig();
         const emojis = config.emojis;
         const identifier = params.join(' ').toLowerCase();
 
-        const players = await PlayerModel.getPlayer(BigInt(message.guild.id), identifier);
+        const players = await PlayerModel.getPlayer(BigInt(guild.id), identifier);
 
         if (!players) {
-            return message.channel.send(Util.formatMessage('error', `${message.author}, no player found with the given identifier`));
+            if (interaction) {
+                return Util.send(interaction, 'info', 'given player played no pickups');
+            } else {
+                return message.channel.send(Util.formatMessage('error', `${message.author}, no player found with the given identifier`));
+            }
         }
 
         if (players.players.length > 1) {
             if (players.oldNick) {
-                return message.channel.send(Util.formatMessage('error', `${message.author}, no player found with such name as current name, found multiple names in the name history, try calling the command with the player id again`));
+                return Util.send(message ? message : interaction, 'info', 'no player found with such name as current name, found multiple names in the name history, try calling the command with the player id again');
 
             } else {
-                return message.channel.send(Util.formatMessage('info', `${message.author}, found multiple players using the given name, try calling the command with the player id again`));
+                return Util.send(message ? message : interaction, 'info', 'found multiple players using the given name, try calling the command with the player id again');
             }
         }
 
-        const ratings = await StatsModel.getPlayerRatings(BigInt(message.guild.id), BigInt(players.players[0].userId));
+        const ratings = await StatsModel.getPlayerRatings(BigInt(guild.id), BigInt(players.players[0].userId));
 
         if (!ratings) {
-            return message.channel.send(Util.formatMessage('info', `${message.author}, no rated games found for **${players.players[0].currentNick}**`));
+            return Util.send(message ? message : interaction, 'info', `no rated games found for **${players.players[0].currentNick}**`);
         }
 
         const pickupNames = [];
@@ -69,7 +88,7 @@ const command: Command = {
             playerRatings.push(`${rankIcon} **${rating}**`);
         })
 
-        const botAvatarUrl = message.guild.client.user.avatarURL();
+        const botAvatarUrl = guild.client.user.avatarURL();
 
         const rankCardEmbed = new Discord.MessageEmbed()
             .setColor('#126e82')
@@ -82,7 +101,11 @@ const command: Command = {
             )
             .setFooter('Active in last 14 days / 10 games required to be ranked', botAvatarUrl);
 
-        message.channel.send({ embeds: [rankCardEmbed] });
+        if (interaction) {
+            interaction.reply({ embeds: [rankCardEmbed] });
+        } else {
+            message.channel.send({ embeds: [rankCardEmbed] });
+        }
     }
 }
 

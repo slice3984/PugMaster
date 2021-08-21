@@ -404,25 +404,26 @@ export default class Bot {
                 const guildSettings = this.getGuild(id);
 
                 try {
-                    const commands = await guild.commands.set(await Promise.all(
-                        guildApplicationCommands
-                            .map(async command => {
-                                const infoObj = {
-                                    name: command.cmd,
-                                    description: command.shortDesc,
-                                    options: undefined
-                                }
+                    const applicationCommands: Discord.ApplicationCommandData[] = [];
 
-                                if ('getOptions' in command.applicationCommand) {
-                                    infoObj.options = await command.applicationCommand.getOptions(guild)
-                                }
+                    for (const command of guildApplicationCommands) {
+                        const infoObj = {
+                            name: command.cmd,
+                            description: command.shortDesc,
+                            options: undefined
+                        }
 
-                                return infoObj;
-                            })
-                    ));
+                        if ('getOptions' in command.applicationCommand) {
+                            infoObj.options = await command.applicationCommand.getOptions(guild)
+                        }
 
-                    commands.forEach(command => {
-                        guildSettings.applicationCommands.set(command.name, command);
+                        applicationCommands.push(infoObj);
+                    }
+
+                    const commands = await guild.commands.set(applicationCommands);
+
+                    [...commands.values()].forEach((command, idx) => {
+                        guildSettings.applicationCommands.set(guildApplicationCommands[idx].cmd, command);
                     })
                 } catch (_) { }
             }
@@ -612,7 +613,8 @@ export default class Bot {
     async updatePickupDependentApplicationCommands(guild: Discord.Guild) {
         const guildSettings = await this.getGuild(guild.id);
         const commandsToUpdate = [
-            'add', 'remove', 'ip', 'lastgame', 'leaderboard', 'players'
+            'add', 'remove', 'ip', 'lastgame', 'leaderboard', 'players',
+            'promote'
         ];
 
         if (guildSettings) {

@@ -2,10 +2,37 @@ import { Command } from '../core/types';
 import Util from '../core/util';
 import GuildModel from '../models/guild';
 import PickupModel from '../models/pickup';
-import { GuildMember, Snowflake } from 'discord.js';
+import { ApplicationCommandOptionData, GuildMember, Snowflake } from 'discord.js';
+import Bot from '../core/bot';
 
 const command: Command = {
     cmd: 'promote',
+    applicationCommand: {
+        global: false,
+        getOptions: async (guild) => {
+            const options = [
+                {
+                    name: 'pickup',
+                    description: 'Pickup to promote',
+                    type: 'STRING',
+                    required: true,
+                    choices: []
+                }
+            ];
+
+            const enabledPickups = await Bot.getInstance().getGuild(guild.id).getEnabledPickups();
+            const promotablePickups = enabledPickups.filter(pickup => pickup.gotPromotionRole);
+
+            promotablePickups.forEach(pickup => {
+                options[0].choices.push({
+                    name: pickup.name,
+                    value: pickup.name
+                });
+            });
+
+            return options as ApplicationCommandOptionData[];
+        }
+    },
     category: 'pickup',
     shortDesc: 'Promote a pickup with set promotion role',
     desc: 'Promote a pickup with set promotion role',
@@ -14,37 +41,39 @@ const command: Command = {
     ],
     global: false,
     perms: false,
-    exec: async (bot, message, params) => {
-        const guildSettings = bot.getGuild(message.guild.id);
+    exec: async (bot, message, params, defaults, interaction) => {
+        const guild = interaction ? interaction.guild : message.guild;
+
+        const guildSettings = bot.getGuild(guild.id);
         const timeUntilNextPromote = guildSettings.lastPromote ?
             (guildSettings.lastPromote.getTime() + guildSettings.promotionDelay) - new Date().getTime() : null;
 
         // Can be null if used for the first time
         if (timeUntilNextPromote && timeUntilNextPromote > 0) {
-            return message.channel.send(Util.formatMessage('info', `${message.author}, you can't promote too often, please wait **${Util.formatTime(timeUntilNextPromote)}**`));
+            return Util.send(message ? message : interaction, 'info', `you can't promote too often, please wait **${Util.formatTime(timeUntilNextPromote)}**`);
         }
 
         const pickup = params[0].toLowerCase();
-        const isValidPickup = await PickupModel.areValidPickups(BigInt(message.guild.id), true, pickup);
+        const isValidPickup = await PickupModel.areValidPickups(BigInt(guild.id), true, pickup);
 
         if (!isValidPickup.length) {
-            return message.channel.send(Util.formatMessage('error', `${message.author}, no valid pickup provided`));
+            return Util.send(message ? message : interaction, 'error', 'no valid pickup provided');
         }
 
-        const pickupSettings = await PickupModel.getPickupSettings(BigInt(message.guild.id), isValidPickup[0].id);
+        const pickupSettings = await PickupModel.getPickupSettings(BigInt(guild.id), isValidPickup[0].id);
         const promotionRole = pickupSettings.promotionRole;
 
         if (!promotionRole) {
-            return message.channel.send(Util.formatMessage('error', `No promotion role set for **${pickupSettings.name}**, not able to promote it`));
+            return Util.send(message ? message : interaction, 'error', `No promotion role set for **${pickupSettings.name}**, not able to promote it`);
         }
 
-        const role = message.guild.roles.cache.get(promotionRole.toString() as Snowflake);
+        const role = guild.roles.cache.get(promotionRole.toString() as Snowflake);
 
         if (!role) {
-            return message.channel.send(Util.formatMessage('error', `Stored promotion role for pickup **${pickupSettings.name}** not found`));
+            return Util.send(message ? message : interaction, 'error', `Stored promotion role for pickup **${pickupSettings.name}** not found`);
         }
 
-        const activePickup = Array.from(await (await PickupModel.getActivePickups(BigInt(message.guild.id)))
+        const activePickup = Array.from(await (await PickupModel.getActivePickups(BigInt(guild.id)))
             .values())
             .find(pu => pu.name === pickup);
 
@@ -56,7 +85,7 @@ const command: Command = {
 
             try {
                 for (const player of players) {
-                    const member = message.guild.members.cache.get(player.id.toString() as Snowflake);
+                    const member = guild.members.cache.get(player.id.toString() as Snowflake);
 
                     if (member) {
                         if (member.roles.cache.has(role.id)) {
@@ -66,15 +95,15 @@ const command: Command = {
                     }
                 }
             } catch (_err) {
-                return message.channel.send(Util.formatMessage('error', 'Can\'t remove the promotion role, are the required permissions given?'));
+                return Util.send(message ? message : interaction, 'error', 'Can\'t remove the promotion role, are the required permissions given?', false);
             }
         }
 
         guildSettings.updateLastPromote();
-        await GuildModel.updateLastPromote(BigInt(message.guild.id));
+        await GuildModel.updateLastPromote(BigInt(guild.id));
 
         const playersLeft = activePickup ? pickupSettings.playerCount - activePickup.players.length : pickupSettings.playerCount;
-        message.channel.send(`${role} please ${guildSettings.prefix}add to **${pickupSettings.name}**, **${playersLeft}** player${playersLeft > 1 ? 's' : ''} left!`);
+        Util.send(message ? message : interaction, null, `${role} please ${guildSettings.prefix}add to **${pickupSettings.name}**, **${playersLeft}** player${playersLeft > 1 ? 's' : ''} left!`, false);
 
         // Readd removed roles
         try {
@@ -82,7 +111,7 @@ const command: Command = {
                 await member.roles.add(role);
             }
         } catch (_err) {
-            message.channel.send('Can\'t readd removed roles, are the required permissions given?');
+            return Util.send(message ? message : interaction, 'error', 'Can\'t readd removed roles, are the required permissions given?', false);
         }
     }
 }
