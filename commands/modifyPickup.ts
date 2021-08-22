@@ -76,6 +76,7 @@ const command: Command = {
                 if (key === 'promotion') {
                     await bot.getGuild(message.guild.id).updateEnabledPickups();
                     await bot.updateGuildApplicationCommand('promote', message.guild);
+                    await bot.updateGuildApplicationCommand('subscribe', message.guild);
                 }
 
                 return message.channel.send(Util.formatMessage('success', `Disabled property **${key}** for pickup **${pickupOrOperation}**, using server default if set`));
@@ -104,6 +105,7 @@ const command: Command = {
                 if (key === 'promotion') {
                     await bot.getGuild(message.guild.id).updateEnabledPickups();
                     await bot.updateGuildApplicationCommand('promote', message.guild);
+                    await bot.updateGuildApplicationCommand('subscribe', message.guild);
                 }
 
                 message.channel.send(Util.formatMessage('success', `Updated pickup **${pickupOrOperation}**, set **${key}** to **${newRole.name}**`));
