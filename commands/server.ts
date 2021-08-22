@@ -1,9 +1,47 @@
+import { ApplicationCommandOptionData } from 'discord.js';
 import { Command } from '../core/types';
 import Util from '../core/util';
 import ServerModel from '../models/server';
 
 const command: Command = {
     cmd: 'server',
+    applicationCommand: {
+        global: false,
+        getOptions: async (guild) => {
+            const options = [
+                {
+                    name: 'all',
+                    description: 'Show all stored servers',
+                    type: 'SUB_COMMAND'
+                },
+                {
+                    name: 'server',
+                    description: 'Show the server IP & Password of a given server',
+                    type: 'SUB_COMMAND',
+                    options: [
+                        {
+                            name: 'server',
+                            description: 'Server to get info for',
+                            type: 'STRING',
+                            required: true,
+                            choices: []
+                        }
+                    ]
+                }
+            ]
+
+            const servers = await ServerModel.getServers(BigInt(guild.id));
+
+            servers.forEach(server => {
+                options[1].options[0].choices.push({
+                    name: server.name,
+                    value: server.name
+                })
+            });
+
+            return options as ApplicationCommandOptionData[];
+        }
+    },
     category: 'info',
     shortDesc: 'Shows stored servers',
     desc: 'Shows stored servers',
@@ -12,28 +50,30 @@ const command: Command = {
     ],
     global: true,
     perms: false,
-    exec: async (bot, message, params) => {
+    exec: async (bot, message, params, defaults, interaction) => {
+        const guild = interaction ? interaction.guild : message.guild;
+
         if (!params.length) {
-            const servers = await ServerModel.getServers(BigInt(message.guild.id));
+            const servers = await ServerModel.getServers(BigInt(guild.id));
 
             if (!servers.length) {
-                return message.channel.send(Util.formatMessage('info', 'No servers stored'));
+                return Util.send(message ? message : interaction, 'info', 'No servers stored', false);
             }
 
-            message.channel.send(Util.formatMessage('info', `Server: ${servers.map(server => `**${server.name}**`).join(', ')}`));
+            Util.send(message ? message : interaction, 'info', `Server: ${servers.map(server => `**${server.name}**`).join(', ')}`, false);
         } else {
-            const isServerStored = await ServerModel.isServerStored(BigInt(message.guild.id), params[0].toLowerCase());
+            const isServerStored = await ServerModel.isServerStored(BigInt(guild.id), params[0].toLowerCase());
 
             if (!isServerStored) {
-                return message.channel.send(Util.formatMessage('error', `${message.author}, server not found`));
+                return Util.send(message ? message : interaction, 'error', 'server not found');
             }
 
-            const server = await ServerModel.getServer(BigInt(message.guild.id), params[0].toLowerCase());
+            const server = await ServerModel.getServer(BigInt(guild.id), params[0].toLowerCase());
 
             if (server.password) {
-                message.channel.send(Util.formatMessage('info', `Name: **${server.name}** IP: **${server.ip}** Password: **${server.password}**`));
+                Util.send(message ? message : interaction, 'info', `Name: **${server.name}** IP: **${server.ip}** Password: **${server.password}**`, false);
             } else {
-                message.channel.send(Util.formatMessage('info', `Name: **${server.name}** IP: **${server.ip}**`));
+                Util.send(message ? message : interaction, 'info', `Name: **${server.name}** IP: **${server.ip}**`, false);
             }
         }
     }

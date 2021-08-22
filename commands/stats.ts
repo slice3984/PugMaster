@@ -2,9 +2,62 @@ import { Command } from '../core/types';
 import StatsModel from '../models/stats';
 import PlayerModel from '../models/player';
 import Util from '../core/util';
+import Bot from '../core/bot';
+import { ApplicationCommandOptionData } from 'discord.js';
 
 const command: Command = {
     cmd: 'stats',
+    applicationCommand: {
+        global: false,
+        getOptions: async (guild) => {
+            const options = [
+                {
+                    name: 'all',
+                    description: 'Stats for all pickups in general',
+                    type: 'SUB_COMMAND'
+                },
+                {
+                    name: 'pickup',
+                    description: 'Stats for a given pickup',
+                    type: 'SUB_COMMAND',
+                    options: [
+                        {
+                            name: 'pickup',
+                            description: 'Pickup to get stats for',
+                            type: 'STRING',
+                            required: true,
+                            choices: []
+                        }
+                    ]
+                },
+                {
+                    name: 'player',
+                    description: 'Stats for a given player',
+                    type: 'SUB_COMMAND',
+                    options: [
+                        {
+                            name: 'player',
+                            description: 'Player to get stats for',
+                            required: true,
+                            type: 'USER'
+                        }
+                    ]
+                }
+            ]
+
+            const enabledPickups = await Bot.getInstance().getGuild(guild.id).getEnabledPickups();
+
+            enabledPickups.forEach(pickup => {
+                // @ts-ignore
+                options[1].options[0].choices.push({
+                    name: pickup.name,
+                    value: pickup.name
+                });
+            });
+
+            return options as ApplicationCommandOptionData[];
+        }
+    },
     category: 'info',
     shortDesc: 'Shows the stats for a given pickup/player or all pickups in general',
     desc: 'Shows the stats for a given pickup/player or all pickups in general',
@@ -13,55 +66,61 @@ const command: Command = {
     ],
     global: false,
     perms: false,
-    exec: async (bot, message, params) => {
+    exec: async (bot, message, params, defaults, interaction) => {
+        const guild = interaction ? interaction.guild : message.guild;
+
         const identifier = params.join(' ').toLowerCase();
 
         // All stats
         if (!identifier.length) {
-            const stats = await StatsModel.getStats(BigInt(message.guild.id));
+            const stats = await StatsModel.getStats(BigInt(guild.id));
 
             if (!stats.length) {
-                return message.channel.send(Util.formatMessage('info', 'No pickups stored'));
+                return Util.send(message ? message : interaction, 'info', 'No pickups stored');
             }
 
-            return message.channel.send(Util.formatMessage('info', `**Played pickups**: ${stats.map(pickup => `\`${pickup.name}\` (**${pickup.amount}**)`).join(' ')}`));
+            return Util.send(message ? message : interaction, 'info', `**Played pickups**: ${stats.map(pickup => `\`${pickup.name}\` (**${pickup.amount}**)`).join(' ')}`, false);
         }
 
         // Try pickup
-        const stats = await StatsModel.getStats(BigInt(message.guild.id), identifier);
+        const stats = await StatsModel.getStats(BigInt(guild.id), identifier);
 
         if (stats.length) {
             const name = stats[0].name;
             const amount = stats[0].amount;
 
-            return message.channel.send(Util.formatMessage('info', `${amount} **${name}** pickup${amount > 1 ? 's' : ''} played`));
+            return Util.send(message ? message : interaction, 'info', `${amount} **${name}** pickup${amount > 1 ? 's' : ''} played`, false);
         } else {
             // By player
-            const players = await PlayerModel.getPlayer(BigInt(message.guild.id), identifier);
+            const players = await PlayerModel.getPlayer(BigInt(guild.id), identifier);
 
             if (!players) {
-                return message.channel.send(Util.formatMessage('error', `${message.author}, no pickup or player found with the given identifier`));
+                if (interaction) {
+                    return Util.send(interaction, 'error', 'given player not stored');
+                } else {
+                    return message.channel.send(Util.formatMessage('error', `${message.author}, no pickup or player found with the given identifier`));
+                }
             }
 
             if (players.players.length > 1) {
                 if (players.oldNick) {
-                    return message.channel.send(Util.formatMessage('error', `${message.author}, no player found with such name as current name, found multiple names in the name history, try calling the command with the player id again`));
+                    return Util.send(message ? message : interaction, 'error', 'no player found with such name as current name, found multiple names in the name history, try calling the command with the player id again');
 
                 } else {
-                    return message.channel.send(Util.formatMessage('info', `${message.author}, found multiple players using the given name, try calling the command with the player id again`));
+                    return Util.send(message ? message : interaction, 'info', 'found multiple players using the given name, try calling the command with the player id again');
                 }
             }
 
-            const stats = await StatsModel.getStats(BigInt(message.guild.id), players.players[0].id);
+            const stats = await StatsModel.getStats(BigInt(guild.id), players.players[0].id);
 
             if (!stats.length) {
-                return message.channel.send(Util.formatMessage('info', `${message.author}, no pickup records found for this player`));
+                return Util.send(message ? message : interaction, 'info', 'no pickup records found for this player');
             }
 
             const msg = `Stats for **${stats[0].nick}**\n` +
                 `**Pickups:** ${stats.map(pickup => `\`${pickup.name}\` (**${pickup.amount}**)`).join(' ')}`;
 
-            message.channel.send(msg);
+            Util.send(message ? message : interaction, 'info', msg, false);
         }
     }
 }

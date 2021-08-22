@@ -33,6 +33,7 @@ const command: Command = {
             }
         }
 
+        bot.updateGuildApplicationCommand('server', message.guild);
         message.channel.send(Util.formatMessage('success', `Removed server ${validServers.map(server => `**${server.name}**`).join(', ')}` +
             (guildServer ? `\nCleared default server **${guildServer.name}**` : '')));
     }

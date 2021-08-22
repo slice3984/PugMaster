@@ -44,6 +44,7 @@ const command: Command = {
             await ServerModel.addServer(BigInt(message.guild.id), name, ip);
         }
 
+        bot.updateGuildApplicationCommand('server', message.guild);
         message.channel.send(Util.formatMessage('success', `Created server **${name}**`));
     }
 }

@@ -84,9 +84,9 @@ export default class GuildSettings {
                         )
                     } catch (_) { }
                 }
-
-                this.applicationCommandsToUpdate.clear();
             }
+
+            this.applicationCommandsToUpdate.clear();
         }, 30 * 1000);
     }
 
