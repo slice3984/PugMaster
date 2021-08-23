@@ -614,7 +614,7 @@ export default class Bot {
         const guildSettings = await this.getGuild(guild.id);
         const commandsToUpdate = [
             'add', 'remove', 'ip', 'lastgame', 'leaderboard', 'players',
-            'promote', 'stats'
+            'promote', 'stats', 'subscribe', 'unsubscribe', 'who'
         ];
 
         if (guildSettings) {

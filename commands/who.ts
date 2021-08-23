@@ -1,10 +1,36 @@
 import { Command } from '../core/types';
-import PlayerModel from '../models/player';
 import PickupModel from '../models/pickup';
 import Util from '../core/util';
+import { ApplicationCommandOptionData } from 'discord.js';
+import Bot from '../core/bot';
 
 const command: Command = {
     cmd: 'who',
+    applicationCommand: {
+        global: false,
+        getOptions: async (guild) => {
+            const options = [
+                {
+                    name: 'pickup',
+                    description: 'Pickup to display added players for',
+                    type: 'STRING',
+                    required: false,
+                    choices: []
+                }
+            ]
+
+            const enabledPickups = await Bot.getInstance().getGuild(guild.id).getEnabledPickups();
+
+            enabledPickups.forEach(pickup => {
+                options[0].choices.push({
+                    name: pickup.name,
+                    value: pickup.name
+                });
+            });
+
+            return options as ApplicationCommandOptionData[];
+        }
+    },
     category: 'info',
     aliases: ['??'],
     shortDesc: 'Show the pickup status of one or multiple pickups',
@@ -20,15 +46,17 @@ const command: Command = {
     ],
     global: false,
     perms: false,
-    exec: async (bot, message, params, defaults) => {
+    exec: async (bot, message, params, defaults, interaction) => {
+        const guild = interaction ? interaction.guild : message.guild;
+
         const genPickupInfo = pickup => `**${pickup.name}** [ **${pickup.players.length}** / **${pickup.maxPlayers}** ]: ${pickup.players.map(player => `\`${player.nick}\``).join(', ')}`;
 
         if (params.length === 0) {
-            const pickups = Array.from((await PickupModel.getActivePickups(BigInt(message.guild.id))).values())
+            const pickups = Array.from((await PickupModel.getActivePickups(BigInt(guild.id))).values())
                 .sort((a, b) => b.players.length - a.players.length);
 
             if (pickups.length === 0) {
-                return message.channel.send(Util.formatMessage('info', 'No active pickups'));
+                return Util.send(message ? message : interaction, 'info', 'No active pickups', false);
             }
 
             let msg = '';
@@ -52,18 +80,19 @@ const command: Command = {
                     msg += `${genPickupInfo(pickup)} `;
                 }
             });
-            message.channel.send(msg);
+
+            Util.send(message ? message : interaction, null, msg, false);
         } else {
             const pickupName = params[0].toLowerCase();
 
-            const pickup = Array.from((await PickupModel.getActivePickups(BigInt(message.guild.id))).values())
+            const pickup = Array.from((await PickupModel.getActivePickups(BigInt(guild.id))).values())
                 .filter(pickup => pickup.name === pickupName);
 
             if (!pickup.length) {
-                return message.channel.send(Util.formatMessage('info', `${message.author}, no results for **${pickupName}**`));
+                return Util.send(message ? message : interaction, 'info', `no results for **${pickupName}**`);
             }
 
-            message.channel.send(genPickupInfo(pickup[0]));
+            Util.send(message ? message : interaction, 'info', genPickupInfo(pickup[0]), false);
         }
     }
 };

@@ -5,6 +5,9 @@ import Util from '../core/util';
 
 const command: Command = {
     cmd: 'warns',
+    applicationCommand: {
+        global: true
+    },
     category: 'info',
     shortDesc: 'List warned players',
     desc: 'List warned players',
@@ -16,8 +19,10 @@ const command: Command = {
     ],
     global: true,
     perms: false,
-    exec: async (bot, message, params, defaults) => {
-        const guildSettings = bot.getGuild(message.guild.id);
+    exec: async (bot, message, params, defaults, interaction) => {
+        const guild = interaction ? interaction.guild : message.guild;
+
+        const guildSettings = bot.getGuild(guild.id);
         const displayIssuers = defaults[0] === 'true';
 
         const warnedPlayers = [];
@@ -25,10 +30,10 @@ const command: Command = {
         const times = [];
         const reasons = [];
 
-        const warns = await GuildModel.getWarns(BigInt(message.guild.id), 11);
+        const warns = await GuildModel.getWarns(BigInt(guild.id), 11);
 
         if (!warns.length) {
-            return message.channel.send(Util.formatMessage('info', `${message.author}, no warns found`));
+            return Util.send(message ? message : interaction, 'info', 'no warns found');
         }
 
         warns.forEach((warn, index) => {
@@ -69,7 +74,7 @@ const command: Command = {
             ]
         }
 
-        const botAvatarUrl = message.guild.client.user.avatarURL();
+        const botAvatarUrl = guild.client.user.avatarURL();
 
         const warnsCardEmbed = new Discord.MessageEmbed()
             .setColor('#126e82')
@@ -77,7 +82,11 @@ const command: Command = {
             .addFields(fieldData)
             .setFooter(`Limited to 10 warns${warns.length > 10 ? ', one or more active warns not displayed' : ''}`, botAvatarUrl);
 
-        message.channel.send({ embeds: [warnsCardEmbed] });
+        if (interaction) {
+            interaction.reply({ embeds: [warnsCardEmbed] });
+        } else {
+            message.channel.send({ embeds: [warnsCardEmbed] });
+        }
     }
 }
 
