@@ -21,7 +21,8 @@ export default class ConfigTool {
         return fs.promises.writeFile(ConfigTool.configPath,
             `{
     "bot": {
-        "token": ""
+        "token": "",
+        "owner_id": "",
     },
     "db": {
         "server": "",

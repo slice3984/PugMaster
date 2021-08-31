@@ -10,7 +10,8 @@ export default ((req: express.Request, res: express.Response) => {
         { category: 'admin', commands: [] }
     ];
 
-    const commandList = bot.getCommandNames();
+    const commandList = bot.getCommandNames()
+        .filter(cmd => cmd !== 'test');
 
     commandList.forEach(commandName => {
         const command = bot.getCommand(commandName);

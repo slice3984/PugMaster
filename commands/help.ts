@@ -31,7 +31,8 @@ const command: Command = {
         const guild = interaction ? interaction.guild : message.guild;
         const config = ConfigTool.getConfig();
 
-        if (!bot.doesCommandExist(params[0].toLowerCase())) {
+        if (!bot.doesCommandExist(params[0].toLowerCase()) ||
+            ['test', 't'].includes(params[0].toLowerCase())) {
             return Util.send(message ? message : interaction, 'error', `command **"${params[0]}"** not found`);
         }
 

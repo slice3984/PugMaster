@@ -1256,4 +1256,20 @@ export default class StatsModel {
 
         return data[0].map(row => row.map);
     }
+
+    static async getTotalPickupsCount(): Promise<number> {
+        const data: any = await db.query(`
+        SELECT COUNT(*) AS amount FROM pickups;
+        `,)
+
+        return data[0][0].amount;
+    }
+
+    static async getTotalKnownPlayers(): Promise<number> {
+        const data: any = await db.query(`
+        SELECT COUNT(DISTINCT user_id) AS amount from players;
+        `);
+
+        return data[0][0].amount;
+    }
 }

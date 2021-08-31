@@ -198,6 +198,11 @@ export namespace Validator {
                             break;
                         }
 
+                        if (pickupSettings.playerCount > 20 && ['manual', 'autopick'].includes(value)) {
+                            errors.push({ type: 'pickmode', errorMessage: 'Manual or autopick mode is only available for pickups with up to 20 players' });
+                            break;
+                        }
+
                         break;
                     case 'rated':
                         if (!['true', 'false'].includes(value)) {

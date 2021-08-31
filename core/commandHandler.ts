@@ -53,6 +53,19 @@ export default class CommandHandler {
 
         cmd = this.bot.getCommand(cmd).cmd;
 
+        // Test command is only executable by bot owners
+        if (cmd === 'test') {
+            let authorId;
+
+            if (input instanceof Discord.Message) {
+                authorId = input.author.id;
+            } else {
+                authorId = input.member.user.id;
+            }
+
+            return this.config.bot.owner_id === authorId;
+        }
+
         // Check if guild disabled
         const isDisabled = guild.disabledCommands.includes(cmd);
 

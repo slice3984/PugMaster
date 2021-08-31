@@ -4,7 +4,8 @@ import Bot from './bot';
 
 export interface Config {
     bot: {
-        token: string
+        token: string;
+        owner_id: string;
     };
     db: {
         server: string;

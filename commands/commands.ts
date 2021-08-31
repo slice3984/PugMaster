@@ -24,7 +24,8 @@ const command: Command = {
         const isAdmin = member.permissions.has([Discord.Permissions.FLAGS.ADMINISTRATOR]);
         const disabledCommands = bot.getGuild(guild.id).disabledCommands;
         const allCommands = bot.getCommandNames();
-        const availableCommands = allCommands.filter(command => !disabledCommands.includes(command));
+        const availableCommands = allCommands.filter(command =>
+            !disabledCommands.includes(command) && command !== 'test');
 
         const grantedCommands = [];
         let availablePermissions = [];
