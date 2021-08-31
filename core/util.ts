@@ -142,7 +142,7 @@ export default class Util {
                 stringParts.push(`${seconds} second${seconds > 1 ? 's' : ''}`);
             }
         }
-
+        console.log(stringParts.join(', '));
         return stringParts.join(shorten ? ' ' : ' and ');
     }
 
