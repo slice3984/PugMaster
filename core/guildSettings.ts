@@ -28,6 +28,7 @@ export default class GuildSettings {
         amount: number;
         playerCount: number
     }[] = [];
+    activePrompts: Set<string> = new Set();
     applicationCommands: Map<string, ApplicationCommand> = new Map();
     // Debounced function to update guild application commands, avoid API spam
     // Updates every 30 seconds

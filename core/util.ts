@@ -502,6 +502,33 @@ export default class Util {
             await input.reply(msg);
         }
     }
+
+    static gotPermissions = (input: Discord.Message | Discord.CommandInteraction,
+        ...permissions: Discord.PermissionString[]): Discord.MessageEmbed => {
+        const bot = Bot.getInstance();
+
+        const channel = input.channel as Discord.TextChannel;
+        const perms = channel.permissionsFor(bot.getClient().user);
+        const missingPermissions = [];
+
+        permissions.forEach(requiredPerm => {
+            if (!perms.has(requiredPerm)) {
+                missingPermissions.push(`**- ${requiredPerm.split('_').join(' ').toLowerCase()}**`);
+            }
+        });
+
+        if (missingPermissions.length) {
+            // Missing permissions embed
+            const permissionsEmbed = new Discord.MessageEmbed()
+                .setTitle(`${Util.getBotEmoji('error')} Permissions missing`)
+                .setColor('#ff0000')
+                .setDescription(missingPermissions.join('\n'));
+
+            return permissionsEmbed;
+        }
+
+        return null;
+    }
 }
 
 export const debounce = (func: Function, delay: number) => {
