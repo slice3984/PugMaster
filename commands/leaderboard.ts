@@ -50,6 +50,16 @@ const command: Command = {
     global: false,
     perms: false,
     exec: async (bot, message, params, defaults, interaction) => {
+        const missingPermissions = Util.gotPermissions(message ? message : interaction, 'USE_EXTERNAL_EMOJIS');
+
+        if (missingPermissions) {
+            if (interaction) {
+                return interaction.reply({ embeds: [missingPermissions] });
+            } else {
+                return message.channel.send({ embeds: [missingPermissions] });
+            }
+        }
+
         const guild = interaction ? interaction.guild : message.guild;
 
         const guildSettings = Bot.getInstance().getGuild(guild.id);

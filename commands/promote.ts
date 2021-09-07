@@ -42,6 +42,16 @@ const command: Command = {
     global: false,
     perms: false,
     exec: async (bot, message, params, defaults, interaction) => {
+        const missingPermissions = Util.gotPermissions(message ? message : interaction, 'MANAGE_ROLES');
+
+        if (missingPermissions) {
+            if (interaction) {
+                return interaction.reply({ embeds: [missingPermissions] });
+            } else {
+                return message.channel.send({ embeds: [missingPermissions] });
+            }
+        }
+
         const guild = interaction ? interaction.guild : message.guild;
 
         const guildSettings = bot.getGuild(guild.id);

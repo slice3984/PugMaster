@@ -14,12 +14,12 @@ export default class PickupModel {
         if (onlyEnabled) {
             results = await db.execute(`
             SELECT name, id FROM pickup_configs
-            WHERE guild_id = ? AND name IN (${Array(pickups.length).fill('?').join(',')}) AND is_enabled = 1
+            WHERE guild_id = ? AND BINARY name IN (${Array(pickups.length).fill('?').join(',')}) AND is_enabled = 1
             `, [guildId, ...pickups])
         } else {
             results = await db.execute(`
             SELECT name, id FROM pickup_configs
-            WHERE guild_id = ? AND name IN (${Array(pickups.length).fill('?').join(',')})
+            WHERE guild_id = ? AND BINARY name IN (${Array(pickups.length).fill('?').join(',')})
             `, [guildId, ...pickups])
         }
 

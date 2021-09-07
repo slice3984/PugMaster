@@ -32,6 +32,19 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
 
     const pickupChannel = await Util.getPickupChannel(guild);
 
+    const missingPermissions = Util.gotPermissions(pickupChannel, 'MANAGE_THREADS', 'USE_PUBLIC_THREADS');
+
+    if (missingPermissions) {
+        const pickupSettings = await PickupModel.getPickupSettings(BigInt(guild.id), pickupConfigId);
+
+        pickupChannel.send({ embeds: [missingPermissions] });
+
+        return startCallback(true, 'manual', pickupSettings, {
+            guild,
+            pickupConfigId: pickupSettings.id,
+        });
+    }
+
     if (firstRun) {
         const pickupSettings = await PickupModel.getPickupSettings(BigInt(guild.id), pickupConfigId);
         const pickup = await PickupModel.getActivePickup(BigInt(guild.id), pickupConfigId);

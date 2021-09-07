@@ -503,11 +503,18 @@ export default class Util {
         }
     }
 
-    static gotPermissions = (input: Discord.Message | Discord.CommandInteraction,
+    static gotPermissions = (input: Discord.Message | Discord.CommandInteraction | Discord.TextChannel,
         ...permissions: Discord.PermissionString[]): Discord.MessageEmbed => {
         const bot = Bot.getInstance();
 
-        const channel = input.channel as Discord.TextChannel;
+        let channel;
+
+        if (input instanceof Discord.TextChannel) {
+            channel = input as Discord.TextChannel;
+        } else {
+            channel = input.channel as Discord.TextChannel;
+        }
+
         const perms = channel.permissionsFor(bot.getClient().user);
         const missingPermissions = [];
 

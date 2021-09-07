@@ -21,6 +21,10 @@ const command: Command = {
             if (parts.length < 2) {
                 continue;
             } else {
+                if (!/^[a-zA-Z0-9]+$/.test(parts[0])) {
+                    continue;
+                }
+
                 if (/^\d+$/.test(parts[0]) || parts[0].length > 20) {
                     continue;
                 }
