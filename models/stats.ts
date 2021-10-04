@@ -98,6 +98,7 @@ export default class StatsModel {
             IFNULL(t.name, pp.team) as team,
             rr.result,
             ps.started_at,
+            ps.map,
             ps.id FROM players p
             JOIN pickup_players pp ON pp.player_id = p.id
             JOIN pickups ps ON pp.pickup_id = ps.id
@@ -123,6 +124,7 @@ export default class StatsModel {
                 IFNULL(t.name, pp.team) as team,
                 rr.result,
                 ps.started_at,
+                ps.map,
                 ps.id FROM players p
                     JOIN pickup_players pp ON pp.player_id = p.id
                     JOIN pickups ps ON pp.pickup_id = ps.id
@@ -149,6 +151,7 @@ export default class StatsModel {
                 IFNULL(t.name, pp.team) as team,
                 rr.result,
                 ps.started_at,
+                ps.map,
                 ps.id FROM players p
                     JOIN pickup_players pp ON pp.player_id = p.id
                     JOIN pickups ps ON pp.pickup_id = ps.id
@@ -165,15 +168,16 @@ export default class StatsModel {
         }
 
         if (pickup[0].length > 0) {
-            let id, name, startedAt, isRated;
+            let id, name, startedAt, map, isRated;
             const teams = new Map();
 
             pickup[0].forEach((row, index) => {
                 if (!index) {
-                    id = row.id,
-                        name = row.name,
-                        startedAt = row.started_at,
-                        isRated = Boolean(row.is_rated)
+                    id = row.id;
+                    name = row.name;
+                    startedAt = row.started_at;
+                    map = row.map;
+                    isRated = Boolean(row.is_rated);
                 }
 
                 const playerObj = {
@@ -214,6 +218,7 @@ export default class StatsModel {
                 id,
                 name,
                 startedAt,
+                map,
                 isRated,
                 teams: Array.from(teams.values()).sort((a, b) => a.name.localeCompare(b.name)) // sort in case of wrong order 
             }
@@ -237,6 +242,7 @@ export default class StatsModel {
             pp.team,
             rr.result,
             ps.started_at,
+            ps.map,
             ps.id FROM players p
             JOIN pickup_players pp ON pp.player_id = p.id
             JOIN pickups ps ON pp.pickup_id = ps.id
@@ -257,6 +263,7 @@ export default class StatsModel {
             pp.team,
             rr.result,
             ps.started_at,
+            ps.map,
             ps.id FROM players p
             JOIN pickup_players pp ON pp.player_id = p.id
             JOIN pickups ps ON pp.pickup_id = ps.id
@@ -268,15 +275,16 @@ export default class StatsModel {
         }
 
         if (pickup[0].length > 0) {
-            let id, name, startedAt, isRated;
+            let id, name, startedAt, map, isRated;
             const teams = new Map();
 
             pickup[0].forEach((row, index) => {
                 if (!index) {
-                    id = row.id,
-                        name = row.name,
-                        startedAt = row.started_at,
-                        isRated = Boolean(row.is_rated)
+                    id = row.id;
+                    name = row.name;
+                    startedAt = row.started_at;
+                    map = row.map,
+                        isRated = Boolean(row.is_rated);
                 }
 
                 const playerObj = {
@@ -317,6 +325,7 @@ export default class StatsModel {
                 id,
                 name,
                 startedAt,
+                map,
                 isRated,
                 teams: Array.from(teams.values()).sort((a, b) => a.name.localeCompare(b.name)) // sort in case of wrong order 
             }

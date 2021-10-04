@@ -29,6 +29,7 @@ export default ((req: express.Request, res: express.Response) => {
         aliases: command.aliases || null,
         desc: command.desc,
         args: command.args || null,
+        additionalInfo: command.additionalInfo || null,
         perms: command.perms,
         global: command.global,
         defaults: command.defaults || null

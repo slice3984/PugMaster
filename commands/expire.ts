@@ -98,7 +98,7 @@ const command: Command = {
             return Util.send(message ? message : interaction, 'error', 'you are not added to any pickup, no expire set');
         }
 
-        const isInPickingStage = await PickupModel.isPlayerAddedToPendingPickup(BigInt(guild.id), BigInt(member.id), 'picking_manual', 'mapvote');
+        const isInPickingStage = await PickupModel.isPlayerAddedToPendingPickup(BigInt(guild.id), BigInt(member.id), 'picking_manual', 'mapvote', 'captain_selection');
 
         if (isInPickingStage) {
             return Util.send(message ? message : interaction, 'error', 'you are not allowed to use expire when added to a pickup in picking or map vote stage');

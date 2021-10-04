@@ -77,6 +77,10 @@
         </tbody>
       </table>
     </div>
+        <div class="command__info" v-if="commandInfo.additionalInfo">
+          <header><h1>Additional information</h1></header>
+          <p v-html="commandInfo.additionalInfo.replace('\n', '<br />')"></p>
+        </div>
   </div>
 </template>
 
@@ -237,6 +241,10 @@ export default defineComponent({
         text-align: left;
       }
     }
+  }
+
+  &__info {
+    font-size: 1.75rem;
   }
 }
 </style>

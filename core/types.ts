@@ -74,6 +74,7 @@ export interface Command {
     shortDesc: string;
     desc: string;
     args?: CommandArgument[];
+    additionalInfo?: string;
     perms: boolean;
     global: boolean;
     defaults?: DefaultValue[];
@@ -120,6 +121,7 @@ export interface PickupInfo {
     id: number;
     name: string;
     startedAt: Date;
+    map: string | null;
     isRated: boolean;
     teams: {
         name: string;
@@ -230,6 +232,7 @@ export interface CommandInfo {
         desc: string;
         required: boolean;
     }[];
+    additionalInfo?: string;
     perms: boolean;
     global: boolean;
     defaults?: {

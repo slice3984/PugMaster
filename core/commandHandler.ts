@@ -25,7 +25,7 @@ export default class CommandHandler {
         return this.instance;
     }
 
-    private async gotPermission(member: Discord.GuildMember, cmd) {
+    private async gotPermission(member: Discord.GuildMember, cmd, subCommand: string = null) {
         // Admin
         if (member.permissions.has([Discord.Permissions.FLAGS.ADMINISTRATOR])) {
             return true;
@@ -35,7 +35,8 @@ export default class CommandHandler {
 
         if (userRoleIds.length > 0) {
             // Check if one of the user roles got the required permission
-            return await PermissionModel.guildRolesGotCommandPermission(BigInt(member.guild.id), cmd, ...userRoleIds);
+            const command = subCommand ? `${cmd}/${subCommand}` : cmd;
+            return await PermissionModel.guildRolesGotCommandPermission(BigInt(member.guild.id), command, ...userRoleIds);
         }
 
         return false;
@@ -217,7 +218,15 @@ export default class CommandHandler {
             member = input.member;
         }
 
-        if (command.perms && !(await this.gotPermission(member, this.bot.getCommand(cmd).cmd))) {
+        const commandObj = this.bot.getCommand(cmd);
+        let subCommand;
+
+        // Create, edit and delete commands come with sub permissions
+        if (['create', 'edit', 'delete'].includes(commandObj.cmd) && args.length) {
+            subCommand = args[0].toLowerCase();
+        }
+
+        if (command.perms && !(await this.gotPermission(member, commandObj.cmd, subCommand))) {
             if (cmd === 'pickup') {
                 // Don't display any message in case of the pickup command to avoid output in non bot managed channels
                 return;

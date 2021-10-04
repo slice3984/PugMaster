@@ -4,7 +4,7 @@ import Util from '../core/util';
 import PlayerModel from '../models/player';
 import PickupModel from '../models/pickup';
 import Bot from '../core/bot';
-import { ApplicationCommandOptionData } from 'discord.js';
+import { ApplicationCommandOptionData, EmbedFieldData, MessageEmbed } from 'discord.js';
 
 const command: Command = {
     cmd: 'lastgame',
@@ -80,9 +80,9 @@ const command: Command = {
             }
 
             if (interaction) {
-                interaction.reply(formatOutput(pickup));
+                interaction.reply({ embeds: [formatOutput(pickup)] });
             } else {
-                message.channel.send(formatOutput(pickup));
+                message.channel.send({ embeds: [formatOutput(pickup)] });
             }
         } else {
             const identifier = params.join(' ');
@@ -99,9 +99,9 @@ const command: Command = {
                 }
 
                 if (interaction) {
-                    interaction.reply(formatOutput(pickup));
+                    interaction.reply({ embeds: [formatOutput(pickup)] });
                 } else {
-                    message.channel.send(formatOutput(pickup));
+                    message.channel.send({ embeds: [formatOutput(pickup)] });
                 }
             } else {
                 // Check for player
@@ -131,9 +131,9 @@ const command: Command = {
                 }
 
                 if (interaction) {
-                    return interaction.reply(formatOutput(pickup, nicks.players[0].currentNick));
+                    return interaction.reply({ embeds: [formatOutput(pickup, nicks.players[0].currentNick)] });
                 } else {
-                    return message.channel.send(formatOutput(pickup, nicks.players[0].currentNick));
+                    return message.channel.send({ embeds: [formatOutput(pickup, nicks.players[0].currentNick)] });
                 }
             }
         }
@@ -173,14 +173,52 @@ const formatOutput = (pickupInfo: PickupInfo, toHighlight?: string | null) => {
     }
 
     const timeDif = new Date().getTime() - pickupInfo.startedAt.getTime();
-    let str = `Pickup **#${pickupInfo.id}** - **${pickupInfo.name}** - ${Util.formatTime(timeDif)} ago`;
+
+    const embedFields: EmbedFieldData[] = [
+        { name: 'Time', value: `${Util.formatTime(timeDif)} ago`, inline: true }
+    ];
+
+    // Map
+    if (pickupInfo.map) {
+        embedFields.push({ name: 'Map', value: pickupInfo.map, inline: true });
+    }
+
+    // Rated
+    if (!pickupInfo.isRated) {
+        if (!pickupInfo.map) {
+            embedFields.push({ name: '\u200B', value: '\u200B', inline: true });
+        }
+
+        embedFields.push({ name: '\u200B', value: '\u200B', inline: true });
+    } else {
+        let ratedStr = '';
+
+        if (pickupInfo.isRated && pickupInfo.teams[0].outcome) {
+            ratedStr = 'Yes';
+        } else if (pickupInfo.isRated && !pickupInfo.teams[0].outcome) {
+            ratedStr = 'Rateable'
+        }
+
+        embedFields.push({ name: 'Rated', value: ratedStr, inline: true });
+
+        if (!pickupInfo.map) {
+            embedFields.push({ name: '\u200B', value: '\u200B', inline: true });
+        }
+    }
+
+    const lastGameCard = new MessageEmbed()
+        .setTitle(`Pickup **#${pickupInfo.id}** - **${pickupInfo.name}**`)
+        .setColor('#126e82')
+        .addFields(embedFields);
 
     if (pickupInfo.teams.length > 1) {
         // 1 player per team pickups are considered as duel
         if (pickupInfo.teams[0].players.length === 1) {
             const nicks = formatPlayers(pickupInfo.teams.flatMap(t => t.players.map(p => ({ ...p, outcome: t.outcome }))), true).join(' **vs** ');
-            str += `\nPlayers: ${nicks}`;
+            lastGameCard.addField('Players', nicks, false);
         } else {
+            const teamStrs = [];
+
             pickupInfo.teams.forEach(team => {
                 const nicks = formatPlayers(team.players, false).join(', ');
                 let outcomeString = '';
@@ -191,14 +229,16 @@ const formatOutput = (pickupInfo: PickupInfo, toHighlight?: string | null) => {
                         case 'loss': outcomeString = ' - LOST';
                     }
                 }
-                str += `\n**Team ${team.name}${outcomeString}**: ${nicks}`;
+                teamStrs.push(`**${team.name}${outcomeString}**: ${nicks}`);
             });
+
+            lastGameCard.addField('Teams', teamStrs.join('\n'), false);
         }
     } else {
-        str += `\nPlayers: ${formatPlayers(pickupInfo.teams.flatMap(t => t.players), false).join(', ')}`;
+        lastGameCard.addField('Players', formatPlayers(pickupInfo.teams.flatMap(t => t.players), false).join(', '), false);
     }
 
-    return str;
+    return lastGameCard;
 }
 
 module.exports = command;

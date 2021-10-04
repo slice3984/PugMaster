@@ -358,8 +358,8 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
 
                         if (toPick === 1) {
                             // Next cap
-                            currCaptainTeam.captain.currentTurn = false;
                             guildData.iterationTimeout.refresh();
+                            currCaptainTeam.captain.currentTurn = false;
                             guildData.currentIteration = 0;
 
                             await updateMessage(guildData, '', true);

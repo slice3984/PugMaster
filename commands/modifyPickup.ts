@@ -67,8 +67,15 @@ const command: Command = {
 
             // Clear value if possible
             if (value === 'none') {
-                if (['name', 'enabled', 'players', 'teams', 'default', 'rated', 'afkcheck', 'pickmode', 'captain_selection'].includes(key)) {
+                if (['name', 'enabled', 'players', 'teams', 'default', 'rated', 'afkcheck', 'mapvote', 'pickmode', 'captain_selection'].includes(key)) {
                     return message.channel.send(Util.formatMessage('error', `Property **${key}** can't be disabled`));
+                }
+
+                await PickupModel.modifyPickup(BigInt(message.guild.id), pickupOrOperation, dbColumn, null);
+
+                if (key === 'mappool') {
+                    // Attempt to disable in case its enabled
+                    await PickupModel.modifyPickup(BigInt(message.guild.id), pickupOrOperation, 'map_vote', 'false');
                 }
 
                 await PickupModel.modifyPickup(BigInt(message.guild.id), pickupOrOperation, dbColumn, null);

@@ -36,8 +36,19 @@ const command: Command = {
         }
 
         const availableGuildCommands = bot.getCommandNames();
+
+        // Add sub commands
+        ['create', 'delete', 'edit'].forEach(subCommand => {
+            if (subCommand === 'edit') {
+                availableGuildCommands.push('bot');
+            }
+
+            availableGuildCommands.push(`${subCommand}/mappool`, `${subCommand}/pickup`, `${subCommand}/server`);
+        });
+
         const givenCommands = params.slice(2);
-        const validCommands = givenCommands.filter(command => availableGuildCommands.includes(command) && bot.getCommand(command).perms);
+        const validCommands = givenCommands.filter(command => availableGuildCommands.includes(command)
+            && (command.includes('/') || bot.getCommand(command).perms));
 
         if (validCommands.length === 0) {
             return message.channel.send(Util.formatMessage('error', `${message.author}, no valid command names given (Make sure the given commands require permissions)`));

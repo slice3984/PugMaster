@@ -431,7 +431,24 @@ export default class Bot {
             for (const [_, command] of this.commands) {
                 // Command not in db, store it
                 if (!storedCommands.some(c => c.name == command.cmd)) {
-                    BotModel.storeCommands(command.cmd);
+
+                    const commandName = command.cmd;
+
+                    if (['create', 'edit', 'delete'].includes(commandName)) {
+                        const commandsToAdd = [commandName];
+
+                        switch (commandName) {
+                            case 'edit':
+                                commandsToAdd.push(`${commandName}/bot`);
+                            case 'create':
+                            case 'delete':
+                                commandsToAdd.push(`${commandName}/mappool`, `${commandName}/pickup`, `${commandName}/server`);
+                        }
+
+                        BotModel.storeCommands(...commandsToAdd);
+                    } else {
+                        BotModel.storeCommands(command.cmd);
+                    }
                 }
 
                 // Register it as application command if required
@@ -471,7 +488,9 @@ export default class Bot {
         await register();
 
         // Remove not used commands
-        const unusedCommands = storedCommands.filter(command => !commandFiles.includes(command.name));
+        const unusedCommands = storedCommands.filter(command => !commandFiles.includes(command.name)
+            && !command.name.includes('/'));
+
         const toRemoveFromDb = unusedCommands.map(command => command.name);
 
         // Remove from application commands

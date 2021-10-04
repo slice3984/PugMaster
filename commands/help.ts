@@ -64,6 +64,10 @@ const command: Command = {
             fieldData.push({ name: 'Description', value: argDescs.join('\n'), inline: true });
         }
 
+        if (cmd.additionalInfo) {
+            fieldData.push({ name: 'Additional information', value: cmd.additionalInfo, inline: false });
+        }
+
         const botAvatarUrl = guild.client.user.avatarURL();
 
         const helpCardEmbed = new Discord.MessageEmbed()
