@@ -9,6 +9,7 @@ import PickupStage from './PickupStage';
 import Logger from './logger';
 import { abortMapVoteStagePickup } from './stages/mapVote';
 import { abortCaptainSelectionStagePickup } from './stages/captainSelection';
+import ConfigTool from './configTool';
 
 export default class PickupState {
     private constructor() { }
@@ -57,6 +58,9 @@ export default class PickupState {
         }
 
         const genPickupInfo = (pickup, modified) => {
+            const upSymbol = ConfigTool.getConfig().emojis.up;
+            const symbol = upSymbol.length ? upSymbol : ' ᐃ';
+
             let name;
             let added;
             let required;
@@ -71,7 +75,7 @@ export default class PickupState {
                 required = pickup.maxPlayers;
             }
 
-            return `${name} [ ${added} / ${required}${modified ? ' ᐃ' : ''} ]`;
+            return `${name} [ ${added} / ${required}${modified ? symbol : ' '}]`;
         };
 
         const pickups = Array.from((await PickupModel.getActivePickups(BigInt(member.guild.id))).values())
@@ -253,6 +257,9 @@ export default class PickupState {
                 .sort((a, b) => b.players.length - a.players.length);
 
             const genPickupInfo = (pickup, modified) => {
+                const downSymbol = ConfigTool.getConfig().emojis.down;
+                const symbol = downSymbol.length ? downSymbol : ' ᐁ';
+
                 let name;
                 let added;
                 let required;
@@ -267,7 +274,7 @@ export default class PickupState {
                     required = pickup.maxPlayers;
                 }
 
-                return `${name} [ ${added} / ${required}${modified ? ' ᐁ' : ''} ]`;
+                return `${name} [ ${added} / ${required}${modified ? symbol : ' '}]`;
             };
 
             if (pickupChannel) {

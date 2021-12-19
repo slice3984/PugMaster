@@ -732,4 +732,37 @@ export default class GuildModel {
         WHERE guild_id IN (${Array(guildIds.length).fill('?').join(',')})
         `, guildIds);
     }
+
+    static async resetRatings(guildId: bigint, ...pickupConfigIds) {
+        await transaction(db, async (db) => {
+            const conn = db as PoolConnection;
+
+            // Rated results
+            await conn.execute(`
+            DELETE rr.* FROM rated_results rr
+            JOIN pickups p ON rr.pickup_id = p.id
+			WHERE p.is_rated = 1 AND p.guild_id = ? AND p.pickup_config_id IN (${Array(pickupConfigIds.length).fill('?').join(',')})
+            `, [guildId, ...pickupConfigIds]);
+
+            // Pickups
+            await conn.execute(`
+            UPDATE pickups SET is_rated = 0
+            WHERE guild_id = ? AND pickup_config_id IN (${Array(pickupConfigIds.length).fill('?').join(',')})
+            `, [guildId, ...pickupConfigIds]);
+
+            // Player rating history
+            await conn.execute(`
+            UPDATE pickup_players pp
+            JOIN pickups ps ON ps.id = pp.pickup_id
+            SET pp.rating = null, pp.variance = null
+            WHERE ps.guild_id = ? AND ps.pickup_config_id IN (${Array(pickupConfigIds.length).fill('?').join(',')})
+            `, [guildId, ...pickupConfigIds]);
+
+            // Player rating snapshots
+            await conn.execute(`
+            DELETE FROM player_ratings
+            WHERE pickup_config_id IN (${Array(pickupConfigIds.length).fill('?').join(',')})
+            `, pickupConfigIds);
+        });
+    }
 }

@@ -5,6 +5,7 @@ import { TimeError, PickupSettings, PickupStartConfiguration } from './types';
 import ServerModel from '../models/server';
 import ConfigTool from './configTool';
 import TeamModel from '../models/teams';
+import { clearInterval } from 'timers';
 
 export default class Util {
     private constructor() { }
@@ -467,7 +468,7 @@ export default class Util {
 
     static formatMessage(type: 'success' | 'info' | 'warn' | 'error', msg: string) {
         const icon = this.getBotEmoji(type);
-        return `${icon} **|** ${msg}`;
+        return `${icon}${msg}`;
     }
 
     static tsToEloNumber(skill: number) { return Math.ceil(skill * 100) }

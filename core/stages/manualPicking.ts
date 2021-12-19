@@ -602,7 +602,25 @@ export const abortPickingStagePickup = async (guildId: string, playerId: string)
         pendingPickup = pending;
 
         // Archive the thread, disable collector
-        const guildData = guildSettings.pendingPickingPickups.get(pending.pickupConfigId);
+        let guildData = guildSettings.pendingPickingPickups.get(pending.pickupConfigId);
+
+        // In case of the transition to manual picking it is possible the object is not set yet
+        if (!guildData) {
+            // Recheck every 100ms
+            await new Promise(resolve => {
+                let count = 0;
+                const interval = setInterval(() => {
+                    count++;
+                    guildData = guildSettings.pendingPickingPickups.get(pending.pickupConfigId);
+
+                    // Timeout after 5 seconds
+                    if (guildData || count == 50) {
+                        resolve(true);
+                        clearInterval(interval);
+                    }
+                }, 100);
+            });
+        }
 
         guildData.messageCollector.stop();
         guildData.selectMenuCollector.stop();

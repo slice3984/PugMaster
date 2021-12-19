@@ -30,6 +30,10 @@ export interface Config {
         warn: string;
         error: string;
         unranked: string;
+        up: string;
+        down: string;
+        increase: string;
+        decrease: string;
         rank_1: string;
         rank_2: string;
         rank_3: string;

@@ -271,7 +271,7 @@ export default class Rating {
         });
 
         const rankCap = pickupSettings.maxRankRatingCap || guildSettings.maxRankRatingCap;
-        const playerNicks = players.map(p => p.nick);
+        const playerNicks = [];
         const from = [];
         const to = [];
 
@@ -282,6 +282,8 @@ export default class Rating {
             let rankIconAfter = amountAfter >= 10 ? emojis[`rank_${Util.tsToRankIcon(result.newMu, result.newSigma, rankCap)}`] : emojis.unranked;
 
             const ratingChange = Math.abs(result.prevMu - result.newMu);
+
+            playerNicks.push(`${result.prevMu > result.newMu ? emojis.decrease : emojis.increase}${p.nick}`);;
 
             from.push(`${rankIconBefore}${result.prevMu ? Util.tsToEloNumber(result.prevMu) : 'UNRATED'}`);
             to.push(`${rankIconAfter}${result.newMu ? Util.tsToEloNumber(result.newMu) : 'UNRATED'} ${result.newMu ? `(**${result.prevMu > result.newMu ? '-' : '+'}${Util.tsToEloNumber(ratingChange)}**)` : ''}`);

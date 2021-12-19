@@ -53,16 +53,46 @@ const command: Command = {
         })
             .sort((a, b) => b.skill - a.skill);
 
-        while (playerRatings.length > 0) {
-            for (let team = 0; team < pickupSettings.teamCount; team++) {
-                if (!generatedTeams[team]) {
-                    generatedTeams.push([]);
+
+        // More accurate generation for <= 10 players 2 teams pickups
+        if (pickupSettings.teamCount === 2 && pickupSettings.playerCount <= 10) {
+            const findMinDiffPartitions = (skills, t1 = [], t2 = []) => {
+                const sum = arr => arr.reduce((acc, a) => acc + a.skill, 0);
+
+                if (skills.length <= 0) {
+                    return [t1, t2];
                 }
 
-                generatedTeams[team].push(playerRatings.shift());
+                let a = findMinDiffPartitions(skills.slice(0, -1), t1.concat(skills.slice(-1).pop()), t2);
+                let b = findMinDiffPartitions(skills.slice(0, -1), t1, t2.concat(skills.slice(-1).pop()));
 
-                if (playerRatings.length >= pickupSettings.teamCount) {
-                    generatedTeams[team].push(playerRatings.pop());
+                if (a[0].length != a[1].length) return b;
+                if (b[0].length != b[1].length) return a;
+
+                if (Math.abs(sum(a[0]) - sum(a[1])) < Math.abs(sum(b[0]) - sum(b[1]))) {
+                    return a;
+                }
+
+                return b;
+            };
+
+            const teams = findMinDiffPartitions(playerRatings);
+
+            teams.forEach(team => {
+                generatedTeams.push(team);
+            });
+        } else {
+            while (playerRatings.length > 0) {
+                for (let team = 0; team < pickupSettings.teamCount; team++) {
+                    if (!generatedTeams[team]) {
+                        generatedTeams.push([]);
+                    }
+
+                    generatedTeams[team].push(playerRatings.shift());
+
+                    if (playerRatings.length >= pickupSettings.teamCount) {
+                        generatedTeams[team].push(playerRatings.pop());
+                    }
                 }
             }
         }
