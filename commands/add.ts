@@ -123,6 +123,8 @@ const command: Command = {
             return invalidPickups;
         }
 
+        await Util.setLock(guildSettings, 'ADD');
+
         // Don't allow to add when the player is added to a pickup in manual picking stage
         const isInPickingStage = await PickupModel.isPlayerAddedToPendingPickup(BigInt(guild.id), BigInt(member.id), 'picking_manual', 'mapvote', 'captain_selection');
 
@@ -136,6 +138,7 @@ const command: Command = {
                     await Util.send(interaction, 'error', 'this server got no enabled pickups');
                 }
 
+                Util.unlock(guildSettings, 'ADD');
                 return;
             }
 
@@ -150,6 +153,8 @@ const command: Command = {
                 if (interaction) {
                     await Util.send(interaction, 'error', 'no suitable pickup found for auto adding');
                 }
+
+                Util.unlock(guildSettings, 'ADD');
                 return;
             }
 
@@ -164,15 +169,18 @@ const command: Command = {
             }
 
             if (validPickups.length === 0) {
+                Util.unlock(guildSettings, 'ADD');
                 return;
             }
 
             await PlayerModel.storeOrUpdatePlayer(BigInt(guild.id), BigInt(member.id), member.displayName);
             await PickupState.addPlayer(member, interaction, ...validPickups);
+            Util.unlock(guildSettings, 'ADD');
         } else {
             const existingPickups = await PickupModel.areValidPickups(BigInt(guild.id), true, ...params);
 
             if (existingPickups.length === 0) {
+                Util.unlock(guildSettings, 'ADD');
                 return;
             }
 
@@ -211,6 +219,7 @@ const command: Command = {
                         await Util.send(interaction, 'error', `not able to add to pending pickup **${pickupName}**`);
                     }
                 }
+                Util.unlock(guildSettings, 'ADD');
                 return;
             }
 
@@ -226,11 +235,13 @@ const command: Command = {
             validPickups = validPickups.filter(pickup => !invalidPickups.includes(pickup.id));
 
             if (validPickups.length === 0) {
+                Util.unlock(guildSettings, 'ADD');
                 return;
             }
 
             await PlayerModel.storeOrUpdatePlayer(BigInt(guild.id), BigInt(member.id), member.displayName);
             await PickupState.addPlayer(member, interaction, ...validPickups.map(pickup => pickup.id))
+            Util.unlock(guildSettings, 'ADD');
         }
     }
 };

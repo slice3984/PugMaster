@@ -28,6 +28,8 @@ export default class GuildSettings {
         amount: number;
         playerCount: number
     }[] = [];
+    // Prevent database concurrency issues
+    locks: Set<string> = new Set();
     activePrompts: Set<string> = new Set();
     applicationCommands: Map<string, ApplicationCommand> = new Map();
     // Debounced function to update guild application commands, avoid API spam

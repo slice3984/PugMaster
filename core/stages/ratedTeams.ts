@@ -70,10 +70,7 @@ export const ratedTeams = async (guild: Discord.Guild, pickupSettings: PickupSet
         }
     }
 
-
     const drawProbability = ts.quality(teamRatings);
-
-    console.log('Draw probability: ', drawProbability);
 
     startCallback(false, 'elo', pickupSettings, {
         guild,

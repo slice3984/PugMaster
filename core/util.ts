@@ -6,6 +6,7 @@ import ServerModel from '../models/server';
 import ConfigTool from './configTool';
 import TeamModel from '../models/teams';
 import { clearInterval } from 'timers';
+import GuildSettings from './guildSettings';
 
 export default class Util {
     private constructor() { }
@@ -536,6 +537,32 @@ export default class Util {
         }
 
         return null;
+    }
+
+    static setLock = async (guildSettings: GuildSettings, name: string, updateFrequencyInMs = 100) => {
+        let promise;
+        const isLocked = guildSettings.locks.has(name);
+
+        if (isLocked) {
+            promise = new Promise(resolve => {
+                const interval = setInterval(() => {
+                    const isLocked = guildSettings.locks.has(name);
+
+                    if (!isLocked) {
+                        resolve(true);
+                        clearInterval(interval);
+                    }
+                }, updateFrequencyInMs);
+            });
+        }
+
+        // Set new lock
+        guildSettings.locks.add(name);
+        return promise;
+    }
+
+    static unlock = async (GuildSettings: GuildSettings, name: string) => {
+        GuildSettings.locks.delete(name);
     }
 }
 
