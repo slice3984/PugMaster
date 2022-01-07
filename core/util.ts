@@ -1,4 +1,5 @@
 import Discord from 'discord.js';
+import { Util as DjsUtil } from 'discord.js';
 import GuildModel from '../models/guild';
 import Bot from './bot';
 import { TimeError, PickupSettings, PickupStartConfiguration } from './types';
@@ -564,6 +565,9 @@ export default class Util {
     static unlock = async (GuildSettings: GuildSettings, name: string) => {
         GuildSettings.locks.delete(name);
     }
+
+    static removeMarkdown = (str: string) => DjsUtil.escapeMarkdown(str.split('`').join(''))
+        .replace(/\\[*_~]/g, '');
 }
 
 export const debounce = (func: Function, delay: number) => {

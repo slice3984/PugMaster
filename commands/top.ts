@@ -57,7 +57,7 @@ const command: Command = {
 
             Util.send(message ? message : interaction, 'info',
                 `**Top 10 Players (amount played)**\n` +
-                `${top.map(player => `\`${player.nick}\` (**${player.amount}**)`).join(' ')}`, false);
+                `${top.map(player => `\`\`${Util.removeMarkdown(player.nick)}\`\` (**${player.amount}**)`).join(' ')}`, false);
         } else {
             const option = params[0].toLowerCase();
 
@@ -73,7 +73,7 @@ const command: Command = {
 
             Util.send(message ? message : interaction, 'info',
                 `**Top 10 Players - Played**\n` +
-                `${top.map((player, index) => `**#${index + 1}** \`${player.nick}\` (**${player.amount}**)`).join(' ')}`, false);
+                `${top.map((player, index) => `**#${index + 1}** \`\`${Util.removeMarkdown(player.nick)}\`\` (**${player.amount}**)`).join(' ')}`, false);
         }
     }
 }

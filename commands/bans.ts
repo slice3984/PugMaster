@@ -76,9 +76,9 @@ const command: Command = {
                 reason = reason.substr(0, 30) + '...';
             }
 
-            bannedPlayers.push(`${ban.banid} - ${ban.player}${displayIssuers ? '\n' : ''}`);
+            bannedPlayers.push(`${ban.banid} - ${Util.removeMarkdown(ban.player)}${displayIssuers ? '\n' : ''}`);
             times.push(`${timeLeft}${displayIssuers ? '\n' : ''}`);
-            issuers.push(issuer);
+            issuers.push(Util.removeMarkdown(issuer));
             reasons.push(reason ? reason : '-');
         });
 

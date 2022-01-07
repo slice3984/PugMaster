@@ -29,6 +29,7 @@ export const createTables = () => new Promise(async (res, _req) => {
       prefix VARCHAR(3) NOT NULL DEFAULT '!',
       global_denylist_role BIGINT NULL,
       global_allowlist_role BIGINT NULL,
+      pickup_player_role BIGINT NULL,
       global_expire INT NULL DEFAULT 21600000,
       report_expire INT NULL DEFAULT 7200000,
       server_id INT NULL,

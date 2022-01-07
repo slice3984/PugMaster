@@ -6,6 +6,7 @@ import Bot from './bot';
 import ConfigTool from './configTool';
 import { RatingPickup, RateablePickup, RatingTeam } from "./types";
 import Util from './util';
+import { Util as DjsUtil } from 'discord.js';
 
 interface UpdateData {
     pickups: PlayerRating[],
@@ -283,7 +284,7 @@ export default class Rating {
 
             const ratingChange = Math.abs(result.prevMu - result.newMu);
 
-            playerNicks.push(`${result.prevMu > result.newMu ? emojis.decrease : emojis.increase}${p.nick}`);;
+            playerNicks.push(`${result.prevMu > result.newMu ? emojis.decrease : emojis.increase}${DjsUtil.escapeMarkdown(p.nick.split('`').join(''))}`);;
 
             from.push(`${rankIconBefore}${result.prevMu ? Util.tsToEloNumber(result.prevMu) : 'UNRATED'}`);
             to.push(`${rankIconAfter}${result.newMu ? Util.tsToEloNumber(result.newMu) : 'UNRATED'} ${result.newMu ? `(**${result.prevMu > result.newMu ? '-' : '+'}${Util.tsToEloNumber(ratingChange)}**)` : ''}`);

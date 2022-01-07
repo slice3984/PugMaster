@@ -99,6 +99,7 @@ export default class GuildModel {
                 data.prefix,
                 data.global_denylist_role,
                 data.global_allowlist_role,
+                data.pickup_player_role,
                 data.promotion_delay,
                 data.last_promote,
                 data.global_expire,

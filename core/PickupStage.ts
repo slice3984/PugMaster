@@ -216,6 +216,29 @@ export default class PickupStage {
             }
         }
 
+        // Assign pickup player role if not assigned yet
+        if (guildSettings.pickupPlayerRole) {
+            const pickupPlayerRole = await Util.getRole(config.guild, guildSettings.pickupPlayerRole.toString());
+
+            if (pickupPlayerRole) {
+                const memberObjs = await Util.getGuildMembers(config.guild, addedPlayers);
+
+                memberObjs.forEach(member => {
+                    const memberRoles = member.roles;
+
+                    if (memberRoles) {
+                        if (memberRoles.cache.find(role => role === pickupPlayerRole)) {
+                            return;
+                        }
+                    }
+
+                    try {
+                        member.roles.add(pickupPlayerRole);
+                    } catch (_err) { }
+                });
+            }
+        }
+
         try {
             await StatsModel.storePickup(config);
         } catch (err) {

@@ -92,7 +92,7 @@ const command: Command = {
 
         const rankCardEmbed = new Discord.MessageEmbed()
             .setColor('#126e82')
-            .setTitle(`Ranking - ${players.players[0].currentNick}`)
+            .setTitle(`Ranking - ${Util.removeMarkdown(players.players[0].currentNick)}`)
             .addField('Rated games ', ratings.pickupCount.toString())
             .addFields(
                 { name: 'Pickup / Rank', value: pickupNames.join('\n'), inline: true },

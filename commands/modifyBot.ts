@@ -41,6 +41,7 @@ const command: Command = {
             const explicitTrust = settings.explicitTrust ? 'enabled' : 'disabled';
             const allowlistRole = settings.allowlistRole ? Util.getRole(message.guild, settings.allowlistRole.toString()) : null;
             const denylistRole = settings.denylistRole ? Util.getRole(message.guild, settings.denylistRole.toString()) : null;
+            const pickupPlayerRole = settings.pickupPlayerRole ? Util.getRole(message.guild, settings.pickupPlayerRole.toString()) : null;
             const promotionDelay = Util.formatTime(settings.promotionDelay);
             const defaultServer = settings.defaultServer ? await (await ServerModel.getServer(BigInt(message.guild.id), settings.defaultServer)).name : '-';
             const startMessage = settings.startMessage || '-';
@@ -93,6 +94,7 @@ const command: Command = {
                     'Default Server': defaultServer,
                     'Default Allowlist': `${allowlistRole ? allowlistRole.name : '-'}`,
                     'Default Denylist': `${denylistRole ? denylistRole.name : '-'}`,
+                    'Pickup Player Role': `${pickupPlayerRole ? pickupPlayerRole.name : '-'}`,
                     '\u200B ': '\u200B',
                     'Iteration time': iterationTime,
                     'AFK check iterations': afkCheckIterations,

@@ -406,7 +406,7 @@ export namespace Validator {
 
     export namespace Guild {
         export function areValidKeys(...keys) {
-            const validKeys = ['prefix', 'global_expire', 'report_expire', 'trust_time', 'explicit_trust', 'allowlist', 'denylist', 'promotion_delay', 'server',
+            const validKeys = ['prefix', 'global_expire', 'report_expire', 'trust_time', 'explicit_trust', 'allowlist', 'denylist', 'pickup_player', 'promotion_delay', 'server',
                 'start_message', 'sub_message', 'notify_message', 'iteration_time', 'afk_time', 'afk_check_iterations', 'picking_iterations', 'map_vote_iterations', 'max_avg_elo_variance',
                 'warn_streaks', 'warns_until_ban', 'warn_streak_expiration', 'warn_expiration', 'warn_bantime', 'warn_bantime_multiplier', 'captain_selection_iterations', 'max_rank_rating_cap'];
 
@@ -527,6 +527,14 @@ export namespace Validator {
 
                         if ([guildSettings.allowlistRole, guildSettings.denylistRole].includes(BigInt(denylistRole.id))) {
                             errors.push({ type: key, errorMessage: 'Can\'t use the same role twice in server settings' });
+                            break;
+                        }
+                        break;
+                    case 'pickup_player':
+                        const pickupPlayerRole = Util.getRole(guild, value);
+
+                        if (!pickupPlayerRole) {
+                            errors.push({ type: key, errorMessage: 'Can\'t find the given role' });
                             break;
                         }
                         break;

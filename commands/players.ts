@@ -111,7 +111,7 @@ const command: Command = {
             return Util.send(message ? message : interaction, 'info', 'no online pickup players found');
         }
 
-        const formatArray = arr => arr.map(player => `\`${player.nick}\` (${player.amount})`);
+        const formatArray = arr => arr.map(player => `\`\`${Util.removeMarkdown(player.nick)}\`\` (${player.amount})`);
 
         Util.send(message ? message : interaction, null,
             `Online and not added${pickup ? ' ' + pickup : ''} pickup players (Added in last ${defaults[0]} days | Limit 50)\n` +

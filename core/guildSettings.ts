@@ -43,6 +43,7 @@ export default class GuildSettings {
         private _prefix: string,
         private _denylistRole: bigint,
         private _allowlistRole: bigint,
+        private _pickupPlayerRole: bigint,
         private _promotionDelay: number,
         private _lastPromote: Date | null,
         private _globalExpireTime: number | null,
@@ -122,9 +123,9 @@ export default class GuildSettings {
             return errors;
         }
 
-        const dbColumnNames = ['global_allowlist_role', 'global_denylist_role',
+        const dbColumnNames = ['global_allowlist_role', 'global_denylist_role', 'pickup_player_role',
             'server_id', 'warn_ban_time', 'warn_ban_time_multiplier', 'warn_expiration_time']
-        const keyNames = ['allowlist', 'denylist', 'server', 'warn_bantime',
+        const keyNames = ['allowlist', 'denylist', 'pickup_player', 'server', 'warn_bantime',
             'warn_bantime_multiplier', 'warn_expiration'];
 
         for (const property of properties) {
@@ -143,7 +144,7 @@ export default class GuildSettings {
             }
 
             // Get the role ids
-            if (value !== 'none' && ['allowlist', 'denylist'].includes(key)) {
+            if (value !== 'none' && ['allowlist', 'denylist', 'pickup_player'].includes(key)) {
                 value = Util.getRole(this.guild, value).id;
             }
 
@@ -171,6 +172,7 @@ export default class GuildSettings {
                 case 'explicit_trust': this._explicitTrust = value ? value === '1' ? true : false : null; break;
                 case 'allowlist': this._allowlistRole = value ? BigInt(value) : null; break;
                 case 'denylist': this._denylistRole = value ? BigInt(value) : null; break;
+                case 'pickup_player': this._pickupPlayerRole = value ? BigInt(value) : null; break;
                 case 'promotion_delay': this._promotionDelay = value ? +value : null; break;
                 case 'server': this._defaultServer = value ? +value : null; break;
                 case 'start_message': this._startMessage = value; break;
@@ -261,6 +263,10 @@ export default class GuildSettings {
 
     public get denylistRole(): bigint {
         return this._denylistRole;
+    }
+
+    public get pickupPlayerRole(): bigint {
+        return this._pickupPlayerRole;
     }
 
     public get prefix(): string {

@@ -50,9 +50,9 @@ const command: Command = {
                 reason = reason.substr(0, 45) + '...';
             }
 
-            warnedPlayers.push(`${warn.warnid} - ${warn.player}${displayIssuers ? '\n' : ''}`);
+            warnedPlayers.push(`${warn.warnid} - ${Util.removeMarkdown(warn.player)}${displayIssuers ? '\n' : ''}`);
             times.push(`${Util.formatTime(timeDif)}${displayIssuers ? '\n' : ''}`);
-            issuers.push(issuer);
+            issuers.push(Util.removeMarkdown(issuer));
             reasons.push(reason ? reason : '-');
         });
 

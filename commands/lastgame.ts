@@ -149,9 +149,9 @@ const formatOutput = (pickupInfo: PickupInfo, toHighlight?: string | null) => {
         return players.map(p => {
             let playerStr = '';
             if (toHighlight && p.nick === toHighlight) {
-                playerStr += `**>**\`${p.nick}\``;
+                playerStr += `**>**\`\`${Util.removeMarkdown(p.nick)}\`\``;
             } else {
-                playerStr += `\`${p.nick}\``;
+                playerStr += `\`\`${Util.removeMarkdown(p.nick)}\`\``;
             }
 
             if (onePlayerTeams && p.outcome) {

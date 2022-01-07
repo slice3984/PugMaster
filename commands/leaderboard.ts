@@ -124,7 +124,7 @@ const command: Command = {
             const winPercentage = Math.round((+player.wins / amountOfGames) * 100);
             const rating = `${rankIcon} ${Util.tsToEloNumber(player.rating)} ± ${Util.tsToEloNumber(player.variance)}`;
 
-            playerNicks.push(`**${rank}** ${name}`);
+            playerNicks.push(`**${rank}** ${Util.removeMarkdown(name)}`);
             playerGames.push(`**${player.wins}** / **${player.draws}** / **${player.losses}** **(${winPercentage}%)**`);
             playerRatings.push(`**${rating}**`);
         });

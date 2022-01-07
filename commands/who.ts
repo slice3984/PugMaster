@@ -49,7 +49,7 @@ const command: Command = {
     exec: async (bot, message, params, defaults, interaction) => {
         const guild = interaction ? interaction.guild : message.guild;
 
-        const genPickupInfo = pickup => `**${pickup.name}** [ **${pickup.players.length}** / **${pickup.maxPlayers}** ]: ${pickup.players.map(player => `\`${player.nick}\``).join(', ')}`;
+        const genPickupInfo = pickup => `**${pickup.name}** [ **${pickup.players.length}** / **${pickup.maxPlayers}** ]: ${pickup.players.map(player => `\`${Util.removeMarkdown(player.nick)}\``).join(', ')}`;
 
         if (params.length === 0) {
             const pickups = Array.from((await PickupModel.getActivePickups(BigInt(guild.id))).values())

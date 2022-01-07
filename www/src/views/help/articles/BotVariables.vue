@@ -83,6 +83,16 @@
                 <td>Role mention, id or name</td>
               </tr>
               <tr>
+                <td>pickup_player<span class="help-article__red">*</span></td>
+                <td>Role every pickup player gets assigned when playing a pickup</td>
+                <td>
+                  <div class="help-article__type help-article__type--mention">
+                    Role
+                  </div>
+                </td>
+                <td>Role mention, id or name</td>
+              </tr>
+              <tr>
                 <td>promotion_delay</td>
                 <td>Time interval pickups can be promoted / a sub called</td>
                 <td>
