@@ -17,17 +17,17 @@ const command: Command = {
     perms: true,
     exec: async (bot, message, params) => {
         if (!/^\d+$/.test(params[0])) {
-            return message.reply('pickup id has to be a number');
+            return Util.send(message, 'error', 'pickup id has to be a number');
         }
 
         const rateablePickup = await PickupModel.getStoredRateEnabledPickup(BigInt(message.guild.id), +params[0]);
 
         if (!rateablePickup) {
-            return message.channel.send(Util.formatMessage('error', `${message.author}, no rateable pickup found with id **${params[0]}**`));
+            return Util.send(message, 'error', `no rateable pickup found with id **${params[0]}**`);
         }
 
         if (!rateablePickup.isRated) {
-            return message.channel.send(Util.formatMessage('error', `${message.author}, pickup **${rateablePickup.pickupId}** - **${rateablePickup.name}** is rateable but not rated yet`));
+            return Util.send(message, 'error', `pickup **${rateablePickup.pickupId}** - **${rateablePickup.name}** is rateable but not rated yet`);
         }
 
         const toSend = await Rating.unrateMatch(message.guild.id, rateablePickup);
@@ -35,7 +35,7 @@ const command: Command = {
         if (toSend instanceof MessageEmbed) {
             message.channel.send({ embeds: [toSend] });
         } else {
-            message.channel.send(toSend);
+            Util.send(message, 'none', toSend, false);
         }
     }
 }

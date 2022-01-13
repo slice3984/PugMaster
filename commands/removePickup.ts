@@ -20,7 +20,7 @@ const command: Command = {
         const guildSettings = bot.getGuild(message.guild.id);
 
         if (guildSettings.activePrompts.has('remove_pickups')) {
-            return message.channel.send(Util.formatMessage('error', `${message.author.toString()}, there is already a active prompt, wait until the prompt timed out or actions were made`));
+            return Util.send(message, 'error', 'there is already a active prompt, wait until the prompt timed out or actions were made');
         }
 
         const pickups = params.map(param => param.toLowerCase());
@@ -28,7 +28,7 @@ const command: Command = {
         let validPickups = await PickupModel.areValidPickups(BigInt(message.guild.id), false, ...pickups);
 
         if (!validPickups.length) {
-            return message.channel.send(Util.formatMessage('error', `${message.author}, no valid pickups provided`));
+            return Util.send(message, 'error', 'no valid pickups provided');
         }
 
         const activePickups = Array.from(await (await (await PickupModel.getActivePickups(BigInt(message.guild.id))).values()));
@@ -123,8 +123,7 @@ const command: Command = {
 
                 // Update application commands
                 await bot.updatePickupDependentApplicationCommands(message.guild);
-
-                await message.channel.send(Util.formatMessage('success', `Removed **${validPickups.length}** pickup${validPickups.length > 1 ? 's' : ''} (${validPickups.map(pickup => `**${pickup.name}**`).join(' ')})`));
+                await Util.send(message, 'success', `Removed **${validPickups.length}** pickup${validPickups.length > 1 ? 's' : ''} (${validPickups.map(pickup => `**${pickup.name}**`).join(' ')})`, false);
 
                 if (filteredPickups.length) {
                     await PickupState.showPickupStatus(message.guild);

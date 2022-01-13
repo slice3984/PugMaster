@@ -9,20 +9,14 @@ export const ratedTeams = async (guild: Discord.Guild, pickupSettings: PickupSet
     config: PickupStartConfiguration) => void) => {
     const pickup = await PickupModel.getActivePickup(BigInt(guild.id), pickupSettings.id);
 
-    // Take variance into account and subtract it 2 times, sort by highest rating afterwards
-    const playerRatings = pickup.players
-        .map(player => {
-            return { ...player, skill: player.rating.mu - 2 * player.rating.sigma }
-        })
-        .sort((a, b) => b.skill - a.skill);
-
+    const playerRatings = pickup.players.sort((a, b) => b.rating.mu - a.rating.mu);
     const teamIds: bigint[][] = [];
     const teamRatings: ts.Rating[][] = [];
 
     // More accurate team generation for 2 teams & <= 10 player pickups
     if (pickupSettings.teamCount === 2 && pickupSettings.playerCount <= 10) {
         const findMinDiffPartitions = (skills, t1 = [], t2 = []) => {
-            const sum = arr => arr.reduce((acc, a) => acc + a.skill, 0);
+            const sum = arr => arr.reduce((acc, a) => acc + a.rating.mu, 0);
 
             if (skills.length <= 0) {
                 return [t1, t2];

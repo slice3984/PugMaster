@@ -26,7 +26,7 @@ const command: Command = {
         }
 
         if (validatedUsers.length === 0) {
-            return message.channel.send(Util.formatMessage('error', `${message.author}, given player(s) not found`));
+            return Util.send(message, 'error', 'given player(s) not found');
         }
 
         // Make sure they are not trusted already
@@ -34,11 +34,11 @@ const command: Command = {
         const toTrust = validatedUsers.filter(user => !alreadyTrusted.includes(user.id));
 
         if (toTrust.length === 0) {
-            return message.channel.send(Util.formatMessage('warn', `${message.author}, the player${validatedUsers.length > 1 ? 's are' : ' is'} already trusted (${validatedUsers.map(user => `**${user.displayName}**`).join(', ')})`));
+            return Util.send(message, 'warn', `the player${validatedUsers.length > 1 ? 's are' : ' is'} already trusted (${validatedUsers.map(user => `**${user.displayName}**`).join(', ')})`);
         }
 
         await PlayerModel.trustPlayers(BigInt(message.guild.id), ...toTrust.map(user => user.id));
-        message.channel.send(Util.formatMessage('success', `Trusted ${toTrust.map(user => `**${user.displayName}**`).join(', ')}`));
+        Util.send(message, 'success', `Trusted ${toTrust.map(user => `**${user.displayName}**`).join(', ')}`, false);
     }
 }
 

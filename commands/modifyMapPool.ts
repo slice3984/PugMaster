@@ -34,35 +34,35 @@ const command: Command = {
                 const validMaps = [...new Set(Validator.Mappool.areValidMapNames(...givenMaps))];
 
                 if (validMaps.length === 0) {
-                    return message.channel.send(Util.formatMessage('error', 'Invalid map names given, are the map names in a range of 1-45 chars?'));
+                    return Util.send(message, 'error', 'Invalid map names given, are the map names in a range of 1-45 chars?', false);
                 }
 
                 mapsInPool = await MappoolModel.getMaps(BigInt(message.guild.id), name);
                 const mapsToAdd = validMaps.filter(map => !mapsInPool.includes(map));
 
                 if (!mapsToAdd.length) {
-                    return message.channel.send(Util.formatMessage('error', `Given maps are already stored in pool **${name}**`));
+                    return Util.send(message, 'error', `Given maps are already stored in pool **${name}**`, false);
                 }
 
                 await MappoolModel.addMapsToPool(BigInt(message.guild.id), name, ...mapsToAdd);
 
-                return message.channel.send(Util.formatMessage('success', `Added the following maps: ${mapsToAdd.map(map => `**${map}**`).join(', ')} to pool **${name}**`));
+                return Util.send(message, 'success', `Added the following maps: ${mapsToAdd.map(map => `**${map}**`).join(', ')} to pool **${name}**`, false);
             case 'remove':
                 mapsInPool = await MappoolModel.getMaps(BigInt(message.guild.id), name);
                 const toRemove = givenMaps.filter(map => mapsInPool.includes(map));
 
                 if (!toRemove.length) {
-                    return message.channel.send(Util.formatMessage('error', `Given maps are not stored in pool **${name}**`));
+                    return Util.send(message, 'error', `Given maps are not stored in pool **${name}**`, false);
                 }
 
                 if (mapsInPool.length === toRemove.length) {
-                    return message.channel.send(Util.formatMessage('error', `Can't remove all maps from a pool, use **${bot.getGuild(message.guild.id).prefix}remove_mappool** to remove the entire pool`));
+                    return Util.send(message, 'error', `Can't remove all maps from a pool, use **${bot.getGuild(message.guild.id).prefix}remove_mappool** to remove the entire pool`, false);
                 }
 
                 MappoolModel.removeMapsFromPool(BigInt(message.guild.id), name, ...toRemove);
-                return message.channel.send(Util.formatMessage('success', `Removed the following maps: ${toRemove.map(map => `**${map}**`).join(', ')} from pool **${name}**`));
+                return Util.send(message, 'success', `Removed the following maps: ${toRemove.map(map => `**${map}**`).join(', ')} from pool **${name}**`, false);
             default:
-                message.channel.send(Util.formatMessage('error', `${message.author}, invalid operation, has to be **add** or **remove**`));
+                Util.send(message, 'error', 'Invalid operation, has to be **add** or **remove**');
         }
     }
 }

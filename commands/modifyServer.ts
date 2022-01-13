@@ -24,11 +24,11 @@ const command: Command = {
         const isValid = await Validator.Server.isValidServer(BigInt(message.guild.id), name);
 
         if (isValid !== true) {
-            return message.reply(isValid.errorMessage);
+            return Util.send(message, 'error', isValid.errorMessage, false);
         }
 
         if (!['ip', 'password'].includes(field)) {
-            return message.channel.send(Util.formatMessage('error', `${message.author}, invalid property, has to be **ip** or **password**`));
+            return Util.send(message, 'error', 'invalid property, has to be **ip** or **password**');
         }
 
         const server = await ServerModel.getServer(BigInt(message.guild.id), name);
@@ -36,26 +36,26 @@ const command: Command = {
         if (field === 'ip') {
             const validIp = Validator.Server.isValidIp(field);
             if (validIp !== true) {
-                return message.channel.send(Util.formatMessage('error', validIp.errorMessage));
+                return Util.send(message, 'error', validIp.errorMessage, false);
             }
 
             if (value === server.ip) {
-                return message.channel.send(Util.formatMessage('error', `IP for server **${name}** is already set to **${value}**`));
+                return Util.send(message, 'error', `IP for server **${name}** is already set to **${value}**`, false);
             }
         } else {
             const validPassword = Validator.Server.isValidPassword(field);
 
             if (validPassword !== true) {
-                return message.channel.send(Util.formatMessage('error', validPassword.errorMessage));
+                return Util.send(message, 'error', validPassword.errorMessage);
             }
 
             if (server.password && server.password === value) {
-                return message.channel.send(Util.formatMessage('error', `Password for server **${name}** is already set to **${value}**`));
+                return Util.send(message, 'error', `Password for server **${name}** is already set to **${value}**`, false);
             }
         }
 
         await ServerModel.modifyServer(BigInt(message.guild.id), name, field, value);
-        message.channel.send(Util.formatMessage('success', `Modified server **${name}**, set **${field}** to **${value}**`));
+        Util.send(message, 'success', `Modified server **${name}**, set **${field}** to **${value}**`, false);
     }
 }
 

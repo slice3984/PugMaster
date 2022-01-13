@@ -22,19 +22,19 @@ const command: Command = {
         const isValid = await Validator.Mappool.isValidPool(BigInt(message.guild.id), name, false);
 
         if (isValid !== true) {
-            return message.channel.send(Util.formatMessage('error', isValid.errorMessage));
+            return Util.send(message, 'error', isValid.errorMessage);
         }
 
         const validMaps = [...new Set(Validator.Mappool.areValidMapNames(...maps))];
         if (validMaps.length === 0) {
-            return message.channel.send(Util.formatMessage('error', `${message.author}, no valid map names given, are the map names in a range of 1-45 chars?`));
+            return Util.send(message, 'error', 'no valid map names given, are the map names in a range of 1-45 chars?');
         }
 
         await MappoolModel.addMappool(BigInt(message.guild.id), name);
         await MappoolModel.addMapsToPool(BigInt(message.guild.id), name, ...validMaps);
 
         await bot.updateGuildApplicationCommand('mappool', message.guild);
-        message.channel.send(Util.formatMessage('success', `Created map pool **${name}** with the following maps: ${validMaps.map(map => `**${map}**`).join(', ')}`));
+        Util.send(message, 'success', `Created map pool **${name}** with the following maps: ${validMaps.map(map => `**${map}**`).join(', ')}`, false)
     }
 }
 

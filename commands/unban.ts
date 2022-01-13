@@ -31,13 +31,13 @@ const command: Command = {
         if (!player) {
             // Try banid
             if (!/\d+/.test(identifier)) {
-                return message.channel.send(Util.formatMessage('error', `${message.author}, invalid identifier, has to be **mention**, **user id** or **ban id**`));
+                return Util.send(message, 'error', 'invalid identifier, has to be **mention**, **user id** or **ban id**');
             }
 
             const isBanned = await PlayerModel.isPlayerBanned(BigInt(message.guild.id), +identifier);
 
             if (!isBanned) {
-                return message.channel.send(Util.formatMessage('error', `${message.author}, ban id not found`));
+                return Util.send(message, 'error', 'ban id not found');
             }
 
             await PlayerModel.unbanPlayer(BigInt(message.guild.id), +isBanned.id);
@@ -50,16 +50,17 @@ const command: Command = {
                 if (isListenChannel) {
                     const puChannel = await Util.getPickupChannel(message.guild);
                     if (puChannel) {
-                        puChannel.send(Util.formatMessage('success', `Revoked **${isBanned.player}'s** ban${issuer}`));
+                        Util.send(puChannel, 'success', `Revoked **${isBanned.player}'s** ban${issuer}`, false);
                     }
                 }
             }
-            return message.channel.send(Util.formatMessage('success', `Revoked **${isBanned.player}'s** ban${issuer}`));
+
+            return Util.send(message, 'success', `Revoked **${isBanned.player}'s** ban${issuer}`, false);
         } else {
             const isBanned = await PlayerModel.isPlayerBanned(BigInt(message.guild.id), BigInt(player.id));
 
             if (!isBanned) {
-                return message.channel.send(Util.formatMessage('error', `${message.author}, given player is not banned`));
+                return Util.send(message, 'error', 'given player is not banned');
             }
 
             await PlayerModel.unbanPlayer(BigInt(message.guild.id), +isBanned.id);
@@ -72,12 +73,12 @@ const command: Command = {
                 if (isListenChannel) {
                     const puChannel = await Util.getPickupChannel(message.guild);
                     if (puChannel) {
-                        puChannel.send(Util.formatMessage('success', `Revoked **${isBanned.player}'s** ban${issuer}`));
+                        Util.send(puChannel, 'success', `Revoked **${isBanned.player}'s** ban${issuer}`, false);
                     }
                 }
             }
 
-            message.channel.send(Util.formatMessage('success', `Revoked **${isBanned.player}'s** ban${issuer}`));
+            Util.send(message, 'success', `Revoked **${isBanned.player}'s** ban${issuer}`, false);
         }
     }
 }

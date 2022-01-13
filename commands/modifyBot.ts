@@ -23,13 +23,13 @@ const command: Command = {
             const errors = await bot.getGuild(message.guild.id).modifyProperty({ key, value });
 
             if (errors.length) {
-                return message.channel.send(Util.formatMessage('error', errors[0].errorMessage));
+                return Util.send(message, 'error', errors[0].errorMessage, false);
             }
 
-            message.channel.send(Util.formatMessage('success', `Updated property ${key}, set value to ${value}`));
+            Util.send(message, 'success', `Updated property ${key}, set value to ${value}`, false);
         } else {
             if (key !== 'show') {
-                return message.channel.send(Util.formatMessage('error', `${message.author}, invalid argument given, do you mean **show**?`));
+                return Util.send(message, 'error', 'invalid argument given, do you mean **show**?');
             }
 
             const settings = bot.getGuild(message.guild.id);
@@ -68,7 +68,7 @@ const command: Command = {
                 const param = params[1].toLowerCase();
 
                 if (!['start', 'sub', 'notify'].includes(param)) {
-                    return message.channel.send(Util.formatMessage('error', `${message.author}, invalid argument given, do you mean **start**, **sub** or **notify**?`))
+                    return Util.send(message, 'error', 'invalid argument given, do you mean **start**, **sub** or **notify**?');
                 }
 
                 let toDisplay = '';
@@ -81,7 +81,7 @@ const command: Command = {
 
                 infoString = `**${param} message**\n\`\`\`${toDisplay}\`\`\``;
 
-                message.channel.send(infoString);
+                Util.send(message, 'none', infoString, false);
             } else {
                 const settingsObj = {
                     'Prefix': settings.prefix,

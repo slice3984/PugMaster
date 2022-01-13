@@ -26,13 +26,13 @@ const command: Command = {
 
         if (!player) {
             if (!/\d+/.test(identifier)) {
-                return message.channel.send(Util.formatMessage('error', `${message.author}, invalid identifier, has to be **mention**, **user id** or **warn id**`));
+                return Util.send(message, 'error', 'invalid identifier, has to be **mention**, **user id** or **warn id**');
             }
 
             const isWarned = await PlayerModel.isPlayerWarned(BigInt(message.guild.id), +identifier);
 
             if (!isWarned) {
-                return message.channel.send(Util.formatMessage('error', `${message.author}, warn id not found`));
+                return Util.send(message, 'error', 'warn id not found');
             }
 
             nick = isWarned;
@@ -40,7 +40,7 @@ const command: Command = {
             const isWarned = await PlayerModel.isPlayerWarned(BigInt(message.guild.id), BigInt(player.id));
 
             if (!isWarned) {
-                return message.channel.send(Util.formatMessage('error', `${message.author}, given player is not warned`));
+                return Util.send(message, 'error', 'given player is not warned');
             }
             nick = isWarned;
         }
@@ -52,7 +52,7 @@ const command: Command = {
         // Remove all warns
         if (params.length >= 2) {
             if (params[1] !== 'all') {
-                return message.channel.send(Util.formatMessage('error', `${message.author}, invalid argument given, do you mean **all**?`));
+                return Util.send(message, 'error', 'invalid argument given, do you mean **all**?');
             }
 
             await PlayerModel.unwarnPlayer(BigInt(message.guild.id), id, true);
@@ -63,13 +63,15 @@ const command: Command = {
         }
 
         message.channel.send(Util.formatMessage('success', msg));
+        Util.send(message, 'success', msg, false);
+
         if (defaults[0] === 'true') {
             // Check if it got executed in the listen channel
             const isListenChannel = bot.getGuild(message.guild.id).channels.get(BigInt(message.channel.id)) === 'listen';
             if (isListenChannel) {
                 const puChannel = await Util.getPickupChannel(message.guild);
                 if (puChannel) {
-                    puChannel.send(Util.formatMessage('success', msg));
+                    Util.send(puChannel, 'success', msg, false);
                 }
             }
         }

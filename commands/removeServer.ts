@@ -20,7 +20,7 @@ const command: Command = {
 
 
         if (!validServers.length) {
-            return message.channel.send(Util.formatMessage('error', `${message.author}, given servers not found`));
+            return Util.send(message, 'error', 'given servers not found');
         }
 
         await ServerModel.removeServers(BigInt(message.guild.id), ...validServers.map(server => server.name));
@@ -34,8 +34,10 @@ const command: Command = {
         }
 
         bot.updateGuildApplicationCommand('server', message.guild);
-        message.channel.send(Util.formatMessage('success', `Removed server ${validServers.map(server => `**${server.name}**`).join(', ')}` +
-            (guildServer ? `\nCleared default server **${guildServer.name}**` : '')));
+
+        Util.send(message, 'success', `Removed server ${validServers.map(server => `**${server.name}**`).join(', ')}` +
+            (guildServer ? `\nCleared default server **${guildServer.name}**` : ''), false);
+
     }
 }
 

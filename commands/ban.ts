@@ -50,14 +50,14 @@ const command: Command = {
 
             if (reason) {
                 if (reason.length > 128) {
-                    return message.channel.send(Util.formatMessage('error', `${message.author}, max reason length is 128 chars`));
+                    return Util.send(message, 'error', 'max reason length is 128 chars');
                 }
             }
 
             if (isBannedAlready) {
                 // no date stored, perm ban
                 if (!isBannedAlready.ends_at) {
-                    return message.channel.send(Util.formatMessage('info', `${message.author}, **${isBannedAlready.player}** is already permbanned`));
+                    return Util.send(message, 'info', `**${isBannedAlready.player}** is already permbanned`);
                 } else {
                     PlayerModel.unbanPlayer(BigInt(message.guild.id), +isBannedAlready.id);
                     const timeDif = isBannedAlready.ends_at.getTime() - new Date().getTime();
@@ -81,11 +81,11 @@ const command: Command = {
                 if (isListenChannel) {
                     const puChannel = await Util.getPickupChannel(message.guild);
                     if (puChannel) {
-                        puChannel.send(Util.formatMessage('success', msg));
+                        Util.send(puChannel, 'success', msg, false);
                     }
                 }
             }
-            await message.channel.send(Util.formatMessage('success', msg));
+            await Util.send(message, 'success', msg, false);
             await PickupState.removePlayer(message.guild.id, player.id, null);
         } else {
             const regex = /^\s*(?<time>(?:\d+[mhdw]\s+)*\d+[mhdw])\s*(?<reason>.*?)$/g;
@@ -95,14 +95,14 @@ const command: Command = {
             const reason = match ? match.groups.reason : null;
 
             if (!timeStr) {
-                return message.channel.send(Util.formatMessage('error', `${message.author}, invalid time amount given`));
+                return Util.send(message, 'error', 'invalid time amount given');
             }
 
             const ms = Util.timeStringToTime(timeStr) * 60000;
 
             // 1h
             if (ms < (1000 * 60 * 60)) {
-                return message.channel.send(Util.formatMessage('error', `${message.author}, min ban time is **1 hour**`));
+                return Util.send(message, 'error', 'min ban time is **1 hour**');
             }
 
             let msg = '';
@@ -136,12 +136,12 @@ const command: Command = {
                 if (isListenChannel) {
                     const puChannel = await Util.getPickupChannel(message.guild);
                     if (puChannel) {
-                        puChannel.send(Util.formatMessage('success', msg));
+                        Util.send(puChannel, 'success', msg, false);
                     }
                 }
             }
 
-            await message.channel.send(Util.formatMessage('success', msg));
+            await Util.send(message, 'success', msg, false);
             await PickupState.removePlayer(message.guild.id, player.id, null);
         }
     }

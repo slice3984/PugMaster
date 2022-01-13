@@ -19,19 +19,19 @@ const command: Command = {
         const role = Util.getRole(message.guild, params[0]);
 
         if (!role) {
-            return message.channel.send(Util.formatMessage('error', 'Role not found'));
+            return Util.send(message, 'error', 'role not found');
         }
 
         if (!['add', 'remove', 'show'].includes(params[1].toLowerCase())) {
-            return message.channel.send(Util.formatMessage('error', `${message.author}, second argument has to be **add**, **remove** or **show**`));
+            return Util.send(message, 'error', 'second argument has to be **add**, **remove** or **show**');
         }
 
         if (params[1].toLowerCase() === 'show') {
             const permissions = await PermissionModel.getRoleCommandPermissions(BigInt(message.guild.id), BigInt(role.id));
             if (permissions.length === 0) {
-                return message.channel.send(Util.formatMessage('info', `There are no permissions set for role **${role.name}**`));
+                return Util.send(message, 'info', `There are no permissions set for role **${role.name}**`, false);
             } else {
-                return message.channel.send(Util.formatMessage('info', `Permissions for role **${role.name}**: ${permissions.map(perm => `**${perm}**`).join(', ')}`));
+                return Util.send(message, 'info', `Permissions for role **${role.name}**: ${permissions.map(perm => `**${perm}**`).join(', ')}`, false);
             }
         }
 
@@ -51,7 +51,7 @@ const command: Command = {
             && (command.includes('/') || bot.getCommand(command).perms));
 
         if (validCommands.length === 0) {
-            return message.channel.send(Util.formatMessage('error', `${message.author}, no valid command names given (Make sure the given commands require permissions)`));
+            return Util.send(message, 'error', 'no valid command names given (Make sure the given commands require permissions)');
         }
 
         const currPermissions = await PermissionModel.getRoleCommandPermissions(BigInt(message.guild.id), BigInt(role.id));
@@ -67,23 +67,23 @@ const command: Command = {
             // is the permission already set ?
             const permissionsToAdd = validCommands.filter(command => !currPermissions.includes(command));
             if (permissionsToAdd.length === 0) {
-                return message.channel.send(Util.formatMessage('error', 'Given commands are already set as role permissions'));
+                return Util.send(message, 'error', 'Given commands are already set as role permissions', false);
             }
 
             await PermissionModel.addGuildRoleCommandPermissions(BigInt(role.id), ...permissionsToAdd);
-            return message.channel.send(Util.formatMessage('success', `Added ${permissionsToAdd.length} permission${permissionsToAdd.length > 1 ? 's' : ''} (${permissionsToAdd.map(perm => `**${perm}**`).join(', ')}) to role **${role.name}**`));
+            return Util.send(message, 'success', `Added ${permissionsToAdd.length} permission${permissionsToAdd.length > 1 ? 's' : ''} (${permissionsToAdd.map(perm => `**${perm}**`).join(', ')}) to role **${role.name}**`);
         } else {
             if (currPermissions.length === 0) {
-                return message.channel.send(Util.formatMessage('error', `There are already no permissions set for role **${role.name}**`));
+                return Util.send(message, 'error', `There are already no permissions set for role **${role.name}**`, false);
             }
 
             const permissionsToRemove = validCommands.filter(command => currPermissions.includes(command));
             if (permissionsToRemove.length === 0) {
-                return message.channel.send(Util.formatMessage('error', `Given commands are not set for role **${role.name}**`));
+                return Util.send(message, 'error', `Given commands are not set for role **${role.name}**`, false);
             }
 
             await PermissionModel.removeGuildRoleCommandPermission(BigInt(role.id), ...permissionsToRemove);
-            return message.channel.send(Util.formatMessage('success', `Removed ${permissionsToRemove.length} permission${permissionsToRemove.length > 1 ? 's' : ''} (${permissionsToRemove.map(perm => `**${perm}**`).join(', ')}) of role **${role.name}**`));
+            return Util.send(message, 'success', `Removed ${permissionsToRemove.length} permission${permissionsToRemove.length > 1 ? 's' : ''} (${permissionsToRemove.map(perm => `**${perm}**`).join(', ')}) of role **${role.name}**`, false);
         }
     }
 }

@@ -32,26 +32,26 @@ const command: Command = {
         const addedPlayer = await Util.getUser(message.guild, params[0]) as Discord.GuildMember;
 
         if (!addedPlayer) {
-            return message.channel.send(Util.formatMessage('error', `${message.author}, given player to replace not found`));
+            return Util.send(message, 'error', 'given player to replace not found');
         }
 
         if (!playersInPickup.includes(addedPlayer.id)) {
-            return message.channel.send(Util.formatMessage('error', `${message.author}, given player to replace didn't participate in the latest rateable pickup`));
+            return Util.send(message, 'error', `given player to replace didn't participate in the latest rateable pickup`);
         }
 
         // Sub
         const subPlayer = await Util.getUser(message.guild, params[1]) as Discord.GuildMember;
 
         if (!subPlayer) {
-            return message.channel.send(Util.formatMessage('error', `${message.author}, given substitute player not found`));
+            return Util.send(message, 'error', 'given substitute player not found');
         }
 
         if (playersInPickup.includes(subPlayer.id)) {
-            return message.channel.send(Util.formatMessage('error', `${message.author}, given substitute player participated in the latest rateable pickup as well, not available as substitute`));
+            return Util.send(message, 'error', 'given substitute player participated in the latest rateable pickup as well, not available as substitute');
         }
 
         await StatsModel.replacePlayer(BigInt(message.guild.id), latestUnratedPickup.pickupId, BigInt(addedPlayer.id), BigInt(subPlayer.id));
-        message.channel.send(Util.formatMessage('success', `Set **${subPlayer.displayName}** as substitute for **${addedPlayer.displayName}** for pickup **#${latestUnratedPickup.pickupId}** - **${latestUnratedPickup.name}**`));
+        Util.send(message, 'success', `Set **${subPlayer.displayName}** as substitute for **${addedPlayer.displayName}** for pickup **#${latestUnratedPickup.pickupId}** - **${latestUnratedPickup.name}**`, false)
     }
 }
 

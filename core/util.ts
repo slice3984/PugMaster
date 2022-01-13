@@ -486,23 +486,30 @@ export default class Util {
         return rank;
     }
 
-    static send = async (input: Discord.Message | Discord.CommandInteraction,
-        type: 'success' | 'info' | 'warn' | 'error', message: string, includeAuthor = true) => {
+    static send = async (input: Discord.Message | Discord.CommandInteraction | Discord.TextChannel,
+        type: 'success' | 'info' | 'warn' | 'error' | 'none', message: string, includeAuthor = true) => {
 
         if (includeAuthor) {
             if (input instanceof Discord.Message) {
                 message = `${input.author}, ${message}`;
-            } else {
+            } else if (input instanceof Discord.CommandInteraction) {
                 message = `${input.member.toString()}, ${message}`;
             }
         }
+        let msg;
 
-        const msg = type ? Util.formatMessage(type, message) : message;
+        if (type === 'none') {
+            msg = message;
+        } else {
+            msg = type ? Util.formatMessage(type, message) : message;
+        }
 
         if (input instanceof Discord.Message) {
-            await input.channel.send(msg);
+            await input.channel.send({ content: msg, allowedMentions: { parse: [], users: [input.author.id] } });
+        } else if (input instanceof Discord.CommandInteraction) {
+            await input.reply({ content: msg, allowedMentions: { parse: [], users: [input.member.toString()] } });
         } else {
-            await input.reply(msg);
+            await input.send({ content: msg, allowedMentions: { parse: [] } });
         }
     }
 

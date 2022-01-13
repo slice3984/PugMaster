@@ -27,18 +27,18 @@ const command: Command = {
         // No bot channel set for this guild channel
         if (!currChannelType) {
             await GuildModel.createChannel(guildId, channelId, channelType);
-            message.channel.send(Util.formatMessage('success', `Configured channel **${(message.channel as Discord.TextChannel).name}** as **${channelType}** channel`));
+            Util.send(message, 'success', `Configured channel **${(message.channel as Discord.TextChannel).name}** as **${channelType}** channel`, false);
         } else {
             if (channelType === 'none') {
                 await GuildModel.removeChannel(guildId, channelId);
-                return message.channel.send(Util.formatMessage('success', `Deleted ${currChannelType} channel`));
+                return Util.send(message, 'success', `Deleted ${currChannelType} channel`, false);
             }
             if (currChannelType === channelType) {
-                return message.channel.send(Util.formatMessage('error', `This channel is already a **${currChannelType}** channel`));
+                return Util.send(message, 'error', `This channel is already a **${currChannelType}** channel`, false);
             }
 
             await GuildModel.updateChannel(guildId, channelId, channelType);
-            return message.channel.send(Util.formatMessage('success', `Channel updated, channel type is **${channelType}** instead of **${currChannelType}** now`));
+            return Util.send(message, 'success', `Channel updated, channel type is **${channelType}** instead of **${currChannelType}** now`, false);
         }
     }
 }

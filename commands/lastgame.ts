@@ -108,11 +108,7 @@ const command: Command = {
                 const nicks = await PlayerModel.getPlayer(BigInt(guild.id), identifier);
 
                 if (!nicks) {
-                    if (interaction) {
-                        return Util.send(interaction, 'info', 'Given player is not stored', false);
-                    } else {
-                        return message.channel.send(Util.formatMessage('info', `Player **${identifier}** not found`));
-                    }
+                    return Util.send(interaction ? interaction : message, 'info', `Player **${identifier}** not found`);
                 }
 
                 if (nicks.players.length > 1) {

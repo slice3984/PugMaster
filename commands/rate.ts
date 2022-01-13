@@ -19,13 +19,13 @@ const command: Command = {
     perms: true,
     exec: async (bot, message, params) => {
         if (!/^\d+$/.test(params[0])) {
-            return message.channel.send(Util.formatMessage('error', `${message.author}, pickup id has to be a number`));
+            return Util.send(message, 'error', 'pickup id has to be a number');
         }
 
         const rateablePickup = await PickupModel.getStoredRateEnabledPickup(BigInt(message.guild.id), +params[0]);
 
         if (!rateablePickup) {
-            return message.channel.send(Util.formatMessage('error', `${message.author}, no rateable or rated pickup found with id **${params[0]}**`));
+            return Util.send(message, 'error', `no rateable or rated pickup found with id **${params[0]}**`);
         }
 
         const givenRatings: { team: string; outcome: string }[] = [];
@@ -119,15 +119,13 @@ const command: Command = {
         });
 
         if (validRatings.length !== rateablePickup.teams.length) {
-            return message.reply(
-                Util.formatMessage('error',
-                    'Invalid ratings provided\n' +
-                    `${winWithDraw ? '- Ratings with a draw can\'t contain wins\n' : ''}` +
-                    `${missingDraw ? '- There have to be at least two draw reports\n' : ''}` +
-                    `${multipleWins ? '- Only one win report allowed\n' : ''}` +
-                    `${missingWin ? '- There has to be at least one win if no draws given' : ''}`
-                )
-            );
+            return Util.send(message, 'none',
+                'Invalid ratings provided\n' +
+                `${winWithDraw ? '- Ratings with a draw can\'t contain wins\n' : ''}` +
+                `${missingDraw ? '- There have to be at least two draw reports\n' : ''}` +
+                `${multipleWins ? '- Only one win report allowed\n' : ''}` +
+                `${missingWin ? '- There has to be at least one win if no draws given' : ''}`
+                , false);
         }
 
         // Make sure the ratings differ from the current ones
@@ -143,7 +141,7 @@ const command: Command = {
             }
 
             if (!diffRatings) {
-                return message.channel.send(Util.formatMessage('error', `The given ratings are equal to the current ratings of **#${params[0]}** - **${rateablePickup.name}**`));
+                return Util.send(message, 'error', `The given ratings are equal to the current ratings of **#${params[0]}** - **${rateablePickup.name}**`, false);
             }
         }
 
@@ -159,6 +157,7 @@ const command: Command = {
             message.channel.send({ embeds: [toSend] });
         } else {
             message.channel.send(toSend);
+            Util.send(message, 'none', toSend, false);
         }
     }
 }

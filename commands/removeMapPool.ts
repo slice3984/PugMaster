@@ -26,12 +26,12 @@ const command: Command = {
         }
 
         if (!validPools.length) {
-            return message.channel.send(Util.formatMessage('error', `${message.author}, given pools not found`));
+            return Util.send(message, 'error', 'given pools not found');
         }
 
         await MappoolModel.removeMapPools(BigInt(message.guild.id), ...validPools);
         await bot.updateGuildApplicationCommand('mappool', message.guild);
-        message.channel.send(Util.formatMessage('success', `Removed map pool ${validPools.map(pool => `**${pool}**`).join(', ')}`));
+        return Util.send(message, 'success', `Removed map pool ${validPools.map(pool => `**${pool}**`).join(', ')}`, false);
     }
 
 }

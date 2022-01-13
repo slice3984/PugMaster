@@ -27,7 +27,7 @@ const command: Command = {
         const player = await Util.getUser(message.guild, playerIdentifier) as GuildMember;
 
         if (!player) {
-            return message.channel.send(Util.formatMessage('error', `${message.author}, given player not found`));
+            return Util.send(message, 'error', 'given player not found');
         }
 
         await PlayerModel.storeOrUpdatePlayer(BigInt(message.guild.id), BigInt(player.id), player.displayName);
@@ -40,7 +40,7 @@ const command: Command = {
 
             if (reason) {
                 if (reason.length > 128) {
-                    return message.channel.send(Util.formatMessage('error', `${message.author}, max reason length is 128 chars`));
+                    return Util.send(message, 'error', 'max reason length is 128 chars');
                 }
             }
 
@@ -95,19 +95,19 @@ const command: Command = {
                 if (isListenChannel) {
                     const puChannel = await Util.getPickupChannel(message.guild);
                     if (puChannel) {
-                        await puChannel.send(msg);
+                        await Util.send(puChannel, 'none', msg, false);
                     }
                 }
             }
 
-            await message.channel.send(msg);
+            await Util.send(message, 'none', msg, false);
             PickupState.removePlayer(message.guild.id, player.id, null);
         } else {
             const reason = params.slice(1).join(' ');
 
             if (reason) {
                 if (reason.length > 128) {
-                    return message.channel.send(Util.formatMessage('error', `${message.author}, max reason length is 128 chars`));
+                    return Util.send(message, 'error', 'max reason length is 128 chars');
                 }
             }
 
@@ -121,12 +121,12 @@ const command: Command = {
                 if (isListenChannel) {
                     const puChannel = await Util.getPickupChannel(message.guild);
                     if (puChannel) {
-                        puChannel.send(Util.formatMessage('success', msg));
+                        Util.send(puChannel, 'success', msg, false);
                     }
                 }
             }
 
-            await message.channel.send(Util.formatMessage('success', msg));
+            Util.send(message, 'success', msg, false);
         }
     }
 }

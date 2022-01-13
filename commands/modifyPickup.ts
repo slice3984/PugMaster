@@ -42,7 +42,7 @@ const command: Command = {
         } else if (params.length >= 2) {
             key = params[1].toLowerCase();
         } else {
-            return message.channel.send(Util.formatMessage('error', `${message.author}, invalid argument given, do you mean **list**?`))
+            return Util.send(message, 'error', 'invalid argument given, do you mean **list**?')
         }
 
         if (params.length > 2) {
@@ -56,19 +56,19 @@ const command: Command = {
             const keyisValid = Validator.Pickup.areValidKeys(key);
 
             if (keyisValid.length) {
-                return message.channel.send(Util.formatMessage('error', `Unknown property **${key}**`));
+                return Util.send(message, 'error', `Unknown property **${key}**`, false);
             }
 
             const isValidPickup = await PickupModel.areValidPickups(BigInt(message.guild.id), false, pickupOrOperation);
 
             if (!isValidPickup.length) {
-                return message.channel.send(Util.formatMessage('error', `Unknown pickup provided`));
+                return Util.send(message, 'error', 'unknown pickup provided');
             }
 
             // Clear value if possible
             if (value === 'none') {
                 if (['name', 'enabled', 'players', 'teams', 'default', 'rated', 'afkcheck', 'mapvote', 'pickmode', 'captain_selection'].includes(key)) {
-                    return message.channel.send(Util.formatMessage('error', `Property **${key}** can't be disabled`));
+                    return Util.send(message, 'error', `Property **${key}** can't be disabled`, false);
                 }
 
                 await PickupModel.modifyPickup(BigInt(message.guild.id), pickupOrOperation, dbColumn, null);
@@ -87,13 +87,13 @@ const command: Command = {
                     await bot.updateGuildApplicationCommand('unsubscribe', message.guild);
                 }
 
-                return message.channel.send(Util.formatMessage('success', `Disabled property **${key}** for pickup **${pickupOrOperation}**, using server default if set`));
+                return Util.send(message, 'success', `Disabled property **${key}** for pickup **${pickupOrOperation}**, using server default if set`, false);
             }
 
             const error = await Validator.Pickup.validate(message.guild, pickupOrOperation, { key, value });
 
             if (error.length) {
-                return message.channel.send(Util.formatMessage('error', error[0].errorMessage));
+                return Util.send(message, 'error', error[0].errorMessage, false);
             }
 
             const pickupSettings = await PickupModel.getPickupSettings(BigInt(message.guild.id), pickupOrOperation);
@@ -105,7 +105,7 @@ const command: Command = {
                 const oldRole = currentValue ? Util.getRole(message.guild, currentValue) : null;
 
                 if (oldRole && oldRole.id === newRole.id) {
-                    return message.reply(Util.formatMessage('info', `Property **${key}** is already set to **${oldRole.name}** for pickup **${pickupOrOperation}**`));
+                    return Util.send(message, 'info', `Property **${key}** is already set to **${oldRole.name}** for pickup **${pickupOrOperation}**`, false);
                 }
 
                 await PickupModel.modifyPickup(BigInt(message.guild.id), pickupOrOperation, dbColumn, newRole.id);
@@ -117,28 +117,29 @@ const command: Command = {
                     await bot.updateGuildApplicationCommand('unsubscribe', message.guild);
                 }
 
-                message.channel.send(Util.formatMessage('success', `Updated pickup **${pickupOrOperation}**, set **${key}** to **${newRole.name}**`));
+                Util.send(message, 'success', `Updated pickup **${pickupOrOperation}**, set **${key}** to **${newRole.name}**`, false);
             } else if (key === 'mappool') {
                 const poolId = await (await MappoolModel.getPools(BigInt(message.guild.id), value))[0].id;
 
                 if (currentValue && currentValue === poolId) {
-                    return message.channel.send(Util.formatMessage('info', `Map pool is already set to **${value}** for pickup **${pickupOrOperation}**`));
+                    return Util.send(message, 'info', `Map pool is already set to **${value}** for pickup **${pickupOrOperation}**`, false);
                 }
 
                 await PickupModel.modifyPickup(BigInt(message.guild.id), pickupOrOperation, dbColumn, poolId);
-                message.reply(Util.formatMessage('success', `Updated pickup **${pickupOrOperation}**, set map pool to **${value}**`));
+                Util.send(message, 'success', `Updated pickup **${pickupOrOperation}**, set map pool to **${value}**`, false);
             } else if (key === 'server') {
                 const serverId = await ServerModel.getServerIds(BigInt(message.guild.id), value);
 
                 if (currentValue && currentValue === serverId[0]) {
-                    return message.channel.send(Util.formatMessage('info', `Server is already set to **${value}** for pickup **${pickupOrOperation}**`));
+                    return Util.send(message, 'info', `Server is already set to **${value}** for pickup **${pickupOrOperation}**`, false);
                 }
 
                 await PickupModel.modifyPickup(BigInt(message.guild.id), pickupOrOperation, dbColumn, serverId[0]);
-                message.channel.send(Util.formatMessage('success', `Updated pickup **${pickupOrOperation}**, set server to **${value}**`));
+                Util.send(message, 'success', `Updated pickup **${pickupOrOperation}**, set server to **${value}**`, false);
             } else {
                 if (currentValue && currentValue.toString() === value) {
-                    return message.channel.send(Util.formatMessage('info', `Property **${key}** is already set to **${value}** for pickup **${pickupOrOperation}**`));
+                    return Util.send(message, 'info', `Property **${key}** is already set to **${value}** for pickup **${pickupOrOperation}**`, false);
+
                 }
 
                 await PickupModel.modifyPickup(BigInt(message.guild.id), pickupOrOperation, dbColumn, value);
@@ -153,17 +154,17 @@ const command: Command = {
                     await bot.updateGuildApplicationCommand('leaderboard', message.guild);
                 }
 
-                message.channel.send(Util.formatMessage('success', `Updated pickup **${pickupOrOperation}**, set **${key}** to **${value}**`));
+                Util.send(message, 'success', `Updated pickup **${pickupOrOperation}**, set **${key}** to **${value}**`, false);
             }
         } else {
             if (key !== 'show') {
-                return message.channel.send(Util.formatMessage('error', `${message.author}, invalid argument given, do you mean **show**?`));
+                return Util.send(message, 'error', 'invalid argument given, do you mean **show**?');
             }
 
             const isValidPickup = await Validator.Pickup.isValidPickup(BigInt(message.guild.id), pickupOrOperation);
 
             if (!isValidPickup) {
-                return message.channel.send(Util.formatMessage('error', `${message.author}, pickup **${pickupOrOperation}** not found`));
+                return Util.send(message, 'error', `pickup **${pickupOrOperation}** not found`);
             }
 
             const config = ConfigTool.getConfig();

@@ -86,7 +86,7 @@ const command: Command = {
         // Replace player in stored pickups
         await StatsModel.replacePlayer(BigInt(guild.id), latestUnratedPickup.pickupId, BigInt(member.id), BigInt(player.id));
 
-        await Util.send(message ? message : interaction, 'success', `Accepted sub request from ${player.displayName}, stored <@${player.id}> as substitute of <@${member.id}>`);
+        await Util.send(message ? message : interaction, 'success', `Accepted sub request from ${player.displayName}, stored <@${player.id}> as substitute of <@${member.id}>`, false);
     }
 }
 

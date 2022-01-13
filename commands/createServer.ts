@@ -36,7 +36,7 @@ const command: Command = {
             const validPassword = Validator.Server.isValidPassword(params[2]);
 
             if (validPassword !== true) {
-                return message.channel.send(Util.formatMessage('error', validPassword.errorMessage));
+                return Util.send(message, 'error', validPassword.errorMessage);
             }
 
             await ServerModel.addServer(BigInt(message.guild.id), name, ip, params[2]);
@@ -45,7 +45,7 @@ const command: Command = {
         }
 
         bot.updateGuildApplicationCommand('server', message.guild);
-        message.channel.send(Util.formatMessage('success', `Created server **${name}**`));
+        Util.send(message, 'success', `Created server **${name}**`, false);
     }
 }
 

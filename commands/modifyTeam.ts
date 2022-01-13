@@ -76,11 +76,11 @@ const command: Command = {
         }
 
         if (!validTeams.length) {
-            return message.channel.send(Util.formatMessage('error', `Make sure team names are unique and less than 31 chars long`));
+            return Util.send(message, 'error', `Make sure team names are unique and less than 31 chars long`, false);
         }
 
         await TeamModel.modifyTeams(BigInt(message.guild.id), validTeams);
-        message.channel.send(Util.formatMessage('success', `Team names modified: ${validTeams.map(t => `**${t.teamId} => ${t.newName}**`).join(', ')}`));
+        Util.send(message, 'success', `Team names modified: ${validTeams.map(t => `**${t.teamId} => ${t.newName}**`).join(', ')}`, false);
     }
 }
 

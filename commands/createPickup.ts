@@ -47,7 +47,7 @@ const command: Command = {
         }
 
         if (validPickups.length === 0) {
-            return message.channel.send(Util.formatMessage('error', `Invalid syntax, no pickups created`));
+            return Util.send(message, 'error', 'invalid syntax, no pickups created');
         }
 
         let alreadyStored = await PickupModel.areValidPickups(BigInt(message.guild.id), false, ...validPickups
@@ -58,7 +58,7 @@ const command: Command = {
         validPickups = validPickups.filter(pickup => !alreadyStoredNames.includes(pickup.name));
 
         if (validPickups.length === 0) {
-            return message.channel.send(Util.formatMessage('error', 'Valid given pickups are already stored'));
+            return Util.send(message, 'error', 'valid given pickups are already stored');
         }
 
         const pickups = await PickupModel.getAllPickups(BigInt(message.guild.id), true);
@@ -66,13 +66,13 @@ const command: Command = {
         const exceededBy = (pickups.length + validPickups.length) - 50;
 
         if (exceededBy > 0) {
-            return message.channel.send(Util.formatMessage('error', `Exceeding the maximum stored pickup capacity of **50** by **${exceededBy}**, remove pickups to create more`));
+            return Util.send(message, 'error', `Exceeding the maximum stored pickup capacity of **50** by **${exceededBy}**, remove pickups to create more`, false);
         }
 
         const exceededByActive = (pickups.filter(p => p.enabled).length + validPickups.length) - 20;
 
         if (exceededByActive > 0) {
-            return message.channel.send(Util.formatMessage('error', `Exceeding the maximum capacity of enabled pickups of **20** by **${exceededByActive}**, disable pickups to create more`));
+            return Util.send(message, 'error', `Exceeding the maximum capacity of enabled pickups of **20** by **${exceededByActive}**, disable pickups to create more`, false);
         }
 
         await PickupModel.createPickups(BigInt(message.guild.id), ...validPickups);
@@ -80,7 +80,7 @@ const command: Command = {
         // Update application commands
         await bot.updatePickupDependentApplicationCommands(message.guild);
 
-        message.channel.send(Util.formatMessage('success', `Created **${validPickups.length}** pickup${validPickups.length > 1 ? 's' : ''} (${validPickups.map(pickup => `**${pickup.name}**`).join(', ')})`));
+        Util.send(message, 'success', `Created **${validPickups.length}** pickup${validPickups.length > 1 ? 's' : ''} (${validPickups.map(pickup => `**${pickup.name}**`).join(', ')})`, false);
     }
 };
 
