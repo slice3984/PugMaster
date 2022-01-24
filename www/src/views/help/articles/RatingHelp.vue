@@ -38,12 +38,11 @@
           commands.
         </p>
         <p>Rating or rerating can be done with the rate command, example:</p>
-        <command-code>!rate 231 A:W B:L</command-code>
+        <command-code>!rate 231</command-code>
         <p>
-          Rates or rerates the pickup with the id 231 and reports a win for Team
-          A and a loss for team B.
+          Shows a embed to report the outcomes of the pickup with id 231 and rates / rerates it afterwards. It is possible to omit
+          the pickup id in case you want to rate / rerate the latest rateable match.
         </p>
-        <p>Possible outcomes are W - Win, D - Draw, L - Loss.</p>
         <p>Using the unrate command it is also possible to unrate a pickup:</p>
         <command-code>!unrate 231 </command-code>
         <p>

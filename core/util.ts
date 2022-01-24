@@ -507,7 +507,7 @@ export default class Util {
         if (input instanceof Discord.Message) {
             await input.channel.send({ content: msg, allowedMentions: { parse: [], users: [input.author.id] } });
         } else if (input instanceof Discord.CommandInteraction) {
-            await input.reply({ content: msg, allowedMentions: { parse: [], users: [input.member.toString()] } });
+            await input.reply({ content: msg, allowedMentions: { parse: [], users: [input.member.user.id] } });
         } else {
             await input.send({ content: msg, allowedMentions: { parse: [] } });
         }

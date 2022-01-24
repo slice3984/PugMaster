@@ -580,7 +580,6 @@ export default class PickupModel {
             await this.setPendings(conn, guildId, 'fill', ...pickupConfigIds);
         });
     }
-
     static async getLatestStoredRateEnabledPickup(guildId: bigint, playerId?: bigint, puId?: number): Promise<RateablePickup | null> {
         let data: any;
 

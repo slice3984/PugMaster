@@ -103,7 +103,7 @@ const afkCheckStage = async (guild: Discord.Guild, pickupConfigId: number, first
             pickupChannel.send(
                 `**${pendingPickup.name}** is about to start\n` +
                 (readyPlayers.length ? `Ready players: ${readyPlayers.map(player => `\`${player.displayName}\``).join(', ')}\n` : '') +
-                `Please ${guildSettings.prefix}ready up: ${afkPlayers.join(', ')}\n` +
+                `Please send a message to ready up: ${afkPlayers.join(', ')}\n` +
                 `**${timeLeft}** left until the pickup gets aborted.`
             );
         }
