@@ -553,13 +553,18 @@ export default class Util {
 
         if (isLocked) {
             promise = new Promise(resolve => {
+                let count = 0;
                 const interval = setInterval(() => {
                     const isLocked = guildSettings.locks.has(name);
 
-                    if (!isLocked) {
+                    // Unlock in case it's still locked after 10 seconds
+                    // Can happen in case of exceptions (Discord API outage)
+                    if (!isLocked || count === 100) {
                         resolve(true);
                         clearInterval(interval);
                     }
+
+                    count++;
                 }, updateFrequencyInMs);
             });
         }
