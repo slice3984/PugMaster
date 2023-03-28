@@ -109,7 +109,7 @@ export const createTables = () => new Promise(async (res, _req) => {
         REFERENCES guilds (guild_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE)
-        ENGINE = InnoDB
+        ENGINE = InnoDB;
         `,
     `
     CREATE TABLE IF NOT EXISTS guild_command_settings (
