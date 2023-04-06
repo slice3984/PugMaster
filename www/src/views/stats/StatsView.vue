@@ -8,22 +8,26 @@
           </div>
         </div>
       </div>
+
       <nav>
         <ul>
           <li>
             <base-link :to="{ name: 'overview' }">Overview</base-link>
           </li>
+
           <li>
             <base-link :to="{ name: 'pickups' }">Pickup history</base-link>
           </li>
+
           <li>
             <base-link
               :to="{ name: 'player-search' }"
               :class="{
                 'router-link-active': $route.path.includes('/player'),
               }"
-              >Player stats</base-link
             >
+              Player stats
+            </base-link>
           </li>
         </ul>
       </nav>
@@ -42,7 +46,6 @@ import { rootKey } from "@/store/types";
 import { useStore } from "vuex";
 import { computed, defineComponent, onUpdated, ref } from "vue";
 import { useRouter } from "vue-router";
-
 export default defineComponent({
   props: {
     guildId: {
@@ -54,19 +57,15 @@ export default defineComponent({
     const router = useRouter();
     const fullPath = ref(router.currentRoute.value.fullPath);
     const store = useStore(rootKey);
-
     const basicGuildInfo = computed(() =>
       store.getters["stats/getBasicGuildInfo"](props.guildId)
     );
-
     if (router.currentRoute.value.name === "stats-view") {
-      router.replace({ name: "overview" });
+      router.replace({
+        name: "overview",
+      });
     }
-
-    return {
-      basicGuildInfo,
-      fullPath,
-    };
+    return { basicGuildInfo, fullPath };
   },
 });
 </script>
@@ -114,3 +113,4 @@ nav {
   }
 }
 </style>
+

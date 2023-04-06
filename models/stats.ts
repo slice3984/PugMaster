@@ -353,6 +353,7 @@ export default class StatsModel {
                 intervalTime = 'YEAR';
         }
 
+        // https://github.com/sidorares/node-mysql2/issues/1239
         if (period === 'alltime') {
             results = await db.execute(`
             SELECT p.current_nick, COUNT(pp.player_id) as amount FROM pickup_players pp
@@ -362,7 +363,7 @@ export default class StatsModel {
             WHERE p.guild_id = ? AND pc.is_enabled = 1
             GROUP BY pp.player_id ORDER BY amount DESC
             LIMIT ?
-            `, [guildId, limit]);
+            `, [guildId, limit + ""]);
         } else {
             results = await db.execute(`
             SELECT p.current_nick, COUNT(pp.player_id) as amount FROM pickup_players pp
@@ -372,7 +373,7 @@ export default class StatsModel {
             WHERE p.guild_id = ? AND ((NOW() - INTERVAL 1 ${intervalTime})  < ps.started_at) AND pc.is_enabled = 1
             GROUP BY pp.player_id ORDER BY amount DESC
             LIMIT ?
-            `, [guildId, limit]);
+            `, [guildId, limit + ""]);
         }
 
         const top = [];
@@ -843,7 +844,7 @@ export default class StatsModel {
             GROUP BY pp.player_id
             ORDER BY amount DESC
             LIMIT ?
-            `, [guildId, period, limit]);
+            `, [guildId, period, limit + ""]);
 
         } else {
             data = await db.execute(`
@@ -855,7 +856,7 @@ export default class StatsModel {
             GROUP BY pp.player_id
             ORDER BY amount DESC
             LIMIT ?
-            `, [guildId, period, pickup, limit])
+            `, [guildId, period, pickup, limit + ""])
         }
 
         data[0].forEach(row => {
