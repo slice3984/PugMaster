@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionData } from 'discord.js';
+import { ApplicationCommandOptionData, ApplicationCommandOptionType } from 'discord.js';
 import { Command } from '../core/types';
 import Util from '../core/util';
 import ServerModel from '../models/server';
@@ -12,17 +12,17 @@ const command: Command = {
                 {
                     name: 'all',
                     description: 'Show all stored servers',
-                    type: 'SUB_COMMAND'
+                    type: ApplicationCommandOptionType.Subcommand
                 },
                 {
                     name: 'server',
                     description: 'Show the server IP & Password of a given server',
-                    type: 'SUB_COMMAND',
+                    type: ApplicationCommandOptionType.Subcommand,
                     options: [
                         {
                             name: 'server',
                             description: 'Server to get info for',
-                            type: 'STRING',
+                            type: ApplicationCommandOptionType.String,
                             required: true,
                             choices: []
                         }

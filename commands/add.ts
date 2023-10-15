@@ -3,7 +3,7 @@ import Util from '../core/util';
 import PickupModel from '../models/pickup';
 import PlayerModel from '../models/player';
 import PickupState from '../core/pickupState';
-import { ApplicationCommandOptionData, GuildMember, Snowflake } from 'discord.js';
+import { ApplicationCommandOptionData, ApplicationCommandOptionType, GuildMember, Snowflake } from 'discord.js';
 import Bot from '../core/bot';
 
 const command: Command = {
@@ -15,7 +15,7 @@ const command: Command = {
                 {
                     name: 'pickup',
                     description: 'Pickup to add to',
-                    type: 'STRING',
+                    type: ApplicationCommandOptionType.String,
                     choices: []
                 }
             ];

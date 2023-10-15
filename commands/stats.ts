@@ -3,7 +3,7 @@ import StatsModel from '../models/stats';
 import PlayerModel from '../models/player';
 import Util from '../core/util';
 import Bot from '../core/bot';
-import { ApplicationCommandOptionData } from 'discord.js';
+import { ApplicationCommandOptionData, ApplicationCommandOptionType } from 'discord.js';
 
 const command: Command = {
     cmd: 'stats',
@@ -14,17 +14,17 @@ const command: Command = {
                 {
                     name: 'all',
                     description: 'Stats for all pickups in general',
-                    type: 'SUB_COMMAND'
+                    type: ApplicationCommandOptionType.Subcommand
                 },
                 {
                     name: 'pickup',
                     description: 'Stats for a given pickup',
-                    type: 'SUB_COMMAND',
+                    type: ApplicationCommandOptionType.Subcommand,
                     options: [
                         {
                             name: 'pickup',
                             description: 'Pickup to get stats for',
-                            type: 'STRING',
+                            type: ApplicationCommandOptionType.String,
                             required: true,
                             choices: []
                         }
@@ -33,13 +33,13 @@ const command: Command = {
                 {
                     name: 'player',
                     description: 'Stats for a given player',
-                    type: 'SUB_COMMAND',
+                    type: ApplicationCommandOptionType.Subcommand,
                     options: [
                         {
                             name: 'player',
                             description: 'Player to get stats for',
                             required: true,
-                            type: 'USER'
+                            type: ApplicationCommandOptionType.User
                         }
                     ]
                 }

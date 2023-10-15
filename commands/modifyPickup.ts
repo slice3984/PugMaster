@@ -30,7 +30,7 @@ const command: Command = {
             const enabledPickups = pickups.filter(p => p.enabled);
             const disabledPickups = pickups.filter(p => !p.enabled);
 
-            const pickupsCardEmbed = new Discord.MessageEmbed()
+            const pickupsCardEmbed = new Discord.EmbedBuilder()
                 .setColor('#126e82')
                 .setTitle('Enabled and disabled server pickups')
                 .addFields(
@@ -201,7 +201,7 @@ const command: Command = {
 
             const botAvatarUrl = message.guild.client.user.avatarURL();
 
-            const settingsEmbed = new Discord.MessageEmbed()
+            const settingsEmbed = new Discord.EmbedBuilder()
                 .setColor('#126e82')
                 .setTitle(`:gear: Pickup settings - ${settings.name}`)
                 .addFields(
@@ -216,7 +216,7 @@ const command: Command = {
                         inline: true
                     }
                 )
-                .setFooter(`${config.webserver.domain}/help/pickupvariables`, botAvatarUrl);
+                .setFooter({ text: `${config.webserver.domain}/help/pickupvariables`, iconURL: botAvatarUrl});
 
             message.channel.send({ embeds: [settingsEmbed] });
         }

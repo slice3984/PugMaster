@@ -1,4 +1,4 @@
-import Discord, { ButtonInteraction, InteractionCollector, Message, MessageActionRow, MessageButton, MessageComponentInteraction, MessageOptions } from 'discord.js';
+import Discord, { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, Embed, InteractionCollector, Message } from 'discord.js';
 import * as progressBar from 'string-progressbar';
 import GuildModel from '../../models/guild';
 import MappoolModel from '../../models/mappool';
@@ -19,7 +19,7 @@ export const mapVote = async (guild: Discord.Guild, config: PickupStartConfigura
     const iterationTime = guildSettings.iterationTime;
     const iterations = guildSettings.mapvoteIterations;
     let iterationCount = 0;
-    let collector: InteractionCollector<MessageComponentInteraction>;
+    let collector: InteractionCollector<any>;
     let currentMessage: Message;
     let modifiedVotes = false;
     let results: Map<string, number> = new Map();
@@ -49,7 +49,7 @@ export const mapVote = async (guild: Discord.Guild, config: PickupStartConfigura
         unvoted.set(map, []);
     });
 
-    const generateVoteMessage = (): MessageOptions => {
+    const generateVoteMessage = (): any => {
         // Message part
         const parts: string[] = [];
 
@@ -65,15 +65,15 @@ export const mapVote = async (guild: Discord.Guild, config: PickupStartConfigura
         parts.push('**You can only vote and unvote once per map.**');
 
         // Vote buttons
-        const row = new MessageActionRow();
+        const row = new ActionRowBuilder();
 
         const buttons = [];
         voteMaps.forEach(map => {
             buttons.push(
-                new MessageButton()
+                new ButtonBuilder()
                     .setCustomId(map)
                     .setLabel(map)
-                    .setStyle('SUCCESS')
+                    .setStyle(ButtonStyle.Success)
             )
         });
 
@@ -125,16 +125,16 @@ export const mapVote = async (guild: Discord.Guild, config: PickupStartConfigura
         // Clear previous vote message
         await removeMessage();
 
-        let voteMessage: MessageOptions;
-        const row = new MessageActionRow();
+        let voteMessage: any;
+        const row = new ActionRowBuilder();
 
         const buttons = [];
         voteMaps.forEach(map => {
             buttons.push(
-                new MessageButton()
+                new ButtonBuilder()
                     .setCustomId(map)
                     .setLabel(map)
-                    .setStyle('SUCCESS')
+                    .setStyle(ButtonStyle.Success)
             )
         });
 
@@ -147,7 +147,7 @@ export const mapVote = async (guild: Discord.Guild, config: PickupStartConfigura
         collector = currentMessage.createMessageComponentCollector();
 
         // Handle votes
-        collector.on('collect', async (i: ButtonInteraction) => {
+        collector.on('collect', async i => {
 
             if (!players.includes(i.user.id)) {
                 return await i.deferUpdate();

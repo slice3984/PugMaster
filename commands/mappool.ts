@@ -2,7 +2,7 @@ import { Command, ValidationError } from '../core/types';
 import MappoolModel from '../models/mappool';
 import { Validator } from '../core/validator';
 import Util from '../core/util';
-import { ApplicationCommandOptionData } from 'discord.js';
+import { ApplicationCommandOptionData, ApplicationCommandOptionType } from 'discord.js';
 
 const command: Command = {
     cmd: 'mappool',
@@ -13,7 +13,7 @@ const command: Command = {
                 {
                     name: 'pool',
                     description: 'Map pool to show maps of',
-                    type: 'STRING',
+                    type: ApplicationCommandOptionType.String,
                     choices: []
                 }
             ]

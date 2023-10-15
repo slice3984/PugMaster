@@ -32,7 +32,7 @@ export default ((req: express.Request, res: express.Response) => {
             info.push({
                 id: guild.id,
                 name: guild.name,
-                icon: guild.iconURL({ format: 'png' })
+                icon: guild.iconURL({ extension: 'png' })
             })
         }
 

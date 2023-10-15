@@ -1,4 +1,4 @@
-import { GuildMember } from 'discord.js';
+import { ApplicationCommandOptionType, GuildMember } from 'discord.js';
 import { Command } from '../core/types';
 import Util from '../core/util';
 import PlayerModel from '../models/player';
@@ -13,12 +13,12 @@ const command: Command = {
                 {
                     name: 'status',
                     description: 'Shows if your notify is enabled or disabled',
-                    type: 'SUB_COMMAND',
+                    type: ApplicationCommandOptionType.Subcommand
                 },
                 {
                     name: 'toggle',
                     description: 'Toggles your notify, enables or disables it',
-                    type: 'SUB_COMMAND'
+                    type: ApplicationCommandOptionType.Subcommand
                 }
             ]
         }

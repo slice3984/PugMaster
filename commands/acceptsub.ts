@@ -1,4 +1,4 @@
-import Discord, { GuildMember } from 'discord.js';
+import Discord, { ApplicationCommandOptionType, GuildMember } from 'discord.js';
 import { Command } from '../core/types';
 import Util from '../core/util';
 import GuildModel from '../models/guild';
@@ -13,9 +13,10 @@ const command: Command = {
         getOptions: () => {
             return [
                 {
+
                     name: 'player',
                     description: 'Player who requested you to sub',
-                    type: 'USER',
+                    type: ApplicationCommandOptionType.User,
                     required: true
                 }
             ]

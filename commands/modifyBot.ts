@@ -121,7 +121,7 @@ const command: Command = {
 
                 const botAvatarUrl = message.guild.client.user.avatarURL();
 
-                const settingsEmbed = new Discord.MessageEmbed()
+                const settingsEmbed = new Discord.EmbedBuilder()
                     .setColor('#126e82')
                     .setTitle(`:gear: Bot settings - ${message.guild.name}`)
                     .addFields(
@@ -136,7 +136,7 @@ const command: Command = {
                             inline: true
                         }
                     )
-                    .setFooter(`${config.webserver.domain}/help/botvariables`, botAvatarUrl);
+                    .setFooter({ text: `${config.webserver.domain}/help/botvariables`, iconURL: botAvatarUrl } );
 
                 message.channel.send({ embeds: [settingsEmbed] });
             }

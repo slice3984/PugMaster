@@ -1,4 +1,4 @@
-import Discord, { ApplicationCommandOptionData } from 'discord.js';
+import Discord, { ApplicationCommandOptionData, ApplicationCommandOptionType } from 'discord.js';
 import Bot from '../core/bot';
 import ConfigTool from '../core/configTool';
 import { Command } from '../core/types';
@@ -15,14 +15,14 @@ const command: Command = {
                 {
                     name: 'pickup',
                     description: 'Pickup to retrieve leaderboard for',
-                    type: 'STRING',
+                    type: ApplicationCommandOptionType.String,
                     required: true,
                     choices: []
                 },
                 {
                     name: 'page',
                     description: 'Leaderboard page',
-                    type: 'NUMBER',
+                    type: ApplicationCommandOptionType.Number
                 }
             ]
 
@@ -50,7 +50,7 @@ const command: Command = {
     global: false,
     perms: false,
     exec: async (bot, message, params, defaults, interaction) => {
-        const missingPermissions = Util.gotPermissions(message ? message : interaction, 'USE_EXTERNAL_EMOJIS');
+        const missingPermissions = Util.gotPermissions(message ? message : interaction, 'UseExternalEmojis');
 
         if (missingPermissions) {
             if (interaction) {
@@ -131,14 +131,14 @@ const command: Command = {
 
         const botAvatarUrl = guild.client.user.avatarURL();
 
-        const leaderboardEmbed = new Discord.MessageEmbed()
+        const leaderboardEmbed = new Discord.EmbedBuilder()
             .setColor('#126e82')
             .setTitle(`Leaderboard - ${ratings.pickup}${page ? ` [Page ${page}]` : ''}`)
             .addFields(
                 { name: 'Player', value: playerNicks.join('\n'), inline: true },
                 { name: 'W / D / L', value: playerGames.join('\n'), inline: true },
                 { name: 'Rating', value: playerRatings.join('\n'), inline: true },
-            ).setFooter('Player skill uncertainty taken into account for ranking.\nActive in last 14 days / 10 games required to be ranked', botAvatarUrl)
+            ).setFooter({ text: 'Player skill uncertainty taken into account for ranking.\nActive in last 14 days / 10 games required to be ranked', iconURL: botAvatarUrl })
 
         if (interaction) {
             interaction.reply({ embeds: [leaderboardEmbed] });

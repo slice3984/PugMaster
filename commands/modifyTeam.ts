@@ -28,7 +28,7 @@ const command: Command = {
 
             currentTeams = currentTeams.sort((a, b) => a.teamId.charCodeAt(0) - b.teamId.charCodeAt(0));
 
-            const teamsEmbed = new Discord.MessageEmbed()
+            const teamsEmbed = new Discord.EmbedBuilder()
                 .setColor('#126e82')
                 .setTitle('Current team names')
                 .addFields(

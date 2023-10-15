@@ -1,4 +1,4 @@
-import { MessageEmbed } from 'discord.js';
+import { EmbedBuilder } from 'discord.js';
 import Rating from '../core/rating';
 import { Command } from '../core/types';
 import Util from '../core/util';
@@ -32,7 +32,7 @@ const command: Command = {
 
         const toSend = await Rating.unrateMatch(message.guild.id, rateablePickup);
 
-        if (toSend instanceof MessageEmbed) {
+        if (toSend instanceof EmbedBuilder) {
             message.channel.send({ embeds: [toSend] });
         } else {
             Util.send(message, 'none', toSend, false);

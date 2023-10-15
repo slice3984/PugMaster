@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import Discord from 'discord.js';
+import Discord, { ActivityType, GatewayIntentBits } from 'discord.js';
 import ConfigTool from './configTool';
 import { Command } from './types';
 import GuildSettings from './guildSettings';
@@ -11,7 +11,6 @@ import PlayerModel from '../models/player';
 import PickupState from './pickupState';
 import Logger from './logger';
 import Console from '../console';
-import Util from './util';
 
 export default class Bot {
     private botIsReady = false;
@@ -31,10 +30,10 @@ export default class Bot {
             presence: {
                 activities: [{
                     name: ConfigTool.getConfig().webserver.domain,
-                    type: 'PLAYING'
+                    type: ActivityType.Playing
                 }]
             },
-            intents: ['GUILDS', 'GUILD_MESSAGES', 'GUILD_PRESENCES', 'GUILD_MEMBERS', 'GUILD_MESSAGE_REACTIONS']
+            intents: [ GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildPresences, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessageReactions, GatewayIntentBits.MessageContent ]
         });
 
         this.client.login(ConfigTool.getConfig().bot.token);

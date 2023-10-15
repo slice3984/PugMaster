@@ -1,4 +1,4 @@
-import Discord, { MessageEmbed } from 'discord.js';
+import Discord, { EmbedBuilder } from 'discord.js';
 import { Command } from '../core/types';
 import Util from '../core/util';
 import PickupModel from '../models/pickup';
@@ -28,7 +28,7 @@ const command: Command = {
             toSend = `Available pickups\n` +
                 pickups.map(pickup => `**${pickup.name}${pickup.rated ? ' (Rated)' : ''}** [ **${pickup.added}** / **${pickup.max}** ]`).join(' ');
         } else {
-            toSend = new Discord.MessageEmbed()
+            toSend = new Discord.EmbedBuilder()
                 .setColor('#126e82')
                 .setTitle('Available pickups')
                 .addFields(
@@ -38,7 +38,7 @@ const command: Command = {
                 );
         }
 
-        if (toSend instanceof MessageEmbed) {
+        if (toSend instanceof EmbedBuilder) {
             if (interaction) {
                 interaction.reply({ embeds: [toSend] });
             } else {

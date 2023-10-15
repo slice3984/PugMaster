@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionData } from 'discord.js';
+import { ApplicationCommandOptionData, ApplicationCommandOptionType } from 'discord.js';
 import { Command } from '../core/types';
 import StatsModel from '../models/stats';
 import Util from '../core/util';
@@ -15,17 +15,17 @@ const command: Command = {
                 {
                     name: 'overall',
                     description: 'Show all active pickup players',
-                    type: 'SUB_COMMAND'
+                    type: ApplicationCommandOptionType.Subcommand
                 },
                 {
                     name: 'pickup',
                     description: 'Show active pickup players for a pickup',
-                    type: 'SUB_COMMAND',
+                    type: ApplicationCommandOptionType.Subcommand,
                     options: [
                         {
                             name: 'pickup',
                             description: 'Pickup to get active players for',
-                            type: 'STRING',
+                            type: ApplicationCommandOptionType.String,
                             required: true,
                             choices: []
                         }

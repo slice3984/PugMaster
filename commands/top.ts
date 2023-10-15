@@ -1,4 +1,4 @@
-import { GuildMember } from 'discord.js';
+import { ApplicationCommandOptionType, GuildMember } from 'discord.js';
 import { Command } from '../core/types';
 import Util from '../core/util';
 import StatsModel from '../models/stats';
@@ -12,17 +12,17 @@ const command: Command = {
                 {
                     name: 'all-time',
                     description: 'All time top 10 players',
-                    type: 'SUB_COMMAND'
+                    type: ApplicationCommandOptionType.Subcommand,
                 },
                 {
                     name: 'period',
                     description: 'Rankings based on time period',
-                    type: 'SUB_COMMAND',
+                    type: ApplicationCommandOptionType.Subcommand,
                     options: [
                         {
                             name: 'period',
                             description: 'Time period for top rankings',
-                            type: 'STRING',
+                            type: ApplicationCommandOptionType.String,
                             required: true,
                             choices: [
                                 { name: 'Day', value: 'day' },

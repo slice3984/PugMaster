@@ -1,4 +1,4 @@
-import Discord from 'discord.js';
+import Discord, { ApplicationCommandOptionType } from 'discord.js';
 import GuildSettings from '../core/guildSettings';
 import { Command, PickupSettings } from '../core/types';
 import Util from '../core/util';
@@ -14,7 +14,7 @@ const command: Command = {
                 {
                     name: 'player',
                     description: 'Player to request subbing',
-                    type: 'USER'
+                    type: ApplicationCommandOptionType.User
                 }
             ]
         }

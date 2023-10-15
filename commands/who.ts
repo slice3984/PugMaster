@@ -1,7 +1,7 @@
 import { Command } from '../core/types';
 import PickupModel from '../models/pickup';
 import Util from '../core/util';
-import { ApplicationCommandOptionData } from 'discord.js';
+import { ApplicationCommandOptionData, ApplicationCommandOptionType } from 'discord.js';
 import Bot from '../core/bot';
 
 const command: Command = {
@@ -13,7 +13,7 @@ const command: Command = {
                 {
                     name: 'pickup',
                     description: 'Pickup to display added players for',
-                    type: 'STRING',
+                    type: ApplicationCommandOptionType.String,
                     required: false,
                     choices: []
                 }

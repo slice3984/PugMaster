@@ -1,4 +1,4 @@
-import Discord from 'discord.js';
+import Discord, { PermissionFlagsBits } from 'discord.js';
 import Bot from './bot';
 import PermissionModel from '../models/permission';
 import Logger from './logger';
@@ -31,7 +31,7 @@ export default class CommandHandler {
 		subCommand: string = null
 	) {
 		// Admin
-		if (member.permissions.has([Discord.Permissions.FLAGS.ADMINISTRATOR])) {
+		if (member.permissions.has([PermissionFlagsBits.Administrator])) {
 			return true;
 		}
 

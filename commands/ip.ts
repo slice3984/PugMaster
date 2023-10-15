@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionData } from 'discord.js';
+import { ApplicationCommandOptionData, ApplicationCommandOptionType } from 'discord.js';
 import Bot from '../core/bot';
 import { Command } from '../core/types';
 import Util from '../core/util';
@@ -14,7 +14,7 @@ const command: Command = {
                 {
                     name: 'pickup',
                     description: 'Pickup to display the IP & Password',
-                    type: 'STRING',
+                    type: ApplicationCommandOptionType.String,
                     choices: [],
                     required: true
                 }

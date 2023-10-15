@@ -1,4 +1,4 @@
-import Discord from 'discord.js';
+import Discord, { ApplicationCommandOptionType, EmbedBuilder } from 'discord.js';
 import Rating from '../core/rating';
 import { Command, RateablePickup } from '../core/types';
 import Util from '../core/util';
@@ -14,7 +14,7 @@ const command: Command = {
                 {
                     name: 'pickup-id',
                     description: 'Pickup id to report a draw for',
-                    type: 'NUMBER'
+                    type: ApplicationCommandOptionType.Number
                 }
             ]
         }
@@ -131,7 +131,7 @@ const rateMatch = async (input: Discord.Message | Discord.CommandInteraction, pi
     const toSend = await Rating.rateMatch(input.guild.id, pickup);
     const pickupChannel = await Util.getPickupChannel(input.guild);
 
-    if (toSend instanceof Discord.MessageEmbed) {
+    if (toSend instanceof EmbedBuilder) {
         if (pickupChannel) {
             pickupChannel.send({ embeds: [toSend] });
         }

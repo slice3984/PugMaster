@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionData, GuildMember, Snowflake } from 'discord.js';
+import { ApplicationCommandOptionData, ApplicationCommandOptionType, GuildMember, Snowflake } from 'discord.js';
 import Bot from '../core/bot';
 import { Command } from '../core/types';
 import Util from '../core/util';
@@ -13,7 +13,7 @@ const command: Command = {
                 {
                     name: 'pickup',
                     description: 'Pickup to unsubscribe from',
-                    type: 'STRING',
+                    type: ApplicationCommandOptionType.String,
                     required: true,
                     choices: []
                 }
@@ -41,7 +41,7 @@ const command: Command = {
     global: false,
     perms: false,
     exec: async (bot, message, params, defaults, interaction) => {
-        const missingPermissions = Util.gotPermissions(message ? message : interaction, 'MANAGE_ROLES');
+        const missingPermissions = Util.gotPermissions(message ? message : interaction, 'ManageRoles');
 
         if (missingPermissions) {
             if (interaction) {

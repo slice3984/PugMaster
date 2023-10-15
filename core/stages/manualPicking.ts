@@ -1,4 +1,4 @@
-import Discord, { MessageActionRow, MessageEmbed, MessageSelectMenu, SelectMenuInteraction, TextChannel } from 'discord.js';
+import Discord, { ActionRow, EmbedBuilder, StringSelectMenuBuilder, SelectMenuInteraction, TextChannel, ComponentType, Embed, MessagePayload, ActionRowBuilder, MessageSelectOption } from 'discord.js';
 import { Rating } from 'ts-trueskill';
 import GuildModel from '../../models/guild';
 import PickupModel from '../../models/pickup';
@@ -32,7 +32,7 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
 
     const pickupChannel = await Util.getPickupChannel(guild);
 
-    const missingPermissions = Util.gotPermissions(pickupChannel, 'MANAGE_THREADS', 'USE_PUBLIC_THREADS');
+    const missingPermissions = Util.gotPermissions(pickupChannel, 'ManageThreads', 'CreatePublicThreads');
 
     if (missingPermissions) {
         const pickupSettings = await PickupModel.getPickupSettings(BigInt(guild.id), pickupConfigId);
@@ -316,9 +316,9 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
 
                 let teamLogEmbed = await generateTeamLog(teams, shuffledPlayers, pickupSettings.playerCount);
 
-                const row = new Discord.MessageActionRow()
+                const row = new Discord.ActionRowBuilder<StringSelectMenuBuilder>()
                     .addComponents(
-                        await new MessageSelectMenu()
+                        new StringSelectMenuBuilder()
                             .setCustomId(pickingThread.id)
                             .setPlaceholder('Select a player to pick [1 to pick]')
                             .addOptions(await generateSelectMenuOptions(guild, shuffledPlayers.map(p => ({ id: p.id, nick: p.nick }))))
@@ -329,7 +329,7 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
 
                 const pickingMessage = await pickingThread.send(toSend);
 
-                const selectCollector = pickingMessage.createMessageComponentCollector({ componentType: 'SELECT_MENU' });
+                const selectCollector = pickingMessage.createMessageComponentCollector({ componentType: ComponentType.SelectMenu });
 
                 // Picks are handled here
                 selectCollector.on('collect', async (i: SelectMenuInteraction) => {
@@ -391,7 +391,7 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
                             await guildData.botMessage.edit({
                                 embeds: [
                                     await generateTeamLog(guildData.teams, guildData.leftPlayers, guildData.maxPlayers),
-                                    new MessageEmbed()
+                                    new EmbedBuilder()
                                         .setColor('#00ff00')
                                         .setTitle(`${Util.getBotEmoji('success')} **Picking done**`)
                                         .setDescription(`Pickup started in ${pickupChannel}`)
@@ -427,9 +427,9 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
                                 embeds: [
                                     await generateTeamLog(guildData.teams, guildData.leftPlayers, guildData.maxPlayers),
                                     await generateTurnEmbed(pickingPlayer, toPick > 1 ? false : true)
-                                ], components: [new MessageActionRow()
+                                ], components: [new ActionRowBuilder<StringSelectMenuBuilder>()
                                     .addComponents(
-                                        new MessageSelectMenu()
+                                        new StringSelectMenuBuilder()
                                             .setCustomId(pickingThread.id)
                                             .setPlaceholder(`Select a player to pick [${toPick} to pick]`)
                                             .addOptions(await generateSelectMenuOptions(guild, guildData.leftPlayers))
@@ -502,7 +502,7 @@ export const manualPicking = async (guild: Discord.Guild, pickupConfigId: number
 
                 await guildData.botMessage.edit({
                     embeds: [
-                        new Discord.MessageEmbed()
+                        new Discord.EmbedBuilder()
                             .setColor('#ff0000')
                             .setTitle(`${Util.getBotEmoji('error')} **Aborted**`)
                             .setDescription(`<@${currentCaptainTeam.captain.id}> didn't pick in time.\n` +
@@ -631,7 +631,7 @@ export const abortPickingStagePickup = async (guildId: string, playerId: string)
             await updateMessage(guildData, '', true);
 
             await guildData.botMessage.edit({
-                embeds: [new Discord.MessageEmbed()
+                embeds: [new Discord.EmbedBuilder()
                     .setColor('#ff0000')
                     .setTitle(`${Util.getBotEmoji('error')} **Aborted**`)
                     .setDescription(`Players missing for picking, pickup **${pending.name}** aborted.`)],
@@ -681,14 +681,14 @@ export const abortPickingStagePickup = async (guildId: string, playerId: string)
 const generateTeamLog = async (
     teams: { team: string; captain: { id: string; nick: string; }; teamAlias: string; players: { id: string; nick: string; }[] }[],
     leftPlayers: { id: string; nick: string; }[],
-    maxPlayers: number): Promise<Discord.MessageEmbed> => {
+    maxPlayers: number): Promise<EmbedBuilder> => {
     const embedTeams = [];
     const playersPerTeam = maxPlayers / teams.length;
 
     teams.forEach(team => {
         // Don't modify the ref, clone the array
         const playersCopy = team.players.slice();
-        const rows: Discord.EmbedFieldData[] = [];
+        const rows = [];
         const teamName = team.teamAlias || team.team;
 
         // | ___ | Team name - Captain name| ___|
@@ -723,21 +723,21 @@ const generateTeamLog = async (
         fields.push({ name: 'Left players', value: leftPlayers.map(p => p.nick).join(', '), inline: false });
     }
 
-    return new Discord.MessageEmbed()
+    return new Discord.EmbedBuilder()
         .setColor('#126e82')
         .setTitle('Team Log')
         .addFields(fields);
 }
 
-const generateTurnEmbed = (playerId: string, pickOne: boolean): Discord.MessageEmbed => {
-    return new Discord.MessageEmbed()
+const generateTurnEmbed = (playerId: string, pickOne: boolean): Discord.EmbedBuilder => {
+    return new Discord.EmbedBuilder()
         .setColor('#126e82')
         .setTitle(`${Util.getBotEmoji('info')} **Turn**`)
         .setDescription(`<@${playerId}> please pick **${pickOne ? 'one' : 'two'} player${pickOne ? '' : 's'}**`);
 }
 
-const generateSelectMenuOptions = async (guild: Discord.Guild, players: { id: string; nick: string }[]): Promise<Discord.MessageSelectOptionData[]> => {
-    const options: Discord.MessageSelectOptionData[] = [];
+const generateSelectMenuOptions = async (guild: Discord.Guild, players: { id: string; nick: string }[]): Promise<Discord.MessageSelectOption[]> => {
+    const options: Discord.MessageSelectOption[] = [];
 
     const members = await Util.getGuildMembers(guild, players.map(p => p.id));
 
@@ -747,7 +747,9 @@ const generateSelectMenuOptions = async (guild: Discord.Guild, players: { id: st
         options.push({
             label: player.nick,
             description: member ? member.user.tag : '-',
-            value: player.id
+            value: player.id,
+            default: false,
+            emoji: undefined
         });
     }
 

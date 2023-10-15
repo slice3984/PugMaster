@@ -1,5 +1,6 @@
 import Discord from 'discord.js';
-import { Util as DjsUtil } from 'discord.js';
+import { Utils as DjsUtil } from 'discord.js';
+import { escapeMarkdown } from 'discord.js';
 import GuildModel from '../models/guild';
 import Bot from './bot';
 import { TimeError, PickupSettings, PickupStartConfiguration } from './types';
@@ -514,7 +515,7 @@ export default class Util {
     }
 
     static gotPermissions = (input: Discord.Message | Discord.CommandInteraction | Discord.TextChannel,
-        ...permissions: Discord.PermissionString[]): Discord.MessageEmbed => {
+        ...permissions: Discord.PermissionsString[]): Discord.EmbedBuilder => {
         const bot = Bot.getInstance();
 
         let channel;
@@ -536,7 +537,7 @@ export default class Util {
 
         if (missingPermissions.length) {
             // Missing permissions embed
-            const permissionsEmbed = new Discord.MessageEmbed()
+            const permissionsEmbed = new Discord.EmbedBuilder()
                 .setTitle(`${Util.getBotEmoji('error')} Permissions missing`)
                 .setColor('#ff0000')
                 .setDescription(missingPermissions.join('\n'));
@@ -578,8 +579,10 @@ export default class Util {
         GuildSettings.locks.delete(name);
     }
 
-    static removeMarkdown = (str: string) => DjsUtil.escapeMarkdown(str.split('`').join(''))
+    static removeMarkdown = (str: string) => escapeMarkdown(str.split('`').join(''))
         .replace(/\\[*_~]/g, '');
+
+    static escapeUserNicks = (str: string) => escapeMarkdown(str, { bold: true, heading: true });
 }
 
 export const debounce = (func: Function, delay: number) => {

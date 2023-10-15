@@ -8,7 +8,7 @@ export default ((req: express.Request, res: express.Response) => {
         return {
             id: guild.id,
             name: guild.name,
-            icon: guild.iconURL({ format: 'png' })
+            icon: guild.iconURL({ extension: 'png' })
         }
     });
 

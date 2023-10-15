@@ -1,4 +1,4 @@
-import Discord from 'discord.js';
+import Discord, { ChannelType } from 'discord.js';
 import Bot from '../bot';
 import CommandHandler from '../commandHandler';
 import { GuildMemberExtended } from '../types';
@@ -6,7 +6,7 @@ import { GuildMemberExtended } from '../types';
 const commandHandler = CommandHandler.getInstance();
 
 module.exports = async (bot: Bot, message: Discord.Message) => {
-	if (message.channel.type === 'DM' || !message.member || message.member.user.bot) {
+	if (message.channel.type === ChannelType.DM || !message.member || message.member.user.bot) {
 		return;
 	}
 
