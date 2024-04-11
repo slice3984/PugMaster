@@ -2,7 +2,7 @@ import { Command } from '../core/types';
 import PickupModel from '../models/pickup';
 import PickupState from '../core/pickupState';
 import Util from '../core/util';
-import { ApplicationCommandOptionData, GuildMember } from 'discord.js';
+import { ApplicationCommandOptionData, ApplicationCommandOptionType, GuildMember } from 'discord.js';
 import Bot from '../core/bot';
 
 const command: Command = {
@@ -14,7 +14,7 @@ const command: Command = {
                 {
                     name: 'pickup',
                     description: 'Pickup to remove from',
-                    type: 'STRING',
+                    type: ApplicationCommandOptionType.String,
                     choices: []
                 }
             ];

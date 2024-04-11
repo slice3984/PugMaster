@@ -1,7 +1,7 @@
 import { Command } from '../core/types';
 import PlayerModel from '../models/player';
 import Util from '../core/util';
-import { GuildMember } from 'discord.js';
+import { ApplicationCommandOptionType, GuildMember } from 'discord.js';
 
 const command: Command = {
     cmd: 'ao',
@@ -12,7 +12,7 @@ const command: Command = {
                 {
                     name: 'show',
                     description: 'Show your ao status',
-                    type: 'STRING',
+                    type: ApplicationCommandOptionType.String,
                     choices: [{
                         name: 'true',
                         value: 'show'

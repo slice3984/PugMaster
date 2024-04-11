@@ -1,4 +1,4 @@
-import Discord from 'discord.js';
+import Discord, { EmbedBuilder } from 'discord.js';
 import { Command } from '../core/types';
 import GuildModel from '../models/guild';
 import Util from '../core/util';
@@ -56,7 +56,7 @@ const command: Command = {
             reasons.push(reason ? reason : '-');
         });
 
-        let fieldData: Discord.EmbedFieldData[];
+        let fieldData;
 
         if (displayIssuers) {
             const issuerReasonColumn = issuers.map((issuer, idx) => `${issuer}\n${reasons[idx]}`);
@@ -76,11 +76,11 @@ const command: Command = {
 
         const botAvatarUrl = guild.client.user.avatarURL();
 
-        const warnsCardEmbed = new Discord.MessageEmbed()
+        const warnsCardEmbed = new EmbedBuilder()
             .setColor('#126e82')
             .setTitle('Warned players')
             .addFields(fieldData)
-            .setFooter(`Limited to 10 warns${warns.length > 10 ? ', one or more active warns not displayed' : ''}`, botAvatarUrl);
+            .setFooter({ text: `Limited to 10 warns${warns.length > 10 ? ', one or more active warns not displayed' : ''}`, iconURL: botAvatarUrl});
 
         if (interaction) {
             interaction.reply({ embeds: [warnsCardEmbed] });

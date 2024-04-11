@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionData, CommandInteraction, Guild, GuildMember, InteractionCollector, Message, MessageCollector, MessageComponentInteraction, MessageEmbed, ThreadChannel } from 'discord.js';
+import { ApplicationCommandOptionData, CommandInteraction, Guild, GuildMember, InteractionCollector, Message, MessageCollector, MessageComponentInteraction, ThreadChannel } from 'discord.js';
 import { Rating } from 'ts-trueskill';
 import Bot from './bot';
 
@@ -323,7 +323,7 @@ export interface PendingPickingGuildData {
     pickingThread: ThreadChannel;
     botMessage: Message;
     messageCollector: MessageCollector;
-    selectMenuCollector: InteractionCollector<MessageComponentInteraction>;
+    selectMenuCollector: InteractionCollector<any>;
     optionalMessages: Message | null;
 }
 

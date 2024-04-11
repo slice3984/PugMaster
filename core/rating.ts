@@ -1,4 +1,4 @@
-import Discord from 'discord.js';
+import Discord, { EmbedBuilder, escapeMarkdown } from 'discord.js';
 import * as ts from 'ts-trueskill';
 import PickupModel from '../models/pickup';
 import RatingModel from "../models/rating";
@@ -6,7 +6,6 @@ import Bot from './bot';
 import ConfigTool from './configTool';
 import { RatingPickup, RateablePickup, RatingTeam } from "./types";
 import Util from './util';
-import { Util as DjsUtil } from 'discord.js';
 
 interface UpdateData {
     pickups: PlayerRating[],
@@ -200,7 +199,7 @@ export default class Rating {
         return message;
     }
 
-    static async unrateMatch(guildId: string, pickupToUnrate: RateablePickup): Promise<Discord.MessageEmbed | string> {
+    static async unrateMatch(guildId: string, pickupToUnrate: RateablePickup): Promise<Discord.EmbedBuilder | string> {
         // If the latest rated pickup is the one being unrated there is no need to generate new ratings
         const amountFollowingPickups = await RatingModel.getAmountOfFollowingPickups(BigInt(guildId), pickupToUnrate.pickupConfigId, pickupToUnrate.pickupId);
 
@@ -236,7 +235,7 @@ export default class Rating {
 
     private static async generateRatingMessage(guildId: string,
         pickup: RateablePickup,
-        outcomes: { team: string; result: "win" | "draw" | "loss" }[], newRatings: { id: bigint, mu: number, sigma: number }[]): Promise<Discord.MessageEmbed | string> {
+        outcomes: { team: string; result: "win" | "draw" | "loss" }[], newRatings: { id: bigint, mu: number, sigma: number }[]): Promise<EmbedBuilder | string> {
         const players = pickup.teams.flatMap(p => p.players.map(p2 => ({ id: BigInt(p2.id), nick: p2.nick })));
         const pickupSettings = await PickupModel.getPickupSettings(BigInt(guildId), pickup.pickupConfigId);
 
@@ -284,13 +283,13 @@ export default class Rating {
 
             const ratingChange = Math.abs(result.prevMu - result.newMu);
 
-            playerNicks.push(`${result.prevMu > result.newMu ? emojis.decrease : emojis.increase}${DjsUtil.escapeMarkdown(p.nick.split('`').join(''))}`);;
+            playerNicks.push(`${result.prevMu > result.newMu ? emojis.decrease : emojis.increase}${escapeMarkdown(p.nick.split('`').join(''))}`);;
 
             from.push(`${rankIconBefore}${result.prevMu ? Util.tsToEloNumber(result.prevMu) : 'UNRATED'}`);
             to.push(`${rankIconAfter}${result.newMu ? Util.tsToEloNumber(result.newMu) : 'UNRATED'} ${result.newMu ? `(**${result.prevMu > result.newMu ? '-' : '+'}${Util.tsToEloNumber(ratingChange)}**)` : ''}`);
         });
 
-        let fieldData: Discord.EmbedFieldData[];
+        let fieldData = [];
         let title;
 
         if (outcomes) {
@@ -317,7 +316,7 @@ export default class Rating {
             title = `Unrated pickup #${pickup.pickupId} - ${pickup.name}`;
         }
 
-        const ratingUpdateCard = new Discord.MessageEmbed()
+        const ratingUpdateCard = new Discord.EmbedBuilder()
             .setColor('#126e82')
             .setTitle(title)
             .addFields(fieldData)

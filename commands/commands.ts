@@ -21,7 +21,7 @@ const command: Command = {
         const member = interaction ? interaction.member as GuildMember : message.member;
 
         // All permissions granted as admin
-        const isAdmin = member.permissions.has([Discord.Permissions.FLAGS.ADMINISTRATOR]);
+        const isAdmin = member.permissions.has([Discord.PermissionsBitField.Flags.Administrator]);
         const disabledCommands = bot.getGuild(guild.id).disabledCommands;
         const allCommands = bot.getCommandNames();
         const availableCommands = allCommands.filter(command =>
@@ -48,12 +48,12 @@ const command: Command = {
 
         const botAvatarUrl = guild.client.user.avatarURL();
 
-        const commandsCardEmbed = new Discord.MessageEmbed()
+        const commandsCardEmbed = new Discord.EmbedBuilder()
             .setColor('#126e82')
             .setTitle(`${member.displayName} - Commands you can execute`)
             .setDescription(`Command reference: ${config.webserver.domain}/commands`)
-            .addField('\u200B', grantedCommands.join(', '))
-            .setFooter('*Commands which require permissions', botAvatarUrl)
+            .addFields([{ name: '\u200B', value: grantedCommands.join(', ')}])
+            .setFooter({ text: '*Commands which require permissions', iconURL: botAvatarUrl})
 
         if (interaction) {
             interaction.reply({ embeds: [commandsCardEmbed] });

@@ -1,4 +1,4 @@
-import Discord from 'discord.js';
+import Discord, { escapeMarkdown } from 'discord.js';
 import Bot from "../bot";
 import PickupModel from '../../models/pickup';
 import PlayerModel from '../../models/player';
@@ -25,7 +25,7 @@ module.exports = async (bot: Bot, oldPresence: Discord.Presence, newPresence: Di
             const pickupChannel = await Util.getPickupChannel(newPresence.guild);
 
             if (pickupChannel) {
-                pickupChannel.send(`${newPresence.member.displayName} went offline and got removed from all pickups`);
+                pickupChannel.send(Util.escapeUserNicks(`${newPresence.member.displayName} went offline and got removed from all pickups`));
             }
 
             await PickupState.removePlayer(newPresence.guild.id, newPresence.member.id, null);

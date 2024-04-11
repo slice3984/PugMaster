@@ -2,7 +2,7 @@ import { Command } from '../core/types';
 import Util from '../core/util';
 import GuildModel from '../models/guild';
 import PickupModel from '../models/pickup';
-import { ApplicationCommandOptionData, GuildMember, Snowflake } from 'discord.js';
+import { ApplicationCommandOptionData, ApplicationCommandOptionType, GuildMember, Snowflake } from 'discord.js';
 import Bot from '../core/bot';
 
 const command: Command = {
@@ -14,7 +14,7 @@ const command: Command = {
                 {
                     name: 'pickup',
                     description: 'Pickup to promote',
-                    type: 'STRING',
+                    type: ApplicationCommandOptionType.String,
                     required: true,
                     choices: []
                 }
@@ -42,7 +42,7 @@ const command: Command = {
     global: false,
     perms: false,
     exec: async (bot, message, params, defaults, interaction) => {
-        const missingPermissions = Util.gotPermissions(message ? message : interaction, 'MANAGE_ROLES');
+        const missingPermissions = Util.gotPermissions(message ? message : interaction, 'ManageRoles');
 
         if (missingPermissions) {
             if (interaction) {

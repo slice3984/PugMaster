@@ -1,4 +1,4 @@
-import Discord from 'discord.js';
+import Discord, { ApplicationCommandOptionType } from 'discord.js';
 import { Command } from '../core/types';
 import GuildModel from '../models/guild';
 import Util from '../core/util';
@@ -12,7 +12,7 @@ const command: Command = {
                 {
                     name: 'perm',
                     description: 'Show permanent bans',
-                    type: 'STRING',
+                    type: ApplicationCommandOptionType.String,
                     choices: [{
                         name: 'true',
                         value: 'perm'
@@ -82,7 +82,7 @@ const command: Command = {
             reasons.push(reason ? reason : '-');
         });
 
-        let fieldData: Discord.EmbedFieldData[];
+        let fieldData: any[];
 
         if (displayIssuers) {
             const issuerReasonColumn = issuers.map((issuer, idx) => `${issuer}\n${reasons[idx]}`);
@@ -102,11 +102,11 @@ const command: Command = {
 
         const botAvatarUrl = guild.client.user.avatarURL();
 
-        const bansCardEmbed = new Discord.MessageEmbed()
+        const bansCardEmbed = new Discord.EmbedBuilder()
             .setColor('#126e82')
             .setTitle(`${displayPerms ? 'Permbanned' : 'Banned'} players`)
             .addFields(fieldData)
-            .setFooter(`Limited to 10 bans${bans.length > 10 ? ', one or more active bans not displayed' : ''}`, botAvatarUrl);
+            .setFooter({ text: `Limited to 10 bans${bans.length > 10 ? ', one or more active bans not displayed' : ''}`, iconURL: botAvatarUrl });
 
         if (interaction) {
             interaction.reply({ embeds: [bansCardEmbed] });

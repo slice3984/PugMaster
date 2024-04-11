@@ -4,7 +4,7 @@ import Util from '../core/util';
 import PlayerModel from '../models/player';
 import PickupModel from '../models/pickup';
 import Bot from '../core/bot';
-import { ApplicationCommandOptionData, EmbedFieldData, MessageEmbed } from 'discord.js';
+import { ApplicationCommandOptionData, ApplicationCommandOptionType, EmbedBuilder } from 'discord.js';
 
 const command: Command = {
     cmd: 'lastgame',
@@ -15,7 +15,7 @@ const command: Command = {
                 {
                     name: 'latest',
                     description: 'Latest played pickup in general',
-                    type: 'SUB_COMMAND',
+                    type: ApplicationCommandOptionType.Subcommand,
                 },
                 {
                     name: 'pickup',
@@ -25,7 +25,7 @@ const command: Command = {
                         {
                             name: 'pickup',
                             description: 'Pickup to get lastgame for',
-                            type: 'STRING',
+                            type: ApplicationCommandOptionType.String,
                             required: true,
                             choices: []
                         }
@@ -39,7 +39,7 @@ const command: Command = {
                         {
                             name: 'player',
                             description: 'Player to get lastgame for',
-                            type: 'USER',
+                            type: ApplicationCommandOptionType.User,
                             required: true
                         }
                     ]
@@ -170,7 +170,7 @@ const formatOutput = (pickupInfo: PickupInfo, toHighlight?: string | null) => {
 
     const timeDif = new Date().getTime() - pickupInfo.startedAt.getTime();
 
-    const embedFields: EmbedFieldData[] = [
+    const embedFields = [
         { name: 'Time', value: `${Util.formatTime(timeDif)} ago`, inline: true }
     ];
 
@@ -202,7 +202,7 @@ const formatOutput = (pickupInfo: PickupInfo, toHighlight?: string | null) => {
         }
     }
 
-    const lastGameCard = new MessageEmbed()
+    const lastGameCard = new EmbedBuilder()
         .setTitle(`Pickup **#${pickupInfo.id}** - **${pickupInfo.name}**`)
         .setColor('#126e82')
         .addFields(embedFields);
@@ -211,7 +211,7 @@ const formatOutput = (pickupInfo: PickupInfo, toHighlight?: string | null) => {
         // 1 player per team pickups are considered as duel
         if (pickupInfo.teams[0].players.length === 1) {
             const nicks = formatPlayers(pickupInfo.teams.flatMap(t => t.players.map(p => ({ ...p, outcome: t.outcome }))), true).join(' **vs** ');
-            lastGameCard.addField('Players', nicks, false);
+            lastGameCard.addFields([ {name: 'Players', value: nicks, inline: false}]);
         } else {
             const teamStrs = [];
 
@@ -228,10 +228,10 @@ const formatOutput = (pickupInfo: PickupInfo, toHighlight?: string | null) => {
                 teamStrs.push(`**${team.name}${outcomeString}**: ${nicks}`);
             });
 
-            lastGameCard.addField('Teams', teamStrs.join('\n'), false);
+            lastGameCard.addFields([{ name: 'Teams', value: teamStrs.join('\n'), inline: false }]);
         }
     } else {
-        lastGameCard.addField('Players', formatPlayers(pickupInfo.teams.flatMap(t => t.players), false).join(', '), false);
+        lastGameCard.addFields([{ name: 'Players', value: formatPlayers(pickupInfo.teams.flatMap(t => t.players), false).join(', '), inline: false}] );
     }
 
     return lastGameCard;

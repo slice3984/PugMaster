@@ -1,4 +1,4 @@
-import Discord from 'discord.js';
+import Discord, { ApplicationCommandOptionType } from 'discord.js';
 import ConfigTool from '../core/configTool';
 import { Command } from '../core/types';
 import Util from '../core/util';
@@ -12,7 +12,7 @@ const command: Command = {
                 {
                     name: 'commmand',
                     description: 'Command to retrieve information for',
-                    type: 'STRING',
+                    type: ApplicationCommandOptionType.String,
                     required: true
                 }
             ]
@@ -39,7 +39,7 @@ const command: Command = {
         const cmd = bot.getCommand(params[0].toLowerCase());
         const prefix = bot.getGuild(guild.id).prefix;
 
-        const fieldData: Discord.EmbedFieldData[] = [];
+        const fieldData = [];
 
         fieldData.push({ name: 'Command', value: cmd.cmd, inline: true });
 
@@ -70,12 +70,12 @@ const command: Command = {
 
         const botAvatarUrl = guild.client.user.avatarURL();
 
-        const helpCardEmbed = new Discord.MessageEmbed()
+        const helpCardEmbed = new Discord.EmbedBuilder()
             .setColor('#126e82')
             .setTitle(`Help - **${prefix}${cmd.cmd}**`)
             .setDescription(cmd.desc)
             .addFields(fieldData)
-            .setFooter(`${config.webserver.domain}/commands/${cmd.cmd}`, botAvatarUrl)
+            .setFooter({ text: `${config.webserver.domain}/commands/${cmd.cmd}`, iconURL: botAvatarUrl})
 
         if (interaction) {
             interaction.reply({ embeds: [helpCardEmbed] });

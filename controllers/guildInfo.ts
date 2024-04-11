@@ -36,7 +36,7 @@ export default (async (req: express.Request, res: express.Response) => {
         const returnObj: GuildInfo = {
             status: 'success',
             gotData: false,
-            guildIcon: guildObj.iconURL({ format: 'png' }),
+            guildIcon: guildObj.iconURL({ extension: 'png' }),
             guildName: guildObj.name,
             guildId: guildObj.id,
             memberCount: guildObj.memberCount
@@ -63,7 +63,7 @@ export default (async (req: express.Request, res: express.Response) => {
     const returnObj: GuildInfo = {
         status: 'success',
         gotData: true,
-        guildIcon: guildObj.iconURL({ format: 'png' }),
+        guildIcon: guildObj.iconURL({ extension: 'png' }),
         guildName: guildObj.name,
         guildId: guildObj.id,
         memberCount: guildObj.memberCount,

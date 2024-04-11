@@ -3,7 +3,7 @@ import PlayerModel from '../models/player';
 import Util from '../core/util';
 import PickupModel from '../models/pickup';
 import Bot from '../core/bot';
-import { GuildMember } from 'discord.js';
+import { ApplicationCommandOptionType, GuildMember } from 'discord.js';
 
 const command: Command = {
     cmd: 'expire',
@@ -47,7 +47,7 @@ const command: Command = {
                 {
                     name: 'time',
                     description: 'Time until you get removed from all pickups',
-                    type: 'STRING',
+                    type: ApplicationCommandOptionType.String,
                     choices
                 }
             ]

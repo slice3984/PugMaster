@@ -3,7 +3,7 @@ import PickupModel from '../models/pickup';
 import GuildModel from '../models/guild';
 import PickupState from '../core/pickupState';
 import Util from '../core/util';
-import { ButtonInteraction, GuildMember, MessageActionRow, MessageButton, MessageEmbed, Permissions } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, EmbedBuilder, GuildMember, PermissionFlagsBits } from 'discord.js';
 import PermissionModel from '../models/permission';
 
 const command: Command = {
@@ -51,21 +51,21 @@ const command: Command = {
             playersAddedTargetPickups.push(...players);
         });
 
-        const row = new MessageActionRow()
+        const row = new ActionRowBuilder<ButtonBuilder>()
             .addComponents(
-                new MessageButton()
+                new ButtonBuilder()
                     .setCustomId('confirm')
                     .setLabel('Delete pickups')
-                    .setStyle('DANGER'),
-                new MessageButton()
+                    .setStyle(ButtonStyle.Danger),
+                new ButtonBuilder()
                     .setCustomId('Abort')
                     .setLabel('Abort')
-                    .setStyle('SUCCESS')
+                    .setStyle(ButtonStyle.Success)
             );
 
         const confirmationMessage = await message.channel.send({
             embeds: [
-                new MessageEmbed()
+                new EmbedBuilder()
                     .setTitle(`${Util.getBotEmoji('warn')} Pickup removal confirmation`)
                     .setColor('#ff0000')
                     .setDescription(
@@ -76,13 +76,13 @@ const command: Command = {
                         `- All players added to this pickup will be removed\n\n` +
                         `**This action is irreversible, please confirm.**`
                     )
-                    .setFooter('This prompt will be active for 30 seconds')
+                    .setFooter({ text: 'This prompt will be active for 30 seconds' })
             ], components: [row]
         });
 
         const collector = confirmationMessage.createMessageComponentCollector({
             max: 1, time: 30000, filter:
-                async (i: ButtonInteraction) => {
+                async i => {
                     const member = i.member as GuildMember;
                     return member.id === message.author.id;
                 }
@@ -94,7 +94,7 @@ const command: Command = {
             // Recheck permissions, could be revoked by now
             const member = i.member as GuildMember;
 
-            if (!member.permissions.has([Permissions.FLAGS.ADMINISTRATOR])) {
+            if (!member.permissions.has([PermissionFlagsBits.Administrator])) {
                 const userRoleIds = member.roles.cache.map(strId => BigInt(strId.id));
 
                 if (userRoleIds.length > 0) {

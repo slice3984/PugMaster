@@ -1,4 +1,4 @@
-import { Permissions, ButtonInteraction, EmbedFieldData, GuildMember, MessageActionRow, MessageActionRowComponent, MessageButton, MessageEmbed, TextChannel } from 'discord.js';
+import { Permissions, ButtonInteraction, GuildMember, MessageActionRowComponent, TextChannel, ActionRowBuilder, EmbedBuilder, PermissionFlagsBits, ButtonBuilder, ButtonStyle } from 'discord.js';
 import Rating from '../core/rating';
 import { Command, RateablePickup } from '../core/types';
 import Util from '../core/util';
@@ -48,11 +48,11 @@ const command: Command = {
 
         const teamNicks = rateablePickup.teams[currTeamIdx].players.map(p => p.nick);
         const generatedPrompt = generateRatingEmbed(rateablePickup, currentTeam.alias || currentTeam.name, teamNicks, [], ['won', 'lost', 'drew'])
-        const ratingPrompt = await message.channel.send({ embeds: [generatedPrompt.embed], components: [new MessageActionRow().addComponents(generatedPrompt.components)] });
+        const ratingPrompt = await message.channel.send({ embeds: [generatedPrompt.embed], components: [new ActionRowBuilder<any>().addComponents(generatedPrompt.components)] });
 
         const collector = ratingPrompt.createMessageComponentCollector({
             time: 30000, filter:
-                async (i: ButtonInteraction) => {
+                async i => {
                     const member = i.member as GuildMember;
                     return member.id === message.author.id;
                 }
@@ -79,7 +79,7 @@ const command: Command = {
 
                 const toSend = await Rating.rateMatch(message.guild.id, rateablePickup);
 
-                if (toSend instanceof MessageEmbed) {
+                if (toSend instanceof EmbedBuilder) {
                     message.channel.send({ embeds: [toSend] });
                 } else {
                     Util.send(message, 'none', toSend, false);
@@ -88,7 +88,7 @@ const command: Command = {
 
             const member = i.member as GuildMember;
 
-            if (!member.permissions.has([Permissions.FLAGS.ADMINISTRATOR])) {
+            if (!member.permissions.has([PermissionFlagsBits.Administrator])) {
                 const userRoleIds = member.roles.cache.map(strId => BigInt(strId.id));
 
                 if (userRoleIds.length > 0) {
@@ -170,7 +170,7 @@ const command: Command = {
                 const filteredOutcomes = currentOutcomes.filter(outcome => outcome.outcome);
 
                 const generatedPrompt = generateRatingEmbed(rateablePickup, currentTeam.alias || currentTeam.name, teamNicks, filteredOutcomes, options)
-                ratingPrompt.edit({ embeds: [generatedPrompt.embed], components: [new MessageActionRow().addComponents(generatedPrompt.components)] });
+                ratingPrompt.edit({ embeds: [generatedPrompt.embed], components: [new ActionRowBuilder<any>().addComponents(generatedPrompt.components)] });
             }
 
             i.deferUpdate();
@@ -191,8 +191,8 @@ const command: Command = {
 }
 
 const generateRatingEmbed = (pickup: RateablePickup, teamName: string, teamPlayers: string[],
-    currentReports: { team: string; outcome: string }[], options: Array<'won' | 'lost' | 'drew'>): { embed: MessageEmbed, components: MessageActionRowComponent[] } => {
-    const rows: EmbedFieldData[] = [];
+    currentReports: { team: string; outcome: string }[], options: Array<'won' | 'lost' | 'drew'>): { embed: EmbedBuilder, components: MessageActionRowComponent[] } => {
+    const rows = [];
 
     rows.push({ name: `Team **${teamName}**`, value: `\u200B`, inline: true });
     rows.push({ name: '\u200B', value: `\u200B`, inline: true });
@@ -208,43 +208,43 @@ const generateRatingEmbed = (pickup: RateablePickup, teamName: string, teamPlaye
         rowNum++;
     }
 
-    const rowComponents: MessageActionRowComponent[] = [];
+    const rowComponents = [];
 
     options.forEach(option => {
         switch (option) {
             case 'won':
                 rowComponents.push(
-                    new MessageButton()
+                    new ButtonBuilder()
                         .setCustomId('win')
                         .setLabel('WON')
-                        .setStyle('SUCCESS')
+                        .setStyle(ButtonStyle.Success)
                 );
                 break;
             case 'lost':
                 rowComponents.push(
-                    new MessageButton()
+                    new ButtonBuilder()
                         .setCustomId('loss')
                         .setLabel('LOST')
-                        .setStyle('DANGER')
+                        .setStyle(ButtonStyle.Danger)
                 );
                 break;
             case 'drew':
                 rowComponents.push(
-                    new MessageButton()
+                    new ButtonBuilder()
                         .setCustomId('draw')
                         .setLabel('DREW')
-                        .setStyle('SECONDARY')
+                        .setStyle(ButtonStyle.Secondary)
                 );
                 break;
         }
     });
 
-    rowComponents.push(new MessageButton()
+    rowComponents.push(new ButtonBuilder()
         .setCustomId('abort')
         .setLabel('Abort rating')
-        .setStyle('PRIMARY'));
+        .setStyle(ButtonStyle.Primary));
 
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
         .setTitle(`${Util.getBotEmoji('info')} Rating report for pickup **${pickup.pickupId}** - **${pickup.name}**`)
         .setColor('#126e82');
 
@@ -257,14 +257,14 @@ const generateRatingEmbed = (pickup: RateablePickup, teamName: string, teamPlaye
             formattedOutcomes.push(`${teamName}: **${report.outcome}**`);
         });
 
-        embed.addField('Current reports', formattedOutcomes.join(' '), false);
+        embed.addFields([{ name: 'Current reports', value: formattedOutcomes.join(' '), inline: false}]);
     } else {
         const agoSince = new Date().getTime() - pickup.startedAt.getTime();
-        embed.addField('Time', `${Util.formatTime(agoSince)} ago`, false);
+        embed.addFields([{ name: 'Time', value: `${Util.formatTime(agoSince)} ago`,inline: false}] );
     }
 
     embed.addFields(rows)
-        .addField('\u200B', `Report the outcome of **team ${teamName}** using the buttons`, false);
+        .addFields([{ name: '\u200B', value: `Report the outcome of **team ${teamName}** using the buttons`, inline: false}]);
 
     return {
         embed,

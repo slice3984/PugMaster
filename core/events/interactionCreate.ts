@@ -1,4 +1,4 @@
-import { Interaction } from 'discord.js';
+import { ApplicationCommandOptionType, ChannelType, Interaction } from 'discord.js';
 import Bot from '../bot';
 import CommandHandler from '../commandHandler';
 import { GuildMemberExtended } from '../types';
@@ -6,7 +6,7 @@ import { GuildMemberExtended } from '../types';
 const commandHandler = CommandHandler.getInstance();
 
 module.exports = async (bot: Bot, i: Interaction) => {
-    if (!i.isCommand() || !i.channel || i.channel.type !== 'GUILD_TEXT') {
+    if (!i.isCommand() || !i.channel || i.channel.type !== ChannelType.GuildText) {
         return;
     }
 
@@ -18,7 +18,7 @@ module.exports = async (bot: Bot, i: Interaction) => {
 
     if (optionData.length) {
         optionData.forEach(option => {
-            if (option.type === 'SUB_COMMAND_GROUP') {
+            if (option.type === ApplicationCommandOptionType.SubcommandGroup) {
                 option.options.forEach(option => {
                     // Sub command with options
                     if (option.options) {
@@ -29,7 +29,7 @@ module.exports = async (bot: Bot, i: Interaction) => {
                         }
                     }
                 })
-            } else if (option.type === 'SUB_COMMAND') {
+            } else if (option.type === ApplicationCommandOptionType.Subcommand) {
                 // If parameterSubCommands is set, we use the sub command itself as argument
                 const command = bot.getCommand(i.commandName);
 

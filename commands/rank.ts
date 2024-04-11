@@ -1,4 +1,4 @@
-import Discord from 'discord.js';
+import Discord, { ApplicationCommandOptionType } from 'discord.js';
 import Bot from '../core/bot';
 import ConfigTool from '../core/configTool';
 import { Command } from '../core/types';
@@ -15,7 +15,7 @@ const command: Command = {
                 {
                     name: 'player',
                     description: 'Player to get ranks for',
-                    type: 'USER',
+                    type: ApplicationCommandOptionType.User,
                     required: true
                 }
             ];
@@ -90,16 +90,16 @@ const command: Command = {
 
         const botAvatarUrl = guild.client.user.avatarURL();
 
-        const rankCardEmbed = new Discord.MessageEmbed()
+        const rankCardEmbed = new Discord.EmbedBuilder()
             .setColor('#126e82')
             .setTitle(`Ranking - ${Util.removeMarkdown(players.players[0].currentNick)}`)
-            .addField('Rated games ', ratings.pickupCount.toString())
+            .addFields([{ name: 'Rated games ', value: ratings.pickupCount.toString() }])
             .addFields(
                 { name: 'Pickup / Rank', value: pickupNames.join('\n'), inline: true },
                 { name: 'W / D / L', value: playerGames.join('\n'), inline: true },
                 { name: 'Rating', value: playerRatings.join('\n'), inline: true }
             )
-            .setFooter('Active in last 14 days / 10 games required to be ranked', botAvatarUrl);
+            .setFooter({ text: 'Active in last 14 days / 10 games required to be ranked', iconURL: botAvatarUrl});
 
         if (interaction) {
             interaction.reply({ embeds: [rankCardEmbed] });

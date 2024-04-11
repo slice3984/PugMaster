@@ -1,4 +1,4 @@
-import { MessageEmbed } from 'discord.js';
+import { EmbedBuilder } from 'discord.js';
 import { Command } from '../core/types';
 import Util from '../core/util';
 import StatsModel from '../models/stats';
@@ -23,9 +23,9 @@ const command: Command = {
         const totalPickups = await StatsModel.getTotalPickupsCount();
         const uniquePickupPlayers = await StatsModel.getTotalKnownPlayers();
 
-        const infoEmbed = new MessageEmbed()
+        const infoEmbed = new EmbedBuilder()
             .setColor('#126e82')
-            .setAuthor('Bot information', client.user.avatarURL())
+            .setAuthor({ name: 'Bot information', iconURL: client.user.avatarURL()})
             .addFields(
                 { name: 'Uptime', value: uptimeStr, inline: true },
                 { name: 'Active servers', value: connectedGuilds.toString(), inline: true },
